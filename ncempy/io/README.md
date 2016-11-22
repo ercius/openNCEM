@@ -6,4 +6,7 @@ The `ncempy.io` module contains the file IO necessary for the various dataformat
 
 Overview of contents with short description:
 
-
+| Submodule | Description |
+| --- | --- |
+| `emd` | EMD file format |
+| `ser` | SER file format used by TIA (FEI) |

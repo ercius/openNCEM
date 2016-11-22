@@ -40,3 +40,4 @@ It relies on the following packages:
 - `matplotlib` (for plotting)
 - `PySide` (for GUI)
 - `pygtgraph` (for plotting in GUI)
+- `h5py` (for EMD files)

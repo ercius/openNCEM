@@ -8,3 +8,7 @@ They are subordered by the experiment/simulation/task they address.
 ## Contents
 
 List of contents with short description:
+
+|Tool|Description|
+|---|---|
+|ser2emd|Convert SER files to EMD|
