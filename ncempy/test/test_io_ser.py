@@ -3,7 +3,7 @@ Tests for the ser io module.
 '''
 
 import unittest
-import ncempy.io.ser
+import ncempy.fio.ser
 import numpy as np
 import os
 import os.path
@@ -20,25 +20,25 @@ class test_ser(unittest.TestCase):
         
         # wrong argument type
         with self.assertRaises(TypeError):
-            fser = ncempy.io.ser.fileSER(42)
+            fser = ncempy.fio.ser.fileSER(42)
 
         # non existing file
         with self.assertRaises(IOError):
-            fser = ncempy.io.ser.fileSER('')
+            fser = ncempy.fio.ser.fileSER('')
             
         # wrong file
         with self.assertRaises(Exception):
-            fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi', verbose=True)
+            fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi', verbose=True)
 
         # single 2D image file
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', verbose=True)
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', 'ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi', verbose=True)
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', verbose=True)
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', 'ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi', verbose=True)
         
         # time series of 2D images
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser')
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser', verbose=True)
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser','ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01.emi', verbose=True)
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser', verbose=True)
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser','ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01.emi', verbose=True)
         
         # single 1D dataset
         # time series of 1D datasets
@@ -53,7 +53,7 @@ class test_ser(unittest.TestCase):
         '''
         
         # ser file for this testing
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
         
         # wrong argument
         with self.assertRaises(TypeError):
@@ -78,7 +78,7 @@ class test_ser(unittest.TestCase):
         '''
     
         # ser file for this testing
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
         
         # wrong index
         with self.assertRaises(IndexError):
@@ -101,11 +101,11 @@ class test_ser(unittest.TestCase):
         '''
         
         # single 2D image file
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser')
         if os.path.isfile('ncempy/test/resources/output/Pt_SAED_D910mm_single_woemi.emd'):
             os.remove('ncempy/test/resources/output/Pt_SAED_D910mm_single_woemi.emd')
         fser.writeEMD('ncempy/test/resources/output/Pt_SAED_D910mm_single_woemi.emd')
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', 'ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Pt_SAED_D910mm_single/im01_1.ser', 'ncempy/test/resources/Pt_SAED_D910mm_single/im01.emi')
         if os.path.isfile('ncempy/test/resources/output/Pt_SAED_D910mm_single.emd'):
             os.remove('ncempy/test/resources/output/Pt_SAED_D910mm_single.emd')
         fser.writeEMD('ncempy/test/resources/output/Pt_SAED_D910mm_single.emd')
@@ -113,13 +113,13 @@ class test_ser(unittest.TestCase):
             fser.writeEMD('')
         
         # time series of 2D images
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser', 'ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01.emi')
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser', 'ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01.emi')
         if os.path.isfile('ncempy/test/resources/output/Au_SAED_D910mm_20x_at_800.emd'):
             os.remove('ncempy/test/resources/output/Au_SAED_D910mm_20x_at_800.emd')
         fser.writeEMD('ncempy/test/resources/output/Au_SAED_D910mm_20x_at_800.emd')
         
         # large time series of 2D images
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off_1.ser','ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off.emi', verbose=True)
+        fser = ncempy.fio.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off_1.ser','ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off.emi', verbose=True)
         ##fser.head['ValidNumberElements'] = 20
         if os.path.isfile('ncempy/test/resources/output/Au_SAED_D910mm_100x_at_RT.emd'):
             os.remove('ncempy/test/resources/output/Au_SAED_D910mm_100x_at_RT.emd')

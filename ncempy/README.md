@@ -9,6 +9,7 @@ The package is given the following structure:
 
 - docs
 
+ Documentation of the `ncempy` package.
 
 - algo
 
@@ -18,7 +19,7 @@ The package is given the following structure:
 
  Evaluation routines build from the single algorithms in `algo`. These address specific tasks like evaluating the results from a particular method or experimental setup.
 
-- io
+- fio
 
  Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
 

@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-import ncempy.io.emd
+import ncempy.fio.emd
 import ncempy.algo.local_max
 import ncempy.algo.math
 import ncempy.eval.ring_diff
@@ -28,7 +28,7 @@ class test_ringdiff(unittest.TestCase):
         if os.path.isfile('ncempy/test/resources/output/test_settings.emd'):
             os.remove('ncempy/test/resources/output/test_settings.emd')
             
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/test_settings.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/test_settings.emd')
         
         ## minimum settings necessary, with many nones
         settings_minimum = { 'lmax_r': 10,
@@ -118,12 +118,12 @@ class test_ringdiff(unittest.TestCase):
         
         
         ### single evaluation
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
         emdgrp = femd.list_emds[0]
         
         if os.path.isfile('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_single.emd'):
             os.remove('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_single.emd')
-        femd_out = ncempy.io.emd.fileEMD('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_single.emd')
+        femd_out = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_single.emd')
         
         # write evaluation details
         grp_eva = femd_out.file_hdl.create_group('evaluation')
@@ -168,12 +168,12 @@ class test_ringdiff(unittest.TestCase):
         
         
         ### evaluation of a series
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd')
         emdgrp = femd.list_emds[0]
         
         if os.path.isfile('ncempy/test/resources/output/evaluation_Au_SAED_D910mm_20x_at_800.emd'):
             os.remove('ncempy/test/resources/output/evaluation_Au_SAED_D910mm_20x_at_800.emd')
-        femd_out = ncempy.io.emd.fileEMD('ncempy/test/resources/output/evaluation_Au_SAED_D910mm_20x_at_800.emd')
+        femd_out = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/evaluation_Au_SAED_D910mm_20x_at_800.emd')
         
         # write evaluation details
         grp_eva = femd_out.file_hdl.create_group('evaluation')
@@ -211,12 +211,12 @@ class test_ringdiff(unittest.TestCase):
         
         ### run multiple evaluations
         ### single evaluation
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
         emdgrp = femd.list_emds[0]
         
         if os.path.isfile('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_multiple.emd'):
             os.remove('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_multiple.emd')
-        femd_out = ncempy.io.emd.fileEMD('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_multiple.emd')
+        femd_out = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/evaluation_Pt_SAED_D910mm_multiple.emd')
         
         # write evaluation details
         grp_eva = femd_out.file_hdl.create_group('evaluation')

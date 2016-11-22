@@ -9,7 +9,7 @@ import os
 import re
 import xml.etree.ElementTree as ET
 import datetime
-import ncempy.io.emd
+import ncempy.fio.emd
 
 class NotSERError(Exception):
     '''Exception if a file is not in SER file format'''
@@ -559,7 +559,7 @@ class fileSER:
         
         # create the EMD file and set version attributes
         try:
-            f = ncempy.io.emd.fileEMD(filename)
+            f = ncempy.fio.emd.fileEMD(filename)
         except:
             raise IOError('Cannot write to file "{}"!'.format(filename))
             

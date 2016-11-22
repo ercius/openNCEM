@@ -7,7 +7,7 @@ import sys
 import os
 from PySide import QtGui, QtCore
 
-import ncempy.io.ser
+import ncempy.fio.ser
 
 class Converter(QtGui.QWidget):
 
@@ -132,7 +132,7 @@ class Converter(QtGui.QWidget):
         else:
             emi_name = None
             
-        fser = ncempy.io.ser.fileSER(ser_name, emifile=emi_name)
+        fser = ncempy.fio.ser.fileSER(ser_name, emifile=emi_name)
         
         if os.path.isfile(self.emd_txt.text()):
             os.remove(self.emd_txt.text())

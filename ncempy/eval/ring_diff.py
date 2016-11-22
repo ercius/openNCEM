@@ -6,7 +6,7 @@ import ncempy.algo.local_max
 import ncempy.algo.distortion
 import ncempy.algo.radial_profile
 import ncempy.algo.math
-import ncempy.io.emd
+import ncempy.fio.emd
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -246,7 +246,7 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
         assert(isinstance(group, h5py._hl.group.Group))
         assert( group.attrs['type'] == np.string_(cur_eva_vers) )
         
-        assert(isinstance(outfile, ncempy.io.emd.fileEMD))
+        assert(isinstance(outfile, ncempy.fio.emd.fileEMD))
     except:
         raise TypeError('Something wrong with the input.')
         
@@ -258,7 +258,7 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
     # get the emdgroup
     if verbose:
         print('.. getting data from {}:{}'.format(group.attrs['filename'].decode('utf-8'), group.attrs['internal_path'].decode('utf-8')))
-    readfile = ncempy.io.emd.fileEMD( group.attrs['filename'].decode('utf-8'), readonly=True )
+    readfile = ncempy.fio.emd.fileEMD( group.attrs['filename'].decode('utf-8'), readonly=True )
     data, dims = readfile.get_emdgroup(readfile.file_hdl[group.attrs['internal_path'].decode('utf-8')])
     
     # find the settings moving upwards in hierarchy

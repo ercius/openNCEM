@@ -4,7 +4,7 @@ Command line tool to prepare an emd evaluation file for diffraction ring analysi
 
 import argparse
 import os
-import ncempy.io.emd
+import ncempy.fio.emd
 import ncempy.eval.ring_diff
 
 # parse the commandline arguments
@@ -19,7 +19,7 @@ print('{}'.format(args.input))
 # open output emdfile
 if os.path.isfile(args.output[0]):
     os.remove(args.output[0])
-femd_out = ncempy.io.emd.fileEMD(args.output[0])
+femd_out = ncempy.fio.emd.fileEMD(args.output[0])
 grp_eva = femd_out.file_hdl.create_group('evaluation')
 
 print('Evaluation file {} created.'.format(args.output[0]))
@@ -39,7 +39,7 @@ if not args.input is None:
         
         hdl = grp_eva.create_group(os.path.basename(fname))
         
-        femd_in = ncempy.io.emd.fileEMD(fname, readonly=True)
+        femd_in = ncempy.fio.emd.fileEMD(fname, readonly=True)
 
         for i in range(len(femd_in.list_emds)):
         

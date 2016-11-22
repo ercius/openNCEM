@@ -7,7 +7,7 @@ import os
 import os.path
 import numpy as np
 
-import ncempy.io.emd
+import ncempy.fio.emd
 
 class test_emd(unittest.TestCase):
     '''
@@ -18,31 +18,31 @@ class test_emd(unittest.TestCase):
         
         # wrong argument type
         with self.assertRaises(TypeError):
-            femd = ncempy.io.emd.fileEMD(42)
+            femd = ncempy.fio.emd.fileEMD(42)
         
         # non existing file in readonly
         with self.assertRaises(IOError):
-            femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/doesnotexist.emd', readonly=True)
+            femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/doesnotexist.emd', readonly=True)
             
         # impossible file for read/write
         with self.assertRaises(IOError):
-            femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/output/output.emd')
+            femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/output/output.emd')
             
         # open existing file
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd')
         # open existing file readonly
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd', readonly=True)
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd', readonly=True)
         # open nonexisting file for writing
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/test.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/test.emd')
 
 
     def test_data_manipulation(self):
     
         # open testfiles
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd', readonly=True)
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/Au_SAED_D910mm_20x_at_800.emd', readonly=True)
         if os.path.isfile('ncempy/test/resources/output/copy.emd'):
             os.remove('ncempy/test/resources/output/copy.emd')
-        femd2 = ncempy.io.emd.fileEMD('ncempy/test/resources/output/copy.emd')
+        femd2 = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/copy.emd')
         
         # test error handling in get_emdgroup
         with self.assertRaises(TypeError):
@@ -65,7 +65,7 @@ class test_emd(unittest.TestCase):
         self.assertIsNotNone(femd2.put_emdgroup('Au_SAED_D910mm_20x_at_800', data, dims))
         
         # try to write a readonly file
-        femd2 = ncempy.io.emd.fileEMD('ncempy/test/resources/output/copy.emd', readonly=True)
+        femd2 = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/copy.emd', readonly=True)
         self.assertIsNone(femd2.put_emdgroup('Au_SAED_D910mm_20x_at_800', data, dims))
         
         del femd, femd2
@@ -73,7 +73,7 @@ class test_emd(unittest.TestCase):
         # write a testfile
         if os.path.isfile('ncempy/test/resources/output/test2.emd'):
             os.remove('ncempy/test/resources/output/test2.emd')
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/test2.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/test2.emd')
         data = np.random.rand(512,512,100)
         dims = ( (np.array(range(512)), 'x', '[px]'),
                  (np.array(range(512)), 'y', '[px]'),
@@ -94,7 +94,7 @@ class test_emd(unittest.TestCase):
         # create a file for comments
         if os.path.isfile('ncempy/test/resources/output/comments.emd'):
             os.remove('ncempy/test/resources/output/comments.emd')
-        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/output/comments.emd')
+        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/output/comments.emd')
         
         with self.assertRaises(TypeError):
             femd.put_comment(42)

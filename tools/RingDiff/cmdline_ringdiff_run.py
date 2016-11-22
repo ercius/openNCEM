@@ -4,7 +4,7 @@ Command line tool to run diffraction ring analysis on an emd evaluation file.
 
 import argparse
 import os
-import ncempy.io.emd
+import ncempy.fio.emd
 import ncempy.eval.ring_diff
 
 # parse the commandline arguments
@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 
 # open input file
-femd = ncempy.io.emd.fileEMD(args.input)
+femd = ncempy.fio.emd.fileEMD(args.input)
 
 # execute
 ncempy.eval.ring_diff.run_all(femd.file_hdl, femd, args.f, args.v, args.p)
