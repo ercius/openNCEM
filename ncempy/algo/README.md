@@ -7,4 +7,9 @@ The evaluation targeting a certain problem is supposed to go in `ncempy.eval` an
 
 Overview of contents with short description:
 
-
+|Module|Description|
+|---|---|
+|`distortion`|Treat distortion in diffraction patterns.|
+|`local_max`|Find local maxima in an image.|
+|`math`|Flexible way to construct fit functions.|
+|`radial_profile`|Calculate azimuthally averaged radial profile of an image.|

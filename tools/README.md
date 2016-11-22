@@ -11,4 +11,5 @@ List of contents with short description:
 
 |Tool|Description|
 |---|---|
+|RingDiff|Evaluate ring diffraction patterns.|
 |ser2emd|Convert SER files to EMD|

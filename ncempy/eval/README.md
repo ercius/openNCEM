@@ -6,4 +6,7 @@ The `ncempy.eval` module contains evaluation routines to address various data ev
 
 Overview of contents with short description:
 
+|Module|Description|
+|---|---|
+|`ring_diff`|Evaluate ring diffraction patterns.|
 
