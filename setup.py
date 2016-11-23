@@ -34,7 +34,7 @@ setup(
     author_email='percius@lbl.gov',
 
     # Choose your license
-    license='UNKNOWN',
+    license='LGPLv3+',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -49,7 +49,7 @@ setup(
         'Topic :: Scientific/Engineering',
 
         # Pick your license as you wish (should match "license" above)
-        'License :: Other/Proprietary License',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -71,7 +71,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'scipy', 'matplotlib', 'h5py']#, 'PySide', 'pyqtgraph'],
+    install_requires=['numpy', 'scipy', 'matplotlib', 'h5py']       
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
