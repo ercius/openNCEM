@@ -8,7 +8,7 @@ Subpackages
 
     ncempy.algo
     ncempy.eval
-    ncempy.io
+    ncempy.fio
     ncempy.test
 
 Module contents

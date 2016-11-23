@@ -19,7 +19,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('/home/niekiel/work/openNCEM/ncempy'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ncempy'
-copyright = '2016, F. Niekiel, P. Ercius, C. Ophus'
-author = 'F. Niekiel, P. Ercius, C. Ophus'
+copyright = '2016, F. Niekiel, P. Ercius, C. Ophus, T. Pekin'
+author = 'F. Niekiel, P. Ercius, C. Ophus, T. Pekin'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -107,12 +107,21 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# check for readthedocs
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+
+if on_rtd:
+    html_theme = 'default'
+else:
+    import sphinx_rtd_theme
+    html_theme = "sphinx_rtd_theme"
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
