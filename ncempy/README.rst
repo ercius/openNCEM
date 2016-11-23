@@ -54,7 +54,7 @@ Installation
 
 For now we support pip installing it from the gitHub repository:
 
-``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy&subdirectory=ncempy'``
+``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy'``
 
 
 Problem with PySide not being available for python3.5, somehow it works on ubuntu if you use it from a system package. So I create a virtualenv with access to system site packages:
