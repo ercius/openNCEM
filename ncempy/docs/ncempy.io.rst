@@ -1,21 +1,21 @@
-ncempy.fio package
+ncempy.io package
 =================
 
 Submodules
 ----------
 
-ncempy.fio.emd module
+ncempy.io.emd module
 --------------------
 
-.. automodule:: ncempy.fio.emd
+.. automodule:: ncempy.io.emd
     :members:
     :undoc-members:
     :show-inheritance:
 
-ncempy.fio.ser module
+ncempy.io.ser module
 --------------------
 
-.. automodule:: ncempy.fio.ser
+.. automodule:: ncempy.io.ser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,7 +24,7 @@ ncempy.fio.ser module
 Module contents
 ---------------
 
-.. automodule:: ncempy.fio
+.. automodule:: ncempy.io
     :members:
     :undoc-members:
     :show-inheritance:

@@ -10,20 +10,21 @@ import datetime
 
 
 class fileEMD:
-    '''
-    Class to represent EMD files. 
+    '''Class to represent EMD files. 
     
     Implemented for spec 0.2 using the recommended layout for metadata.
-    Meant to provide convenience functions for commonly occuring tasks. 
-    This means that you will still want to acces fileEMD.file_hdl to manipulate the HDF5 file for not so commonly occuring tasks.
+    
+    Meant to provide convenience functions for commonly occuring tasks. This means that you will still want to acces fileEMD.file_hdl to manipulate the HDF5 file for not so commonly occuring tasks.
+    
+    Parameters:
+        filename (str):    Name of the EMD file.
+        readonly (bool):    Set to open in read only mode.
+            
     '''
     
     def __init__(self, filename, readonly=False):
         '''Init opening/creating the file.
         
-        input:
-        - filename (string)     name of the EMD file
-        - readonly (bool)       set to open in read only mode
         '''
         
         ## necessary declarations in case something goes bad
@@ -107,14 +108,25 @@ class fileEMD:
             
 
     def __del__(self):
-        '''Destructor for EMD file object'''
+        '''Destructor for EMD file object.
+        
+        '''
+        
         # close the file
         if(self.file_hdl):
             self.file_hdl.close()
 
 
     def find_emdgroups(self, parent):
-        '''Find all emd_data_type groups within the group parent and return a list of references to their HDF5 groups.'''
+        '''Find all emd_data_type groups within the group parent and return a list of references to their HDF5 groups.
+        
+        Parameters:
+            parent (h5py._hl.group.Group):  Handle to the parent group.
+            
+        Returns:
+            (list):    A list of h5py._hl.group.Group handles to children groups being emd_data_type groups.
+            
+        '''
         
         emds = []
         
@@ -141,11 +153,16 @@ class fileEMD:
     def get_emdgroup(self, group):
         '''Get the emdtype data saved in in group.
         
-        input:
-        - group         reference to the HDF5 group
+        Parameters:
+            group (h5py._hl.group.Group):   Reference to the emdtype HDF5 group.
         
-        returns:
-        - data
+        Returns:
+            (tuple/None):    None or tuple containing:
+            
+                np.ndarray:    The data of the emdtype group.
+                
+                list:    List of dimension vectors plus labels and units.
+                
         '''
         
         # check input
@@ -189,19 +206,21 @@ class fileEMD:
             print('Content of "{}" does not seem to be in emd specified shape'.format(group.name))
             
             return None
+            
 
     def write_dim(self, label, dim, parent):
         '''Auxiliary function to write a dim dataset to parent.
         
         Input is not checked for sanity, so handle exceptions in call.
         
-        input:
-        - label (string)        label for dataset, usually dim1, dim2, dimN
-        - dim                   tuple containing (data, name, units)
-        - parent                HDF5 parent group
+        Parameters:
+            label (str):    Label for dataset, usually dim1, dim2, dimN.
+            dim (tuple):    Tuple containing (data, name, units).
+            parent (h5py._hl.group.Group):    HDF5 handle to parent group.
         
-        return:
-        - dset                  HDF5 dataset handle referencing this dim
+        Returns:
+            (h5py._hl.group.Group):    HDF5 dataset handle referencing this dim.
+            
         '''
         
         try:
@@ -215,17 +234,20 @@ class fileEMD:
         
         
     def put_emdgroup(self, label, data, dims, parent=None, overwrite=False):
-        '''Put an emdtype dataset into the EMD file
+        '''Put an emdtype dataset into the EMD file.
         
-        input:
-        - label (string)        label for the emdtype group containing the dataset
-        - data                  numpy array of the data 
-        - dims                  tuple containing the necessary dims as ((vec, name, units), (vec, name, units), ...)
-        - parent                parent for the emdtype group, if None it will be written to /data
+        Parameters:
+            label (str):    Label for the emdtype group containing the dataset.
+            data (np.ndarray):    Numpy array containing the data.
+            dims (tuple):    Tuple containing the necessary dims as ((vec, name, units), (vec, name, units), ...)
+            parent (h5py._hl.group.Group/None):    Parent for the emdtype group, if None it will be written to /data.
+            overwrite (bool):    Set to force overwriting entry in EMD file.
         
-        return:
-        - grp                   group referencing this emdtype dataset or None if failed
+        Returns:
+            (h5py._hl.group.Group/None):    Group referencing this emdtype dataset or None if failed.
+            
         '''
+        
         # check input
         if not isinstance(label, str):
             raise TypeError('label needs to be string!')
@@ -292,9 +314,10 @@ class fileEMD:
         
         If timestamp already exists, the msg is appended to existing comment.
         
-        input:
-        - msg (string)          string of the message to save
-        - timestamp             timestamp used as the key, defaults to the current UTC time
+        Parameters:
+            msg (str):    String of the message to save.
+            timestamp (str/None):    Timestamp used as the key, defaults to the current UTC time.
+        
         '''
         
         # check input

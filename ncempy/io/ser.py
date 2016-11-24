@@ -12,27 +12,42 @@ import datetime
 import ncempy.io.emd
 
 class NotSERError(Exception):
-    '''Exception if a file is not in SER file format'''
+    '''Exception if a file is not in SER file format.
+    
+    '''
     pass
 
 
 class fileSER:
     '''
     Class to represent SER files (read only).
+    
+    Parameters:
+        filename (str):    Name of the SER file.
+        emifile (str):    Name of an optional EMI file to read metadata.
+        verbose (bool):    True to get extensive output while reading the file.
+        
     '''
 
     dictByteOrder = {0x4949 : 'little endian'}
+    '''(dict):    Information on byte order.'''
+    
     dictSeriesVersion = {0x0210 : '< TIA 4.7.3', 0x0220 : '>= TIA 4.7.3'}
+    '''(dict):    Information on fileformat version.'''
+    
     dictDataTypeID = {0x4120:'1D spectra', 0x4122:'2D images'}
+    '''(dict):    Information on data type.'''
+    
     dictTagTypeID = {0x4152:'time only',0x4142:'time and 2D position'}
+    '''(dict):    Information on tag type.'''
+    
     dictDataType = {1:'<u1', 2:'<u2', 3:'<u4', 4:'<i1', 5:'<i2', 6:'<i4', 7:'<f4', 8:'<f8', 9:'<c8', 10:'<c16'}
+    '''(dict):    Information on data format.'''
+
 
     def __init__(self, filename, emifile=None, verbose=False):
         '''Init opening the file and reading in the header.
         
-        input:
-        - filename (string)     name of the SER file
-        - verbose (bool)        True to get extensive output while reading the file
         '''
         # necessary declarations, if something fails
         self.file_hdl = None
@@ -60,21 +75,24 @@ class fileSER:
 
 
     def __del__(self):
-        '''Closing the file stream on del.'''
+        '''Closing the file stream on del.
+        
+        '''
+        
         # close the file
         if(self.file_hdl):
             self.file_hdl.close()
 
 
     def readHeader(self, verbose=False):
-        '''
-        Read and return the SER files header.
+        '''Read and return the SER files header.
         
-        input:
-        - verbose (bool)        True to get extensive output while reading the file
+        Parameters:
+            verbose (bool):    True to get extensive output while reading the file.
 
-        returns:
-        - head		the header of the SER file as dict
+        Returns:
+            (dict):    The header of the SER file as dict.
+            
         '''
         
         # prepare empty dict to be populated while reading
@@ -237,11 +255,11 @@ class fileSER:
 
 
     def checkIndex(self, i):
-        '''
-        Check index i for sanity, otherwise raise Exception.
+        '''Check index i for sanity, otherwise raise Exception.
         
-        input:
-        - i(int)        index
+        Parameters:
+            i (int):    Index.
+            
         '''
         
         # check type
@@ -258,13 +276,17 @@ class fileSER:
     def getDataset(self, index, verbose=False):
         '''Retrieve dataset from data file.
 
-        input:
-        - index (int)   index of dataset
-        - verbose (bool)        True to get extensive output while reading the file
+        Parameters:
+            index (int):    Index of dataset.
+            verbose (bool):    True to get extensive output while reading the file.
         
-        returns:
-        - dataset	dataset as array
-        - meta          metadata as dict
+        Returns:
+            (tuple):    Tuple containing:
+            
+                np.ndarray:    Dataset as array.
+                
+                dict:    Metadata as dict.
+                
         '''
 
         # check index, will raise Exceptions if not
@@ -362,12 +384,13 @@ class fileSER:
     def getTag(self, index, verbose=False):
         '''Retrieve tag from data file.
 
-        input:
-        - index (int)           index of tag
-        - verbose (bool)        True to get extensive output while reading the file
+        Parameters:
+            index (int):    Index of tag.
+            verbose (bool):    True to get extensive output while reading the file.
 
-        returns:
-        - tag		        tag as dict
+        Returns:
+            (dict):    Tag as dict.
+            
         '''
 
         # check index, will raise Exceptions if not
@@ -415,16 +438,16 @@ class fileSER:
         
     
     def createDim(self, size, offset, delta, element):
-        '''Create dimension labels from SER information
+        '''Create dimension labels from SER information.
         
-        input:
-        - size          number of elements
-        - offset        value at indicated element
-        - delta         difference between elements
-        - element       indicates the element of value offset
+        Parameters:
+            size (int):    Number of elements.
+            offset (float):    Value at indicated element.
+            delta (float):    Difference between elements.
+            element (int):    Indicates the element of value offset.
         
-        return:
-        - dim           dimension labels as np.array
+        Returns:
+            (np.ndarray):    Dimension vector as array.
         
         '''
         
@@ -437,14 +460,16 @@ class fileSER:
         
         return dim
     
+    
     def parseEntryEMI(self, value):
-        '''Auxiliary function to parse string entry to int, float or np.string_.
+        '''Auxiliary function to parse string entry to int, float or np.string_().
         
-        input:
-        - value (string)        string containing an int, float or string
+        Parameters:
+            value (str):    String containing an int, float or string.
         
-        return:
-        - p                     int, float or string of value
+        Returns:
+            (int/float/str):    Value as int, float or string.
+            
         '''
         
         # try to parse as int
@@ -464,11 +489,11 @@ class fileSER:
     def readEMI(self, filename):
         '''Read the meta data from an EMI file.
         
-        input:
-        - filename (string)     name of the EMI file
+        Parameters:
+            filename (str):    Name of the EMI file.
         
-        return:
-        - emi           dict of metadata
+        Returns:
+            (dict):    Dict of metadata.
         '''
         
         # check for string
@@ -553,8 +578,8 @@ class fileSER:
         '''
         Write SER data to an EMD file.
         
-        input:
-        - filename (string)             name of the EMD file
+        Parameters:
+            filename (str):    Name of the EMD file.
         '''
         
         # create the EMD file and set version attributes
