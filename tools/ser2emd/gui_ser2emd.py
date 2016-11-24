@@ -5,7 +5,7 @@ GUI tool to convert SER file to EMD file.
 
 import sys
 import os
-from PySide import QtGui, QtCore
+from PyQt4 import QtGui, QtCore
 
 import ncempy.io.ser
 
