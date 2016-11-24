@@ -1,25 +1,22 @@
-========
-openNCEM
-========
+openNCEM Documentation
+======================
 
 A collection of packages and tools for electron microscopy data analysis supported by the National Center for Electron Microscopy facility of the Molecular Foundry.
 
-Read the documentation: https://openncem.readthedocs.io/en/latest/.
-
 Components
-==========
+----------
 
-The openNCEM collection comes with different components, described below.
+The openNCEM collection comes with different components. The general functionality is condensed in libraries/packages, distinguished by programming language or framework. Tools are provided, addressing particular problems or tasks, leveraging the functionality provided in the libraries/packages.
 
-**ncempy**
-    openNCEM's python package to provide various algorithms and routines to process or simulate images.
-    
+.. toctree::
+   :maxdepth: 1
 
-**tools**
-    The tools build leveraging the algorithms and routines provided in the libraries/packages. They are subordered by the different problems they address.
+    ncempy - openNCEM's python package<ncempy>
+    tools - wrapping the provided functionality into useful tools<tools>
+
 
 License
-=======
+-------
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
