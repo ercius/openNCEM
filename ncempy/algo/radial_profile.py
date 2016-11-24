@@ -1,5 +1,29 @@
 '''
 Module to calculate radial profiles.
+
+The **settings** dict used for the evaluation has the following entries:
+
+    * lmax_r (int):    Radius used for local maximum detection in [px].
+    * lmax_thresh (int):    Threshold for local maximum detection in [intensity].
+    * lmax_cinit (int, int):    Initial guess for center in [px].
+    * lmax_range (float, float):    r range to cinit used to filter local maxima [dims].
+    * ns (int, ...):    Distortion orders to correct.
+    * fit_rrange (float, float):    r range used to fit radial profile [dims].
+    * back_xs (float, ...):    Fixpoints for fitting background [dims].
+    * back_xswidth (float):    Range around fixpoints to take into account [dims].
+    * back_init (float):    Initial guess for subtracting background.
+    * fit_funcs (str, ...):    List of functions to model radial profile.
+    * fit_init (float, ...):    Initial guess for fitting.
+
+    optional (set to None to use defaults):
+    
+        * plt_imgminmax (float, float):    Relative range to plot the img.
+        * rad_rmax (float):    Max r to be used in radial profile [dims].
+        * rad_dr (float): Stepsize for r-axis in radial profile [dims].
+        * rad_sigma (float): Sigma for Gaussian used as kernel density estimator [dims].
+        * mask (np.ndarray): Binary image as img, 0 for pixels to exclude.
+        * fit_maxfev (int): Maxfev forwarded to scipy optimize.
+
 '''
 
 import copy
@@ -12,20 +36,20 @@ import ncempy.algo.math
 import ncempy.algo.distortion
 
 def calc_polarcoords ( center, dims, ns=None, dists=None ):
-    '''
-    Calculate the polar coordinates for an image of given shape.
+    '''Calculate the polar coordinates for an image of given shape.
     
     Center is assumed to be in real coordinates (if not just fake the dims).
     Distortions are corrected if ns and corresponding dists are given.
     
-    input:
-    - center
-    - dims
-    - ns
-    - dists
+    Parameters:
+        center (np.ndarray/tuple):    Center of polar coordinate system.
+        dims (tuple):    Tuple of dimensions.
+        ns (tuple):    List of distortion orders to correct for.
+        dists (np.ndarray):    Parameters for distortions.
     
-    return:
-    - rs, thes
+    Returns:
+        (tuple):    Polarcoordinates (r, theta) of polar coordinate system as two np.ndarrays with same dimensions as original image.
+        
     '''
     
     # check input
@@ -64,15 +88,18 @@ def calc_polarcoords ( center, dims, ns=None, dists=None ):
     
       
 def correct_distortion( img, dims, center, ns, dists ):
-    '''
-    Give corrected version of img with respect to distortions.
+    '''Give corrected version of img with respect to distortions.
     
-    input:
-    - img       2D np.ndarray holding image
-    - dims      dimensions
-    - center    center to be used
-    - ns        list of distortion orders
-    - dists     distortion parameters
+    Parameters:
+        img (np.ndarray):    Image (2D).
+        dims (tuple):    Dimensions tuple.
+        center (np.ndarray/tuple):    Center to be used.
+        ns (tuple):    List of distortion orders.
+        dists (np.ndarray):    Distortion parameters.
+        
+    Returns:
+        (np.ndarray):   Corrected image.
+        
     '''
     
     # check input
@@ -111,21 +138,21 @@ def correct_distortion( img, dims, center, ns, dists ):
         
     
 def calc_radialprofile( img, rs, rMax, dr, rsigma, mask=None):
-    '''
-    Calculate the radial profile using Gaussian density estimator.
+    '''Calculate the radial profile using Gaussian kernel density estimator.
     
     It is suggested to use an rMax such that all directions are still in the image, otherwise outer areas will contribute differently and lead to different signal-to-noise. A value of dr corresponding to 1/10 px and rsigma corresponding to 1 px are good parameters.
     
-    input:
-    - img       image to take radial profile of intensity from
-    - rs        array containing the radial distance, same shape as img
-    - rMax      maximum radial distance used for the radial profile
-    - dr        stepsize for r-axis of radial distance
-    - rsigma    sigma for Gaussian used as kernel density estimator
-    - mask      binary image, 0 for pixels to exclude
+    Parameters:
+        img (np.ndarray):    Image to take radial profile of intensity from.
+        rs (np.ndarray):    Array containing the radial distance, same shape as img.
+        rMax (float):      Maximum radial distance used for the radial profile.
+        dr (float):    Stepsize for r-axis of radial distance.
+        rsigma (float):    Sigma for Gaussian used as kernel density estimator.
+        mask (np.ndarray):    Mask image, values at 0 are excluded from radial profile.
     
-    return:
-    - r, intens
+    Returns:
+        (tuple):    Tuple of radial and intensity axes.
+        
     '''
     
     # check input
@@ -177,16 +204,17 @@ def calc_radialprofile( img, rs, rMax, dr, rsigma, mask=None):
     
     
 def plot_radialprofile( r, intens, dims, show=False ):
-    '''
-    Plot radial profile.
+    '''Plot radial profile.
     
-    input:
-    - r             r-axis of radial profile
-    - intens        intensity-axis of radial profile
-    - dims          dimensions of original image to read out units
+    Parameters:
+        r (np.ndarray):    r-axis of radial profile.
+        intens (np.ndarray):    Intensity-axis of radial profile.
+        dims (tuple):    Dimensions of original image to read out units.
+        show (bool):    Set to directly show plot interactively.
     
-    return:
-    - plot          plot rendered to np.ndarray
+    Returns:
+        (np.ndarray):    Image of the plot.
+        
     '''
     
     try:
@@ -223,35 +251,38 @@ def plot_radialprofile( r, intens, dims, show=False ):
 
 
 def residuals_fit( param, r, intens, funcs ):
-    '''
-    Residual function to fit radial profile with flexibility.
+    '''Residual function to fit radial profile with flexibility.
     
     The arguments for the single functions are automatically cut from the fit parameters.
     
-    input:
-    - param         fit parameters
-    - r             r-axis
-    - intens        intensity-axis
-    - funcs         list of functions to include
+    Parameters:
+        param (np.ndarray):    Fit parameters.
+        r (np.ndarray):    r-axis.
+        intens (np.ndarray):    Intensity-axis.
+        funcs (tuple):    List of functions to include.
         
-    return:
-    - residuals
+    Returns:
+        (np.ndarray):    Residuals.
+        
     '''
 
     return intens - ncempy.algo.math.sum_functions(r, funcs, param)
     
     
 def fit_radialprofile( r, intens, funcs, init_guess, maxfev=None ):
-    '''
-    Fit the radial profile.
+    '''Fit the radial profile.
     
     Convenience wrapper for fitting.
     
-    input:
-    - r             r-axis of radial profile
-    - intens        intensity-axis of radial profile
-    - funcs         list of functions
-    - init_guess    initial guess for parameters of functions in funcs
+    Parameters:
+        r (np.ndarray):    r-axis of radial profile.
+        intens (np.ndarray):    Intensity-axis of radial profile.
+        funcs (tuple):    List of functions.
+        init_guess (np.ndarray):    Initial guess for parameters of functions in funcs.
+        
+    Returns:
+        (np.ndarray):    Optimized parameters.
+        
     '''    
     
     try:
@@ -283,18 +314,19 @@ def fit_radialprofile( r, intens, funcs, init_guess, maxfev=None ):
 
 
 def plot_fit( r, intens, dims, funcs, param, show=False ):
-    '''
-    Plot the fit results to the radial profile.
+    '''Plot the fit results to the radial profile.
     
-    input:
-    - r             r-axis of radial profile
-    - intens        intensity-axis of radial profile
-    - dims          dimensions of original image to read out units
-    - funcs         list of functions
-    - param         parameters for functions in funcs
+    Parameters:
+        r (np.ndarray):    r-axis of radial profile.
+        intens (np.ndarray):    Intensity-axis of radial profile.
+        dims (tuple):    Dimensions of original image to read out units.
+        funcs (tuple):    List of functions.
+        param (np.ndarray):    Parameters for functions in funcs.
+        show (bool):    Set to directly show plot interactively.
     
-    return:
-    - plot          plot rendered to np.ndarray
+    Returns:
+        (np.ndarray):    Image of the plot.
+        
     '''
     
     try:
@@ -349,35 +381,17 @@ def plot_fit( r, intens, dims, funcs, param, show=False ):
     
     
 def run_singleImage( img, dims, settings, show=False ):
-    '''
-    Evaluate a single ring diffraction pattern with given settings.
+    '''Evaluate a single ring diffraction pattern with given settings.
     
-    input:
-    - img           image as np.ndarray
-    - dims          corresponding dim vectors
-    - settings      dict of settings necessary for the evaluation
-        - lmax_r        (int)               radius used for local maximum detection                 [px]
-        - lmax_thresh   (int)               threshold for local maximum detection                   [intensity]
-        - lmax_cinit    (int, int)          initial guess for center                                [px]
-        - lmax_range    (float, float)      r range to cinit used to filter local maxima            [dims]
-        - ns            (int, ...)          distortion orders to correct                            []
-        - fit_rrange    (float, float)      r range used to fit radial profile                      [dims]
-        - back_xs       (float, ...)        fixpoints for subtracting background                    [dims]
-        - back_xswidth  (float)             range around fixpoints to take into account             [dims]
-        - back_init     (float)             initial guess for subtracting background
-        - fit_funcs     (str, ...)          list of functions to model radial profile               []
-        - fit_init      (float, ...)        initial guess for fitting                               []
+    Parameters:
+        img (np.ndarray):    Image.
+        dims (tuple):    Corresponding dim vectors.
+        settings (dict):    Dict of settings necessary for the evaluation.
+        show (bool):    Set to directly show plots interactively.
 
-        optional (set to None to use defaults)
-        - plt_imgminmax (float, float)      relative range to plot the img                          []
-        - rad_rmax      (float)             max r to be used in radial profile                      [dims]
-        - rad_dr        (float)             stepsize for r-axis in radial profile                   [dims]
-        - rad_sigma     (float)             sigma for Gaussian used as kernel density estimator     [dims]
-        - mask          (np.ndarray)        binary image as img, 0 for pixels to exclude            []
-        - fit_maxfev    (int)               maxfev forwarded to scipy optimize                      []
+    Returns:
+        (np.ndarray):    Optimized parameters of fitting the radial profile according to the settings.
         
-    return:
-    - res
     '''
     
     try:

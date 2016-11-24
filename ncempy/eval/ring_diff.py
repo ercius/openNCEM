@@ -15,7 +15,10 @@ import h5py
 
 # used to indicate settings format
 cur_set_vers = 'ring_diffraction_setting_vers0.1'
+'''(str):    Used to identify settings hdf5 groups.'''
+
 cur_eva_vers = 'ring_diffraction_evaluation_vers0.1'
+'''(str):    Used to identify evaluation hdf5 groups.'''
 
 dummie_settings = { 'lmax_r': 1,
                     'lmax_thresh': 1,
@@ -35,6 +38,7 @@ dummie_settings = { 'lmax_r': 1,
                     'fit_init': (1.0, 1.0, 1.0, 1.0),
                     'fit_maxfev':10
                   }
+'''(dict):    Dummy settings with all parameters set.'''
 
 min_dummie_settings = { 'lmax_r': 1,
                         'lmax_thresh': 1,
@@ -54,16 +58,18 @@ min_dummie_settings = { 'lmax_r': 1,
                         'fit_init': (1.0, 1.0, 1.0, 1.0),
                         'fit_maxfev': None
                     }
+'''(dict):    Dummy settings with all parameters set but all optional ones as Nones.'''
+
 
 def get_settings( parent ):
-    '''
-    Get settings for radial profile evaluation.
+    '''Get settings for radial profile evaluation.
     
-    input:
-    - parent     input group
+    Parameters:
+        parent (h5py._hl.group.Group):    Input group.
     
-    return:
-    - settings   settings read from parent
+    Returns:
+        (dict):    Settings read from parent.
+        
     '''
     
     try:
@@ -136,17 +142,17 @@ def get_settings( parent ):
 
 
 def put_settings( parent, settings ):
-    '''
-    Put settings for radial profile evaluation.
+    '''Put settings for radial profile evaluation.
     
     Creates a subgroup in parent holding the settings as attributes.
     
-    input:
-    - parent        group to hold settings subgroup
-    - setting       dict of settings to write
+    Parameters:
+        parent (h5py._hl.group.Group):    Group to hold settings subgroup.
+        setting (dict):    Settings to write.
     
-    return:
-    - grp_set       handle to settings group
+    Returns:
+        (h5py._hl.group.Group):    Handle to settings group.
+        
     '''
  
     try:
@@ -199,18 +205,18 @@ def put_settings( parent, settings ):
 
 
 def put_sglgroup(parent, label, data_grp):
-    '''
-    Puts the todo evaluation into parent.
+    '''Puts the todo evaluation into parent.
     
     Remember that the ressource of the external link must not be already opened elsewhere to access data.
     
-    input:
-    - parent        hdf5 group to add this evaluation group to
-    - label         label for the evaluation group    
-    - data_grp      emdtype group where to find the data
+    Parameters:
+        parent (h5py._hl.group.Group):    Hdf5 group to add this evaluation group to.
+        label (str):    Label for the evaluation group.
+        data_grp (h5py._hl.group.Group):    Emdtype group where to find the data.
     
-    return:
-    - grp           handle to group
+    Returns:
+        (h5py._hl.group.Group):    Handle to group.
+        
     '''
     
     try:
@@ -234,12 +240,15 @@ def put_sglgroup(parent, label, data_grp):
     
 
 def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False):
-    '''
-    Run evaluation on a single group.
+    '''Run evaluation on a single group.
     
-    input:
-    - group         handle to evaluation group to execute
-    - outfile       emdfile for output
+    Parameters:
+        group (h5py._hl.group.Group):    Handle to evaluation group to execute.
+        outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
+        overwrite (bool):    Set to overwrite existing results in outfile.
+        verbose (bool):    Set to get verbose output during run.
+        showplots (bool):    Set to directly show plots interactively.
+        
     '''
 
     try:
@@ -336,7 +345,6 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
     else:
         raise RuntimeError('Cannot handle that data.')
 
-    
     # save a log comment
     outfile.put_comment('Evaluated "{}" using ring diffraction analysis.'.format(group.name))
     
@@ -347,9 +355,13 @@ def run_all(parent, outfile, overwrite=False, verbose=False, showplots=False):
     
     All evaluations within parent are run.
     
-    input:
-    - parent        handle to parent group
-    - outfile       emdfile to save evaluations
+    Parameters:
+        parent (h5py._hl.group.Group):    Handle to parent.
+        outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
+        overwrite (bool):    Set to overwrite existing results in outfile.
+        verbose (bool):    Set to get verbose output during run.
+        showplots (bool):    Set to directly show plots interactively.
+        
     '''
     
     # get all groups with evaluations to do
