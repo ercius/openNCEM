@@ -112,17 +112,17 @@ class Converter(QtGui.QWidget):
             
     def clicked_serButton(self):
         self.msg.setText('Ready')
-        fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open SER file', filter='SER files (*.ser);;All files (*.*)')
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open SER file', filter='SER files (*.ser);;All files (*.*)')
         self.ser_txt.setText(fname)
         
     def clicked_emiButton(self):
         self.msg.setText('Ready')
-        fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open EMI file', filter='EMI files (*.emi);;All files (*.*)')    
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open EMI file', filter='EMI files (*.emi);;All files (*.*)')    
         self.emi_txt.setText(fname)
     
     def clicked_emdButton(self):
         self.msg.setText('Ready')
-        fname, _ = QtGui.QFileDialog.getSaveFileName(self, 'Save EMD file')
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save EMD file')
         self.emd_txt.setText(fname)
         
     def convert(self):

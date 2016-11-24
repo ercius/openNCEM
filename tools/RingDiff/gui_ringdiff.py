@@ -164,7 +164,7 @@ class Main(QtGui.QMainWindow):
         layout_files.addLayout(hbox_infile)
         
         self.gui_file['idx_lbl'] = QtGui.QLabel('index: ', frame_files)
-        self.gui_file['idx_slider'] = QtGui.QSlider(QtCore.Qt.Orientation.Horizontal, frame_files)
+        self.gui_file['idx_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_files)
         self.gui_file['idx_slider'].setMinimum(0)
         self.gui_file['idx_slider'].setMaximum(0)
         self.gui_file['idx_slider'].valueChanged.connect(self.on_indexSlider)
@@ -217,7 +217,7 @@ class Main(QtGui.QMainWindow):
         layout_localmax.addWidget(self.gui_localmax['lmax_btn'])
         
         self.gui_localmax['min_lbl'] = QtGui.QLabel('min: ', frame_localmax)
-        self.gui_localmax['min_slider'] = QtGui.QSlider(QtCore.Qt.Orientation.Horizontal, frame_localmax)
+        self.gui_localmax['min_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_localmax)
         self.gui_localmax['min_slider'].setMinimum(0)
         self.gui_localmax['min_slider'].setMaximum(0)
         self.gui_localmax['min_slider'].valueChanged.connect(self.on_intensitySlider)
@@ -229,7 +229,7 @@ class Main(QtGui.QMainWindow):
         layout_localmax.addLayout(hbox_lmax_min)
         
         self.gui_localmax['max_lbl'] = QtGui.QLabel('max: ', frame_localmax)
-        self.gui_localmax['max_slider'] = QtGui.QSlider(QtCore.Qt.Orientation.Horizontal, frame_localmax)
+        self.gui_localmax['max_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_localmax)
         self.gui_localmax['max_slider'].setMinimum(0)
         self.gui_localmax['max_slider'].setMaximum(0)
         self.gui_localmax['max_slider'].valueChanged.connect(self.on_intensitySlider)
@@ -522,7 +522,7 @@ class Main(QtGui.QMainWindow):
         '''
         Open an EMD file with input images.
         '''
-        fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
         try:
             self.femd_in = ncempy.io.emd.fileEMD(fname, readonly=True)
             
@@ -582,7 +582,7 @@ class Main(QtGui.QMainWindow):
     
     def on_reopen(self):
     
-        fname, _ = QtGui.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtGui.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
         
         try:
             femd = ncempy.io.emd.fileEMD(fname, readonly=True)
@@ -702,7 +702,7 @@ class Main(QtGui.QMainWindow):
         '''
         Open or create an EMD file to hold the evaluation.
         '''
-        fname, _ = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
         
         try:
             self.log('Saving evaluation to file "{}".'.format(fname))
@@ -1455,7 +1455,7 @@ class Main(QtGui.QMainWindow):
     
     def on_saveCorrPattern(self):
     
-        fname, _ = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
         
         try:
             self.log('Saving corrected diffraction pattern to file "{}".'.format(fname))

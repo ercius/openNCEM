@@ -670,6 +670,6 @@ class fileSER:
                 f.microscope.attrs[key] = self.emi[key]
                 
         # write comment into Comment group
-        f.put_comment('Converted SER file "{}" to EMD using the emt library.'.format(self.file_hdl.name))
+        f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self.file_hdl.name))
         
             
