@@ -10,6 +10,7 @@ Requirements
 ------------
 
 The GUI tools come with additional requirements:
+
 * PySide (for GUI)
 * pygtgraph (for plotting in GUI)
 
