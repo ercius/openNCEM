@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'ncempy'
+project = 'openNCEM'
 copyright = '2016, F. Niekiel, P. Ercius, C. Ophus, T. Pekin'
 author = 'F. Niekiel, P. Ercius, C. Ophus, T. Pekin'
 
