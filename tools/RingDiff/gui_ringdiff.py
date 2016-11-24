@@ -9,7 +9,7 @@ import os
 import copy
 import h5py
 
-import ncempy.fio.emd
+import ncempy.io.emd
 import ncempy.algo.local_max
 import ncempy.algo.distortion
 import ncempy.algo.radial_profile
@@ -524,7 +524,7 @@ class Main(QtGui.QMainWindow):
         '''
         fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
         try:
-            self.femd_in = ncempy.fio.emd.fileEMD(fname, readonly=True)
+            self.femd_in = ncempy.io.emd.fileEMD(fname, readonly=True)
             
             self.gui_file['in_txt'].setText(fname)
             
@@ -585,7 +585,7 @@ class Main(QtGui.QMainWindow):
         fname, _ = QtGui.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
         
         try:
-            femd = ncempy.fio.emd.fileEMD(fname, readonly=True)
+            femd = ncempy.io.emd.fileEMD(fname, readonly=True)
             
             self.log('Reopening evaluation file "{}" ..'.format(fname))
             
@@ -607,7 +607,7 @@ class Main(QtGui.QMainWindow):
             grp_eva = todo[0]
             self.log('.. found evaluation group at "{}".'.format(grp_eva.name))
             
-            self.femd_in = ncempy.fio.emd.fileEMD(grp_eva.attrs['filename'].decode('utf-8'), readonly=True)
+            self.femd_in = ncempy.io.emd.fileEMD(grp_eva.attrs['filename'].decode('utf-8'), readonly=True)
             self.gui_file['in_txt'].setText(grp_eva.attrs['filename'].decode('utf-8'))
             
             # get and save data
@@ -710,7 +710,7 @@ class Main(QtGui.QMainWindow):
             # create/overwrite outfile
             if os.path.isfile(fname):
                 os.remove(fname)
-            femd = ncempy.fio.emd.fileEMD(fname)            
+            femd = ncempy.io.emd.fileEMD(fname)            
                 
             if 'evaluation' in femd.file_hdl:
                 grp_eva = femd.file_hdl['evaluation']
@@ -1463,7 +1463,7 @@ class Main(QtGui.QMainWindow):
             # create/overwrite outfile
             if os.path.isfile(fname):
                 os.remove(fname)
-            femd = ncempy.fio.emd.fileEMD(fname)            
+            femd = ncempy.io.emd.fileEMD(fname)            
                 
             grp = femd.file_hdl['data']
             

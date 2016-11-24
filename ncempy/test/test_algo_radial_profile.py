@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-import ncempy.fio.emd
+import ncempy.io.emd
 import ncempy.algo.local_max
 import ncempy.algo.distortion
 import ncempy.algo.math
@@ -28,7 +28,7 @@ class test_ringdiff(unittest.TestCase):
         show=True
         
         # get an image
-        femd = ncempy.fio.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
+        femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
         data, dims = femd.get_emdgroup(femd.list_emds[0])
         
         img = data[:,:,0]

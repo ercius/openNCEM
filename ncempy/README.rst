@@ -18,7 +18,7 @@ The package is given the following structure:
 * eval
     Evaluation routines build from the single algorithms in `algo`. These address specific tasks like evaluating the results from a particular method or experimental setup.
 
-* fio
+* io
     Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
 
 * test
