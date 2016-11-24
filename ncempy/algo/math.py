@@ -9,22 +9,49 @@ import scipy.special
 
 
 def const( x, param):
-    '''
-    Constant function.
+    '''Constant function.
+    
+    f = param[0] .
+    
+    Parameters:
+        x (np.ndarray):    Positions at which to evaluate function.
+        param (np.ndarray):    Necessary parameters.
+        
+    Returns:
+        (np.ndarray):    Values of function at x.
+        
     '''
     
     return param[0]*np.ones(x.shape)
 
 def linear( x, param):
-    '''
-    Linear function.
+    '''Linear function.
+    
+    f = param[0] * x + param[1] .
+    
+    Parameters:
+        x (np.ndarray):    Positions at which to evaluate function.
+        param (np.ndarray):    Necessary parameters.
+        
+    Returns:
+        (np.ndarray):    Values of function at x.
+        
     '''
     
     return param[0]*x + param[1]
 
 def powlaw( x, param):
-    '''
-    Power law.
+    '''Power law.
+    
+    f = param[0] * x^param[1] .
+    
+    Parameters:
+        x (np.ndarray):    Positions at which to evaluate function.
+        param (np.ndarray):    Necessary parameters.
+        
+    Returns:
+        (np.ndarray):    Values of function at x.
+        
     '''
     # A = param[0]
     # n = param[1]
@@ -35,6 +62,16 @@ def powlaw( x, param):
 def voigt( x, param):
     '''
     Voigt peak function.
+    
+    f = param[0]/(param[2] * sqrt(2*pi)) * Re( Faddeeva( ((x - param[1]) + i*param[3])/(param[2] * sqrt(2)) ) )
+    
+    Parameters:
+        x (np.ndarray):    Positions at which to evaluate function.
+        param (np.ndarray):    Necessary parameters.
+        
+    Returns:
+        (np.ndarray):    Values of function at x.
+        
     '''
     # A = param[0]
     # mu = param[1]
@@ -47,10 +84,14 @@ def sum_functions( x, funcs, param ):
     '''
     Sum functions in funcs over range x.
     
-    input:
-    - x             axis to evaluate functions on
-    - funcs         list of functions to include with entrys (function_handle, number_of_arguments)
-    - param         parameters for functions in funcs
+    Parameters:
+        x (np.ndarray):    Positions at which to evaluate the functions.
+        funcs (list):    List of strings identifying function implemented in ncempy.algo.math.
+        param (np.ndarray):    Concatenated parameters for functions in funcs.
+        
+    Returns:
+        (np.ndarray):   Values of sum of functions at x.
+        
     '''
     
     # estimator
@@ -71,3 +112,4 @@ lkp_funcs = { 'const': (const, 1),
               'powlaw': (powlaw, 2),
               'voigt': (voigt, 4)
             }
+'''(dict):    Look-up table for functions implemented in this module. Functions are identified by strings, the entries give handles to the functions as well as the number of arguments necessary.'''

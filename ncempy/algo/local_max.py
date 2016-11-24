@@ -1,5 +1,5 @@
 '''
-Find local maxima in an image.
+Module to find local maxima in an image.
 '''
 
 import numpy as np
@@ -9,18 +9,18 @@ import matplotlib.pyplot as plt
 
 
 def local_max(img, r, thresh):
-    '''
-    Find local maxima from comparing dilated and eroded images.
+    '''Find local maxima from comparing dilated and eroded images.
     
     Calculates images with maximum and minimum within given radius. If the difference is larger than the threshold, the original pixel position with max value is detected as local maximum.
     
-    input:
-    - img       input image (np.ndarray)
-    - r         radius (int)
-    - thresh    intensity difference threshold (int)
+    Parameters:
+        img (np.ndarray):    Input image.
+        r (int):    Radius for locality.
+        thresh (int/float):    Intensity difference threshold.
     
-    return:
-    - points    array of points
+    Returns:
+        (np.ndarray):    Array of points.
+        
     '''
     
     try:
@@ -54,16 +54,19 @@ def local_max(img, r, thresh):
         
     
 def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False):
-    '''
-    Plot the detected points on the input image for checking.
+    '''Plot the detected points on the input image for checking.
     
-    input:
-    - img       image
-    - points    array containing the points
-    - vminmax   tuple of two values for relative lower and upper cut off to display image
+    Parameters:
+        img (np.ndarray):    Image.
+        points (np.ndarray):    Array containing the points.
+        vminmax (tuple):    Tuple of two values for relative lower and upper cut off to display image.
+        dims (tuple):    Tuple of dims to plot in dimensions.
+        invert (bool):    Set to invert the image.
+        show (bool):    Set to directly show the plot interactively.
     
-    return:
-    plot        plot image as np.ndarray
+    Returns:
+        (np.ndarray):    Image of the plot.
+        
     '''
     
     try:
@@ -111,10 +114,17 @@ def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False)
     
     
 def points_todim(points, dims):
-    '''
-    Convert points from px coordinates to real dim.
+    '''Convert points from px coordinates to real dim.
     
     Points are expected to be array indices for the first two dimensions in dims.
+    
+    Parameters:
+        points (np.ndarray):    Points to convert.
+        dims (tuple):    Tuple of dimensions.
+        
+    Returns:
+        (np.ndarray):   Converted points.
+        
     '''
     
     try:
