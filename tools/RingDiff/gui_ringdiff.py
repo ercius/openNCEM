@@ -43,9 +43,11 @@ class MaskDialog(QtGui.QDialog):
         okbtn = QtGui.QPushButton('Use new mask', self)
         okbtn.clicked.connect(self.accept)
         okbtn.setDefault(True)
+        okbtn.setToolTip('Create mask to remove selected ROI from affecting the radial profile.')
         
         cclbtn = QtGui.QPushButton('Remove mask', self)
         cclbtn.clicked.connect(self.reject)
+        cclbtn.setToolTip('Cancel procedure and remove any mask present in the settings.')
 
         vbox = QtGui.QVBoxLayout(self)
         vbox.addWidget(self.imgview)
@@ -58,6 +60,8 @@ class MaskDialog(QtGui.QDialog):
         self.setGeometry(100,100,768,768+64)
         self.setWindowTitle('Create Mask')
         
+        self.setToolTip('This dialog allows to create a mask.\nUse the ROI to select the area, which should be removed from affecting the radial profile.')
+        
         self.show()
         
         
@@ -69,7 +73,7 @@ class MaskDialog(QtGui.QDialog):
         p = QtGui.QPainter(im)
         p.setPen(pg.functions.mkPen(None))
         p.setBrush(pg.functions.mkBrush('k'))
-        p.setTransform(self.roi.itncempyransform(self.imgview.getImageItem())[0])
+        p.setTransform(self.roi.itemTransform(self.imgview.getImageItem())[0])
         p.drawPath(self.roi.shape())
         p.end()
         
@@ -129,7 +133,7 @@ class Main(QtGui.QMainWindow):
     
     def initUI(self):
     
-        self.statusBar().showMessage('Welcome')
+        self.statusBar().showMessage('')
         
         self.mnwid = QtGui.QWidget()
         
@@ -493,6 +497,55 @@ class Main(QtGui.QMainWindow):
         
         self.setGeometry(100,100,1500,1100)
         self.setWindowTitle('Evaluation of Ring Diffraction Patterns')
+        
+        
+        ## tooltips
+        self.gui_file['re_btn'].setToolTip('Reopen an EMD evaluation file to conveniently load all the settings or resume previous work.\nNote that you have to rerun the evaluation, as no results are loaded, even if they are present in the EMD file.')
+        self.gui_file['in_txt'].setToolTip('Use the Open button to load a file.')
+        self.gui_file['in_btn'].setToolTip('Open an EMD file with diffraction patterns.\nOnly the first EMD group is read in. Dataset can be a single diffraction patterns or a series.')
+        self.gui_file['idx_slider'].setToolTip('Control the index of the diffraction patterns to work on, if a series is loaded.\nEach diffraction patterns in the series has its own set of results, the settings are shared between all.')
+        
+        self.gui_localmax['txt_lmax_r'].setToolTip('Radius to use for local maxima determination.\nA local maxmimum will suppress all other local maxima within this radius.\nShould be a single integer.')
+        self.gui_localmax['txt_lmax_thresh'].setToolTip('Threshold for local maxima determination.\nA local maximum is considered a local maximum, if its value at least this threshold above the minimum value found in the area described by the local radius.\nShould be a single value in intensity units.')
+        self.gui_localmax['txt_lmax_cinit'].setToolTip('Initial guess for the center of the diffraction pattern.\nShould be two comma separated values in the displayed coordinate system.')
+        self.gui_localmax['btn_lmax_cinit'].setToolTip('Select the initial guess for the center of the diffraction pattern from the image plot.\nMove the green crosshair to the center position and left-click.')
+        self.gui_localmax['txt_lmax_range'].setToolTip('Filter the local maxima to only select those within a certain radial range to the initially guessed center.\nShould be two comma separated values in displayed coordinate system units.\nIf not provided, no filtering will take place.')
+        self.gui_localmax['lmax_btn'].setToolTip('Run the local maxima detection.\nUpon completion, these are drawn as red circles in the image plot.\nThe goal is to find and select only points on a single ring, which will be used to determine the polar coordinate system of the diffraction patterns.')
+        self.gui_localmax['min_slider'].setToolTip('Black level used to plot the image.')
+        self.gui_localmax['max_slider'].setToolTip('White level used to plot the image.')
+        
+        self.gui_polar['cencpy_btn'].setToolTip('Copy initial center guess from above to use for polar plot.')
+        self.gui_polar['cenopt_btn'].setToolTip('Optimize the current center to minimize the deviation from the mean radial distance of the found positions on one ring.')
+        self.gui_polar['dist_txt'].setToolTip('Distortion orders to correct for.\nShould be a comma separated list of integers.')
+        self.gui_polar['dists_btn'].setToolTip('Fit the distortions and plot the results to the polar plot.\nThe goal is to minimize the radial deviations.')
+        
+        self.gui_radprof['rad_txt'].setToolTip('Parameters for extracting the radial profile:\nr_max is the maximum radial distance considered\ndr is the stepsize on the radial axis\nsigma the width of the Gaussian kernel density estimatior applied\nShould be a comma separated list of three values. Can be left blank to use default values.')
+        self.gui_radprof['crct_check'].setToolTip('Toogles whether the distortions fitted above are corrected during extraction of radial profile or not.')
+        self.gui_radprof['mask_btn'].setToolTip('Launches a dialog to mask the input image. This allows to select areas, not to be used during extraction of the radial profile.')
+        self.gui_radprof['ext_btn'].setToolTip('Extract the radial profile and plot it in the radial profile tab.')
+        self.gui_radprof['fitxs_txt'].setToolTip('r values of supporting points in the radial profile, which will be used to fit a power law background.\nShould be a comma separated list of values.')
+        self.gui_radprof['fitxs_btn'].setToolTip('Conveniently select the r values for supporting points in the radial profile plot.\nMove the green crosshair and left-click to select a point.\nPress the select button again to stop the selection process.')
+        self.gui_radprof['fitxsw_txt'].setToolTip('Range in which points in the radial profile around the supporting points are considered for fitting the background.')
+        self.gui_radprof['back_init_txt'].setToolTip('Initial parameters for fitting the power law background (offset + amplitude*r^exponent).\nShould be a list of three comma separated values.\nGood values usually are 1, 1000, -1.')
+        self.gui_radprof['fitback_btn'].setToolTip('Fit power law background to the supporting points selected on the radial profile.')
+        self.gui_radprof['back_check'].setToolTip('Check to subtract the fitted background.\nMake sure first, that the fitted background fits nicely to the radial profile.\nThis can be judged from the plot, when subtract background is not checked.')
+        self.gui_radprof['fit_tbl'].setToolTip('List of peak functions fitted to the radial profile.\nFirst column is the name of the fit function, second column contains comma separated lists of values used as initial guess for the parameters.\nUse the option to plot the initial guess to get the initial parameters right.\nFor now just use \'voigt\' functions, which require lists of four comma separated values as initial parameters.')
+        self.gui_radprof['fit_add_btn'].setToolTip('Add a row to the list of fit functions.')
+        self.gui_radprof['fit_del_btn'].setToolTip('Delete the selected row(s) of the list of fit functions.')
+        self.gui_radprof['fit_range_txt'].setToolTip('Range of the radial profile used during fit.\nGenerally used to cut of lower and upper end of the radial profile.\nShould be a list of two comma separated values.')
+        self.gui_radprof['fit_btn'].setToolTip('Fit the radial profile with the given peak functions.')
+        self.gui_radprof['fit_check'].setToolTip('Show the fitted functions in the radial profile plot.')
+        self.gui_radprof['init_check'].setToolTip('Show the functions with initial parameters in the radial profile plot.')
+        
+        self.gui_run['run_btn'].setToolTip('Run the evaluation on the currently selected image.\nEquivalent to subsequently hitting the single buttons in order.')
+        self.gui_run['all_btn'].setToolTip('Run the evaluation on all images in the series.\nEquivalent to hitting \'Run Current\' for each index in the series.')
+        self.gui_run['out_btn'].setToolTip('Save the settings and the results in an EMD file.')
+        self.gui_run['savedist_btn'].setToolTip('Save the diffraction pattern corrected for the fitted distortions in an EMD file.')
+        
+        
+        self.plt_localmax.setToolTip('Image plot used to find local maxima.\nThe diffraction pattern is plotted according to the intensity sliders on the left.\nThe detected and optionally filtered local maxima are plotted as red circles.')
+        self.plt_polar.setToolTip('Plot of the selected points on a ring in polar coordinates.\nThis plot is used to optimize the center and fit the distortions.\nRed crosses are points before correction, green after correction.')
+        self.plt_radprof.setToolTip('Plot of the radial profile (red line).\nIf subtract background is not checked, the fitted power law is plotted as blue line with black crosses marking the supporting points used for the fit.\nOtherwise the fit functions are either plotted using the fitted parameters or the initial guess.')
         
         self.show()
         
@@ -1094,7 +1147,7 @@ class Main(QtGui.QMainWindow):
             I = np.copy(self.radprof[self.idx][:,1])
             
             # cut to fitrange
-            if (not len(self.settings['fit_rrange']) == 0) and (self.gui_radprof['fit_check'].isChecked() or self.gui_radprof['init_check'].isChecked()):
+            if (not len(self.settings['fit_rrange']) == 0) and (self.gui_radprof['back_check'].isChecked()):
                 sel = (R>=self.settings['fit_rrange'][0])*(R<=self.settings['fit_rrange'][1])
                 I = I[sel]
                 R = R[sel]
