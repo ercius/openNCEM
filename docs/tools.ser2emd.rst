@@ -13,6 +13,9 @@ GUI Tool
 
 To run the GUI execute ``python3 gui_ser2emd.py``
 
+.. image:: https://cloud.githubusercontent.com/assets/23124266/20652214/d09b7f1e-b4a9-11e6-854c-3ebc27202001.png
+    :scale: 30 %
+
 Requirements
 ^^^^^^^^^^^^
 
