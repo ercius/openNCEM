@@ -138,8 +138,6 @@ class test_ser(unittest.TestCase):
             os.remove('ncempy/test/resources/output/CBED_mapping_edx.emd')
         fser.writeEMD('ncempy/test/resources/output/CBED_mapping_edx.emd')
         
-        import pdb; pdb.set_trace()
-        
         
         # large time series of 2D images
         fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off_1.ser','ncempy/test/resources/Au_SAED_D910mm_100x_at_RT/step_off.emi', verbose=True)
