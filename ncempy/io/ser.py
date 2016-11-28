@@ -35,7 +35,7 @@ class fileSER:
     dictSeriesVersion = {0x0210 : '< TIA 4.7.3', 0x0220 : '>= TIA 4.7.3'}
     '''(dict):    Information on fileformat version.'''
     
-    dictDataTypeID = {0x4120:'1D spectra', 0x4122:'2D images'}
+    dictDataTypeID = {0x4120:'1D datasets', 0x4122:'2D images'}
     '''(dict):    Information on data type.'''
     
     dictTagTypeID = {0x4152:'time only',0x4142:'time and 2D position'}
@@ -134,8 +134,8 @@ class fileSER:
         data = np.fromfile(self.file_hdl, dtype='<i4', count=4)
 
         # DataTypeID
-        if not data[0] == 0x4122:
-            raise RuntimeError('Only 2D images implemented so far')
+        if not data[0] in self.dictDataTypeID:
+            raise RuntimeError('Unknown DataTypeID: "{:#06x}"'.format(data[0]))
         head['DataTypeID'] = data[0]
         if verbose:
             print('DataTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictDataTypeID[data[0]]))
@@ -352,30 +352,33 @@ class fileSER:
             raise RuntimeError('Unknown DataType: "{}"'.format(data[0]))
         if verbose:
             print('DataType:\t{},\t{}'.format(data[0],self.dictDataType[data[0]]))
+                
+        if self.head['DataTypeID'] == 0x4120:
+            # 1D data element
         
-        data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+            data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+            # ArrayLength
+            data = data.tolist()
+            meta['ArrayShape'] = data
+            if verbose:
+                print('ArrayShape:\t{}'.format(data))
+                
+            dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0])
         
-        # ArrayShape
-        data = data.tolist()
-        meta['ArrayShape'] = data
-        if verbose:
-            print('ArrayShape:\t{}'.format(data))
-        
-        ## ArraySizeX
-        #meta['ArraySizeX'] = data[0]
-        #if verbose:
-        #    print('ArraySizeX:\t{}'.format(data[0]))
-        
-        ## ArraySizeY
-        #meta['ArraySizeY'] = data[1]
-        #if verbose:
-        #    print('ArraySizeY:\t{}'.format(data[1]))
+        elif self.head['DataTypeID'] == 0x4122:
+            # 2D data element
             
-        # dataset
-        dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0]*meta['ArrayShape'][1])
-        dataset = dataset.reshape(meta['ArrayShape'])
+            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+            # ArrayShape
+            data = data.tolist()
+            meta['ArrayShape'] = data
+            if verbose:
+                print('ArrayShape:\t{}'.format(data))
+
+            # dataset
+            dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0]*meta['ArrayShape'][1])
+            dataset = dataset.reshape(meta['ArrayShape'])
         
-        if self.head['DataTypeID'] == 0x4122:
             dataset = np.flipud(dataset)
 
         return dataset, meta
@@ -454,9 +457,18 @@ class fileSER:
         #dim = np.zeros(size)
         #dim[:] = np.nan
         
+        # if element is out off range, map it back into defined
+        if element >= size:
+            element = size-1
+            offset = offset - (element-(size-1))*delta
+        
         dim = np.array(range(size)).astype('f8')
         dim = dim*delta
         dim += (offset - dim[element])
+        
+        # some weird shifting, positionx is +0.5, positiony is -0.5
+        # doing this during saving
+        # dim += 0.5*delta
         
         return dim
     
@@ -529,7 +541,7 @@ class fileSER:
             
         # strip of binary stuff still around
         data = data.decode('ascii', errors='ignore')
-        matchObj = re.search('<ObjectInfo>(.+)</ObjectInfo', data)
+        matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
         try:
             data = matchObj.group(1)
         except:
@@ -591,83 +603,225 @@ class fileSER:
         
         # use first dataset to layout memory
         data, first_meta = self.getDataset(0)
+        first_tag = self.getTag(0)
         
         if self.head['DataTypeID'] == 0x4122:
-            dset_buf = np.zeros( (first_meta['ArrayShape'][0], first_meta['ArrayShape'][1], self.head['ValidNumberElements']), dtype=self.dictDataType[first_meta['DataType']] )
-        else:
-            raise RuntimeError('Only 2D datasets implemented yet!')
-       
-        # arrays to collect interesting meta data while looping images
-        time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
-        if self.head['TagTypeID'] == 0x4142:
-            positionx = np.zeros(self.head['ValidNumberElements'], dtype='f8')
-            positionx[:] = np.nan
-            positiony = np.zeros(self.head['ValidNumberElements'], dtype='f8')
-            positiony[:] = np.nan
+            # 2D datasets
             
-        
-        # loop over datasets in ser file to retrieve them        
-        ### if series size is to large, this will lead to heavy swapping   
-        for i in range(self.head['ValidNumberElements']):
-            print('converting dataset {} of {}'.format(i+1, self.head['ValidNumberElements']))
-            
-            # retrieve dataset and put into buffer
-            data, meta = self.getDataset(i)
-            dset_buf[:,:,i] = data[:,:].transpose()
-            
-            # get tag data per image
-            tag = self.getTag(i)
-            time[i] = tag['Time']
-            if tag['TagTypeID'] == 0x4142:
-                positionx[i] = tag['PositionX']
-                positiony[i] = tag['PositionY']
-        
-        # create dimension datasets
-        dims = []
-        
-        if self.head['DataTypeID'] == 0x4122:
-            # 2d datasets
-            dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
-            dims.append( (dim, 'x', '[m]') )
+                if first_tag['TagTypeID'] == 0x4142:
+                    # 2D mapping
+                    
+                    dset_buf = np.zeros( ( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize'], first_meta['ArrayShape'][0], first_meta['ArrayShape'][1]), dtype=self.dictDataType[first_meta['DataType']] )
+                    
+                    time = np.zeros( (self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize']), dtype='i4')
 
-            dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
-            dims.append( (dim, 'y', '[m]') )
-        else:
-            raise RuntimeError('Only 2D datasets implemented so far!')
-            
-        # first SER dimension is number
-        i = 0
-        assert self.head['Dimensions'][i]['Description'] == 'Number'
-        dim = self.createDim(self.head['Dimensions'][i]['DimensionSize'], self.head['Dimensions'][i]['CalibrationOffset'], self.head['Dimensions'][i]['CalibrationDelta'], self.head['Dimensions'][i]['CalibrationElement'])
-        dims.append( (dim, self.head['Dimensions'][i]['Description'], '[{}]'.format(self.head['Dimensions'][i]['Units'])) )
-            
-        # for mappings there are additional spacial dimensions
-        # need to convert series to 4D beforehand    
+                    # create mapping dims for checking
+                    map_xdim = self.createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
+                    map_ydim = self.createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
+                    # weird direction dependend half pixel shifting
+                    map_xdim += 0.5*self.head['Dimensions'][0]['CalibrationDelta']
+                    map_ydim -= 0.5*self.head['Dimensions'][1]['CalibrationDelta']
+
+                    for y in range(self.head['Dimensions'][0]['DimensionSize']):
+                        for x in range(self.head['Dimensions'][1]['DimensionSize']):
+
+                            index = int(x+y*self.head['Dimensions'][0]['DimensionSize'])
+                            print('converting dataset {} of {}, items ({}, {})'.format(index+1, self.head['ValidNumberElements'], x, y))
+                   
+                            # retrieve dataset and put into buffer     
+                            data, meta = self.getDataset( index )
+                            dset_buf[x, y, :,:] = np.copy(data[:,:]).transpose()
+                            
+                            # get tag data per image
+                            tag = self.getTag(index)
+                            time[x,y] = tag['Time']
+
+                    
+                            assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
+                            assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
+                    
+                            del data, meta, tag
+                    
+                    
+                    # create dimension datasets
+                    dims = []
+                    dims_time = []
+                    
+                    # Position X
+                    assert self.head['Dimensions'][0]['Description'] == 'Position'
+                    dims.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                    dims_time.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                    
+                    # Position Y
+                    assert self.head['Dimensions'][1]['Description'] == 'Position'
+                    dims.append( (map_ydim, self.head['Dimensions'][1]['Description'], '[{}]'.format(self.head['Dimensions'][1]['Units'])) )
+                    dims_time.append( (map_ydim, self.head['Dimensions'][1]['Description'], '[{}]'.format(self.head['Dimensions'][1]['Units'])) )
+                        
+                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dims.append( (dim, 'x', '[m]') )
+
+                    dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                    dims.append( (dim, 'y', '[m]') )
+                        
+                    # dataset to file
+                    grp = f.put_emdgroup(os.path.basename(self.file_hdl.name), dset_buf, dims)
+ 
+                    # write out time as additional dataset
+                    grp = f.put_emdgroup('timestamp', time, dims_time, parent=grp)
+                    
+                    
+                else:
+                    # simple series
         
-        # dataset to file
-        grp = f.put_emdgroup(os.path.basename(self.file_hdl.name), dset_buf, dims)
+                    dset_buf = np.zeros( (first_meta['ArrayShape'][0], first_meta['ArrayShape'][1], self.head['ValidNumberElements']), dtype=self.dictDataType[first_meta['DataType']] )
+        
+                    # collect time
+                    time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
+        
+                    for i in range(self.head['ValidNumberElements']):
+                        print('converting dataset {} of {}'.format(i+1, self.head['ValidNumberElements']))
+            
+                        # retrieve dataset and put into buffer
+                        data, meta = self.getDataset(i)
+                        dset_buf[:,:,i] = data[:,:].transpose()
+            
+                        # get tag data per image
+                        tag = self.getTag(i)
+                        time[i] = tag['Time']
+                        
+                    # create dimension datasets
+                    dims = []
+                        
+                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dims.append( (dim, 'x', '[m]') )
+
+                    dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                    dims.append( (dim, 'y', '[m]') )
+                            
+                    # first SER dimension is number
+                    i = 0
+                    assert self.head['Dimensions'][i]['Description'] == 'Number'
+                        
+                    dim = self.createDim(self.head['Dimensions'][i]['DimensionSize'], self.head['Dimensions'][i]['CalibrationOffset'], self.head['Dimensions'][i]['CalibrationDelta'], self.head['Dimensions'][i]['CalibrationElement'])
+                    dims.append( (dim, self.head['Dimensions'][i]['Description'], '[{}]'.format(self.head['Dimensions'][i]['Units'])) )
+                        
+                    # dataset to file
+                    grp = f.put_emdgroup(os.path.basename(self.file_hdl.name), dset_buf, dims)
+ 
+                    # write out time as additional dim vector
+                    f.write_dim('dim3_time', (time, 'timestamp', '[s]'), grp)
+        
+        
+        elif self.head['DataTypeID'] == 0x4120:
+            # 1D datasets
+            
+            if first_tag['TagTypeID'] == 0x4142:
+                    # 2D mapping
+                    
+                    dset_buf = np.zeros( ( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize'], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
+                    
+                    time = np.zeros( (self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize']), dtype='i4')
+
+                    # create mapping dims for checking
+                    map_xdim = self.createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
+                    map_ydim = self.createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
+                    # weird direction dependend half pixel shifting
+                    map_xdim += 0.5*self.head['Dimensions'][0]['CalibrationDelta']
+                    map_ydim -= 0.5*self.head['Dimensions'][1]['CalibrationDelta']
+
+                    for y in range(self.head['Dimensions'][0]['DimensionSize']):
+                        for x in range(self.head['Dimensions'][1]['DimensionSize']):
+
+                            index = int(x+y*self.head['Dimensions'][0]['DimensionSize'])
+                            print('converting dataset {} of {}, items ({}, {})'.format(index+1, self.head['ValidNumberElements'], x, y))
+                   
+                            # retrieve dataset and put into buffer     
+                            data, meta = self.getDataset( index )
+                            dset_buf[x, y, :] = np.copy(data[:])
+                            
+                            # get tag data per image
+                            tag = self.getTag(index)
+                            time[x,y] = tag['Time']
+
+                            assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
+                            assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
+                    
+                            del data, meta, tag
+                    
+                    # create dimension datasets
+                    dims = []
+                    dims_time = []
+                    
+                    # Position X
+                    assert self.head['Dimensions'][0]['Description'] == 'Position'
+                    dims.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                    dims_time.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                    
+                    # Position Y
+                    assert self.head['Dimensions'][1]['Description'] == 'Position'
+                    dims.append( (map_ydim, self.head['Dimensions'][1]['Description'], '[{}]'.format(self.head['Dimensions'][1]['Units'])) )
+                    dims_time.append( (map_ydim, self.head['Dimensions'][1]['Description'], '[{}]'.format(self.head['Dimensions'][1]['Units'])) )
+                        
+                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dims.append( (dim, 'E', '[m_eV]') )
+                        
+                    # dataset to file
+                    grp = f.put_emdgroup(os.path.basename(self.file_hdl.name), dset_buf, dims)
+ 
+                    # write out time as additional dataset
+                    grp = f.put_emdgroup('timestamp', time, dims_time, parent=grp)
+                    
+            else:
+                    # simple series
+                    
+                    dset_buf = np.zeros( (first_meta['ArrayShape'][0], self.head['ValidNumberElements']), dtype=self.dictDataType[first_meta['DataType']])
+                    
+                    # collect time
+                    time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
+                    
+                    for i in range(self.head['ValidNumberElements']):
+                        print('converting dataset {} of {}'.format(i+1, self.head['ValidNumberElements']))
+            
+                        # retrieve dataset and put into buffer
+                        data, meta = self.getDataset(i)
+                        dset_buf[:,i] = data[:]
+            
+                        # get tag data per image
+                        tag = self.getTag(i)
+                        time[i] = tag['Time']
+                        
+                    # create dimension datasets
+                    dims = []
+                        
+                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dims.append( (dim, 'E', '[m_eV]') )
+                            
+                    # first SER dimension is number
+                    i = 0
+                    assert self.head['Dimensions'][i]['Description'] == 'Number'
+                        
+                    dim = self.createDim(self.head['Dimensions'][i]['DimensionSize'], self.head['Dimensions'][i]['CalibrationOffset'], self.head['Dimensions'][i]['CalibrationDelta'], self.head['Dimensions'][i]['CalibrationElement'])
+                    dims.append( (dim, self.head['Dimensions'][i]['Description'], '[{}]'.format(self.head['Dimensions'][i]['Units'])) )
+                        
+                    # dataset to file
+                    grp = f.put_emdgroup(os.path.basename(self.file_hdl.name), dset_buf, dims)
+ 
+                    # write out time as additional dim vector
+                    f.write_dim('dim2_time', (time, 'timestamp', '[s]'), grp)    
+                    
+        else:
+            raise RuntimeError('Unknown DataTypeID')    
+            
 
         # attempt to free memory asap
         del dset_buf, dims
         
-        # hardcoded dim3_ in here, need to adapt later
-        # and add additional dimension datasets
-        f.write_dim('dim3_time', (time, 'timestamp', '[s]'), grp)
-          
-        #if self.head['TagTypeID'] == 0x4142:
-        #    dim_hdl = grp.create_dataset('dim3_positionx', data=positionx)
-        #    dim_hdl.attrs['name']=np.string_('Position X')
-        #    dim_hdl.attrs['units']=np.string_('[m]')
-        # 
-        #    dim_hdl = grp.create_dataset('dim3_positiony', data=positiony)
-        #    dim_hdl.attrs['name']=np.string_('Position Y')
-        #    dim_hdl.attrs['units']=np.string_('[m]')
-            
         
         # put meta information from EMI to Microscope group, if available
         if self.emi:
             for key in self.emi:
-                f.microscope.attrs[key] = self.emi[key]
+                if not self.emi[key] is None:
+                    f.microscope.attrs[key] = self.emi[key]
                 
         # write comment into Comment group
         f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self.file_hdl.name))
