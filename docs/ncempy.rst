@@ -32,7 +32,11 @@ It relies on the following packages:
 Installation
 ------------
 
-For now we support pip installing the ``ncempy`` package from the gitHub repository:
+The ``ncempy`` package is available on PyPI and can be installed using pip:
+
+``pip install ncempy``
+
+If you dare, you can also install the latest development version from github:
 
 ``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy'``
 
