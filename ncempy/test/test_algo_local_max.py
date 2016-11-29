@@ -28,8 +28,8 @@ class test_localmax(unittest.TestCase):
         femd = ncempy.io.emd.fileEMD('ncempy/test/resources/Pt_SAED_D910mm_single/Pt_SAED_D910mm_single.emd')
         data, dims = femd.get_emdgroup(femd.list_emds[0])
         
-        img = data[:,:,0]
-        dims = dims[0:2]
+        img = data[0,:,:]
+        dims = dims[1:3]
         
         
         ## local_max
