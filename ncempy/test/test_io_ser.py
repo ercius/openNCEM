@@ -124,7 +124,7 @@ class test_ser(unittest.TestCase):
             os.remove('ncempy/test/resources/output/Au_SAED_D910mm_20x_at_800.emd')
         fser.writeEMD('ncempy/test/resources/output/Au_SAED_D910mm_20x_at_800.emd')
         
-        ## breaks memory
+        ## exceeds memory
         # mapping of 2D images
         #fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_2.ser')#, 'ncempy/test/resources/CBED_mapping/map01.emi')
         #if os.path.isfile('ncempy/test/resources/output/CBED_mapping_images.emd'):
