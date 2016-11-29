@@ -70,36 +70,42 @@ class fileEMD:
                     print('WARNING: You are reading a version {}.{} EMD file, this implementation assumes version 0.2!'.format(self.version[0], self.version[1]))
             else:
                 # set version information
-                self.file_hdl.attrs['version_major'] = 0
-                self.file_hdl.attrs['version_minor'] = 2
+                if not readonly:
+                    self.file_hdl.attrs['version_major'] = 0
+                    self.file_hdl.attrs['version_minor'] = 2
                 
             # check for data group
             if not 'data' in self.file_hdl:
-                self.data = self.file_hdl.create_group('data')
+                if not readonly:
+                    self.data = self.file_hdl.create_group('data')
             else:
                 self.data = self.file_hdl['data']
                 
             # check for data group
             if not 'microscope' in self.file_hdl:
-                self.microscope = self.file_hdl.create_group('microscope')
+                if not readonly:
+                    self.microscope = self.file_hdl.create_group('microscope')
             else:
                 self.microscope = self.file_hdl['microscope']
                 
             # check for data group
             if not 'sample' in self.file_hdl:
-                self.sample = self.file_hdl.create_group('sample')
+                if not readonly:
+                    self.sample = self.file_hdl.create_group('sample')
             else:
                 self.sample = self.file_hdl['sample']
                 
             # check for data group
             if not 'user' in self.file_hdl:
-                self.user = self.file_hdl.create_group('user')
+                if not readonly:
+                    self.user = self.file_hdl.create_group('user')
             else:
                 self.user = self.file_hdl['user']
                 
             # check for data group
             if not 'comments' in self.file_hdl:
-                self.comments = self.file_hdl.create_group('comments')
+                if not readonly:
+                    self.comments = self.file_hdl.create_group('comments')
             else:
                 self.comments = self.file_hdl['comments']
                 
