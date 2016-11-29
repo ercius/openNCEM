@@ -51,7 +51,7 @@ class Converter(QtGui.QWidget):
         emi_sep = QtGui.QFrame()
         emi_sep.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
         
-        emd_lbl = QtGui.QLabel('output SER file:', self) 
+        emd_lbl = QtGui.QLabel('output EMD file:', self) 
         
         self.emd_txt = QtGui.QLineEdit(self)
         self.emd_txt.setReadOnly(True)

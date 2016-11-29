@@ -302,17 +302,17 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
     
     # run evaluation with settings
     if len(data.shape) == 3:
-        for i in range(data.shape[2]):
-            profile, res, center, dists, rawprofile, res_back, myset = ncempy.algo.radial_profile.run_singleImage( data[:,:,i], dims[0:2], settings,  show=showplots)
+        for i in range(data.shape[0]):
+            profile, res, center, dists, rawprofile, res_back, myset = ncempy.algo.radial_profile.run_singleImage( data[i,:,:], dims[1:3], settings,  show=showplots)
     
             # after first run I know the size
             if profiles is None:
-                profiles = np.zeros( (profile.shape[0], data.shape[2]) )
-                fits = np.zeros( (res.shape[0], data.shape[2]) )
-                centers = np.zeros( (2, data.shape[2]) )
-                distss = np.zeros( (dists.shape[0], data.shape[2]) )
-                rawprofiles = np.zeros( (rawprofile.shape[0], data.shape[2]) )
-                fits_back = np.zeros( (res_back.shape[0], data.shape[2]) )
+                profiles = np.zeros( (profile.shape[0], data.shape[0]) )
+                fits = np.zeros( (res.shape[0], data.shape[0]) )
+                centers = np.zeros( (2, data.shape[0]) )
+                distss = np.zeros( (dists.shape[0], data.shape[0]) )
+                rawprofiles = np.zeros( (rawprofile.shape[0], data.shape[0]) )
+                fits_back = np.zeros( (res_back.shape[0], data.shape[0]) )
                 
             # assign data    
             profiles[:,i] = profile[:,1]
@@ -323,12 +323,12 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
             fits_back[:,i] = res_back[:]
 
         # save results in this group
-        outfile.put_emdgroup('radial_profile', profiles, ( (profile[:,0], 'radial distance', dims[0][2]) , dims[2]), parent=group, overwrite=overwrite)
-        outfile.put_emdgroup('fit_results', fits, ( ( np.array(range(fits.shape[0])), 'parameters', '[]') , dims[2]), parent=group, overwrite=overwrite)
-        outfile.put_emdgroup('centers', centers, ( ( np.array(range(2)), 'dimension', dims[0][2]) , dims[2]), parent=group, overwrite=overwrite)    
-        outfile.put_emdgroup('distortions', distss, ( ( np.array(range(distss.shape[0])), 'parameters', '[]') , dims[2]), parent=group, overwrite=overwrite)
-        outfile.put_emdgroup('radial_profile_noback', rawprofiles, ( (rawprofile[:,0], 'radial distance', dims[0][2]) , dims[2]), parent=group, overwrite=overwrite)
-        outfile.put_emdgroup('back_results', fits_back, ( ( np.array(range(fits_back.shape[0])), 'background parameters', '[]') , dims[2]), parent=group, overwrite=overwrite)
+        outfile.put_emdgroup('radial_profile', profiles, ( (profile[:,0], 'radial distance', dims[2][2]) , dims[0]), parent=group, overwrite=overwrite)
+        outfile.put_emdgroup('fit_results', fits, ( ( np.array(range(fits.shape[0])), 'parameters', '[]') , dims[0]), parent=group, overwrite=overwrite)
+        outfile.put_emdgroup('centers', centers, ( ( np.array(range(2)), 'dimension', dims[2][2]) , dims[0]), parent=group, overwrite=overwrite)    
+        outfile.put_emdgroup('distortions', distss, ( ( np.array(range(distss.shape[0])), 'parameters', '[]') , dims[0]), parent=group, overwrite=overwrite)
+        outfile.put_emdgroup('radial_profile_noback', rawprofiles, ( (rawprofile[:,0], 'radial distance', dims[2][2]) , dims[0]), parent=group, overwrite=overwrite)
+        outfile.put_emdgroup('back_results', fits_back, ( ( np.array(range(fits_back.shape[0])), 'background parameters', '[]') , dims[0]), parent=group, overwrite=overwrite)
     
 
     elif len(data.shape) == 2:
