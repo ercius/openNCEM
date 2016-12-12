@@ -60,9 +60,9 @@ class test_shiftedimages(unittest.TestCase):
         with self.assertRaises(TypeError):
             mc.multicorr(np.zeros([2,3]), np.zeros([3,2]), 'phase', 1).parse_input()
 
-    def test_multicorr_math_initial_correlation(self):
+    def test_multicorr_math_initial_correlation_image(self):
         '''
-        Test to check if the initial correlation is working. 
+        Test to check if the initial correlation is working.
         '''
         g2 = np.zeros((3,3))
         test = mc.multicorr(g2, g2)
@@ -75,19 +75,22 @@ class test_shiftedimages(unittest.TestCase):
         out = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'phase', 1)
         out.multicorr()
 
-        np.testing.assert_almost_equal(np.exp(1j * np.angle((np.multiply(np.fft.fft2(G2), np.conj(np.fft.fft2(G1)))))), out.imageCorr, decimal=4)
+        np.testing.assert_almost_equal(np.exp(1j * np.angle((np.multiply(np.fft.fft2(G1), np.conj(np.fft.fft2(G2)))))), out.imageCorr, decimal=4)
 
         np.testing.assert_almost_equal(np.real(np.fft.ifft2(out.imageCorr)), out.imageCorrIFT, decimal=4)
 
         # plt.imshow(out.imageCorrIFT)
         # plt.show(block = True)
-        self.assertEqual(out.xyShift, (30,0))
+        self.assertEqual(out.xyShift, [-30.0, 0.0])
 
         # test cross correlation
         out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 1)
         out_cross.multicorr()
 
-        np.testing.assert_almost_equal(np.multiply(np.fft.fft2(G2), np.conj(np.fft.fft2(G1))), out_cross.imageCorr, decimal=4)
+        np.testing.assert_almost_equal(np.multiply(np.fft.fft2(G1), np.conj(np.fft.fft2(G2))), out_cross.imageCorr, decimal=4)
+
+        plt.imshow(np.subtract(G1, np.real(np.fft.ifft2(out.G2shift))))
+        plt.show(block = True)
 
 
 

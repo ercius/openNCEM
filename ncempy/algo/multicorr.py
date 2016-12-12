@@ -60,9 +60,9 @@ class multicorr(object):
         if self.G1.shape != self.G2.shape:
             raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(str(self.G1.shape), str(self.G2.shape)))
 
-    def initial_correlation(self):
+    def initial_correlation_image(self):
         '''Generate correlation image at initial resolution'''
-        G12 = np.multiply(self.G2, np.conj(self.G1)) # is this the correct order that we want? 
+        G12 = np.multiply(self.G1, np.conj(self.G2)) # is this the correct order that we want?
         if self.method == 'phase':
             imageCorr = np.exp(1j * np.angle(G12))
         elif self.method == 'cross':
@@ -75,10 +75,31 @@ class multicorr(object):
 
     def upsampled_correlation(self):
         self.imageCorrIFT = np.real(np.fft.ifft2(self.imageCorr))
-        self.xyShift = np.unravel_index(self.imageCorrIFT.argmax(), self.imageCorrIFT.shape, 'C')
+        self.xyShift = list(np.unravel_index(self.imageCorrIFT.argmax(), self.imageCorrIFT.shape, 'C'))
+
+        if self.upsampleFactor == 1:
+            imageSize = self.imageCorrIFT.shape
+            self.xyShift[0] = ((self.xyShift[0] + imageSize[0]/2) % imageSize[0]) - imageSize[0]/2
+            self.xyShift[1] = ((self.xyShift[1] + imageSize[1]/2) % imageSize[1]) - imageSize[1]/2
+            # print(self.xyShift)
+            self.G2shift = np.fft.fft2(np.roll(np.roll(np.fft.ifft2(self.G2), int(self.xyShift[0]), 0), int(self.xyShift[1]), 1))
+        else:
+            self.imageCorrLarge = upsampleFFT(self.imageCorr, 2)
+
+
+    def upsampleFFT(imageInit, upsampleFactor):
+        '''This does a fourier upsample of the imageInit. imageInit is the fourier transform of the correlation image.'''
+        imageSize = imageInit.shape
+        imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize)))
+        imageUpsample[:imageSize[0], :imageSize[1]] = imageInit
+        imageUpsample = np.roll(np.roll(imageUpsample, int(imageSize[0]/2), 0), int(imageSize[1]/2),1)
+        imageUpsampleReal = np.real(np.fft.ifft2(imageUpsample))
+        
+        return imageUpsampleReal
+
 
     def multicorr(self):
         self.parse_input()
-        self.initial_correlation()
+        self.initial_correlation_image()
         self.upsampled_correlation()
         # return self.xyShift, self.G2shift, self.imageCorrIFT
