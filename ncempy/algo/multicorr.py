@@ -84,17 +84,21 @@ class multicorr(object):
             # print(self.xyShift)
             self.G2shift = np.fft.fft2(np.roll(np.roll(np.fft.ifft2(self.G2), int(self.xyShift[0]), 0), int(self.xyShift[1]), 1))
         else:
-            self.imageCorrLarge = upsampleFFT(self.imageCorr, 2)
+            self.imageCorrLarge = self.upsampleFFT(self.imageCorr, 2)
+            imageSizeLarge = self.imageCorrLarge.shape
+            xySubShift2 = list(np.unravel_index(self.imageCorrLarge.argmax(), imageSizeLarge, 'C'))
+            xySubShift2[0] = ((xySubShift2[0] + imageSizeLarge[0]/2) % imageSizeLarge[0]) - imageSizeLarge[0]/2
+            xySubShift2[1] = ((xySubShift2[1] + imageSizeLarge[1]/2) % imageSizeLarge[1]) - imageSizeLarge[1]/2
+            self.xyShift = [i/2 for i in xySubShift2]
 
-
-    def upsampleFFT(imageInit, upsampleFactor):
-        '''This does a fourier upsample of the imageInit. imageInit is the fourier transform of the correlation image.'''
+    def upsampleFFT(self, imageInit, upsampleFactor):
+        '''This does a fourier upsample of the imageInit. imageInit is the fourier transform of the correlation image. upsampleFactor is self-descriptive. The function returns the real space correlation image that has been fourier upsampled by 2.'''
         imageSize = imageInit.shape
-        imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize)))
+        imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize))) + 0j
         imageUpsample[:imageSize[0], :imageSize[1]] = imageInit
         imageUpsample = np.roll(np.roll(imageUpsample, int(imageSize[0]/2), 0), int(imageSize[1]/2),1)
         imageUpsampleReal = np.real(np.fft.ifft2(imageUpsample))
-        
+
         return imageUpsampleReal
 
 

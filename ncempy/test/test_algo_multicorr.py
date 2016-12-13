@@ -72,7 +72,7 @@ class test_shiftedimages(unittest.TestCase):
         filename_shifted = '/Users/Tom/Downloads/matt_beard_shifted.jpg'
         G1 = cv2.imread(filename, 0)
         G2 = cv2.imread(filename_shifted, 0)
-        out = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'phase', 1)
+        out = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'phase', 2)
         out.multicorr()
 
         np.testing.assert_almost_equal(np.exp(1j * np.angle((np.multiply(np.fft.fft2(G1), np.conj(np.fft.fft2(G2)))))), out.imageCorr, decimal=4)
@@ -89,8 +89,8 @@ class test_shiftedimages(unittest.TestCase):
 
         np.testing.assert_almost_equal(np.multiply(np.fft.fft2(G1), np.conj(np.fft.fft2(G2))), out_cross.imageCorr, decimal=4)
 
-        plt.imshow(np.subtract(G1, np.real(np.fft.ifft2(out.G2shift))))
-        plt.show(block = True)
+        # plt.imshow(np.subtract(G1, np.real(np.fft.ifft2(out.G2shift))))
+        # plt.show(block = True)
 
 
 
