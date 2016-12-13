@@ -90,6 +90,44 @@ class multicorr(object):
             xySubShift2[0] = ((xySubShift2[0] + imageSizeLarge[0]/2) % imageSizeLarge[0]) - imageSizeLarge[0]/2
             xySubShift2[1] = ((xySubShift2[1] + imageSizeLarge[1]/2) % imageSizeLarge[1]) - imageSizeLarge[1]/2
             self.xyShift = [i/2 for i in xySubShift2]
+            print(['self.xyShift'] + self.xyShift)
+
+            if self.upsampleFactor > 2:
+                # here is where we use DFT registration to make things much faster
+                # we cut out and upsample a peak 1.5 by 1.5 px from or ouriginal correlation image.
+
+                self.xyShift[0] = np.round(self.xyShift[0] * self.upsampleFactor) / self.upsampleFactor
+                self.xyShift[1] = np.round(self.xyShift[1] * self.upsampleFactor) / self.upsampleFactor
+
+                globalShift = np.fix(np.ceil(self.upsampleFactor * 1.5)/2)# this line might have an off by one error based. The associated matlab comment is "this will be used to center the output array at dftshift + 1"
+                print('globalShift', globalShift)
+
+                self.imageCorrUpsample = np.conj(self.dftUpsample(np.conj(self.imageCorr), self.upsampleFactor, globalShift - np.multiply(self.xyShift, self.upsampleFactor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * self.upsampleFactor ** 2)
+
+                self.xySubShift = np.unravel_index(self.imageCorrUpsample.argmax(), self.imageCorrUpsample.shape, 'C')
+                print('self.xySubShift', self.xySubShift)
+
+                # add a subpixel shift via parabolic fitting
+                try:
+                    icc = np.real(imageCorrUpsample[self.xySubShift[0] - 1 : self.xySubShift[0] + 2, self.xySubShift[1] - 1 : self.xySubShift[1] + 2])
+                    dx = (icc[2,1] - icc[0,1]) / (4 * icc[1,1] - 2 * icc[2,1] - 2 * icc[0,1])
+                    dy = (icc[1,2] - icc[1,0]) / (4 * icc[1,1] - 2 * icc[1,2] - 2 * icc[1,0])
+                except:
+                    dx, dy = 0, 0 # this is the case when the peak is near the edge and one of the above values does not exist
+
+                self.xySubShift = self.xySubShift - globalShift;
+                self.xyShift = self.xyShift + (self.xySubShift + np.array([dx, dy])) / self.upsampleFactor
+
+    def imageShifter(self):
+        imageSize = self.imageCorrIFT.shape
+        qx = self.makeFourierCoords(imageSize[0], 1) # does this need to be a column vector
+        if imageSize[1] == imageSize[0]:
+            qy = qx
+        else:
+            qy = self.makeFourierCoords(imageSize[1], 1)
+
+        self.G2shift = np.multiply(G2, np.multiply( np.exp(-2j * np.pi * qx * xyShift[0]),  np.exp(-2j * np.pi * qy * xyShift[1])))
+
 
     def upsampleFFT(self, imageInit, upsampleFactor):
         '''This does a fourier upsample of the imageInit. imageInit is the fourier transform of the correlation image. upsampleFactor is self-descriptive. The function returns the real space correlation image that has been fourier upsampled by 2.'''
@@ -100,6 +138,38 @@ class multicorr(object):
         imageUpsampleReal = np.real(np.fft.ifft2(imageUpsample))
 
         return imageUpsampleReal
+
+    def makeFourierCoords(N, pSize):
+        if N % 2 == 0:
+            q = np.roll(np.arange(-N/2, N/2) / ((N-1) * pSize), -N/2, axis=1)
+        else:
+            q = np.roll(np.arange(-N/2 + 0.5, N/2 + 0.5) / ((N-1) * pSize), -N/2 + 0.5, axis=1)
+        return q
+
+    def dftUpsample(self, imageCorr, upsampleFactor, xyShift):
+        '''this code is adapted from dftups which is a subfunction available from dftregistration on the matlab file exchange. At some point I will credit the people who did that code. It has been hardcoded with a 1.5 pixel'''
+        imageSize = imageCorr.shape
+        pixelRadius = 1.5
+        numRow = np.ceil(pixelRadius * upsampleFactor)
+        numCol = numRow
+        # compute kernels and compute subpixel DFT by matrix multiplication. see here: http://www.sciencedirect.com/science/article/pii/S0045790612000778
+
+        colKern = np.exp(
+        (-1j * 2 * np.pi / (imageSize[1] * upsampleFactor))
+        * (np.fft.ifftshift( (np.arange(imageSize[1])) )
+        - np.floor(imageSize[1]/2))
+        * (np.arange(numCol) - xyShift[1])[:, np.newaxis]
+        ) # this is currently not a column, and it needs to be one for the matrix multiplication to work correctly. Something needs to be changed with the transpose portion, or the vector multiplication needs to be done differently.
+
+        rowKern = np.exp(
+        (-1j * 2 * np.pi / (imageSize[0] * upsampleFactor))
+        * (np.arange(numRow) - xyShift[0])
+        * (np.fft.ifftshift(np.arange(imageSize[0]))
+        - np.floor(imageSize[0]/2))[:, np.newaxis]
+        )
+        print(['rowkern, imagecorr, colkern'] + [rowKern.shape, imageCorr.shape, colKern.shape])
+        return np.real(np.dot(np.dot(rowKern.transpose(), imageCorr), colKern.transpose()))
+
 
 
     def multicorr(self):
