@@ -405,37 +405,48 @@ class fileSER:
         if verbose:
             print('Getting tag {} of {}.'.format(index, self.head['ValidNumberElements']))
             
-        # go to dataset in file
-        self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
+        try:
+            # bad tagoffsets occured pointing to the end of the file
+        
+            # go to dataset in file
+            self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
 
-        # read tag
-        tag = {}
-        
-        data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
-        
-        # TagTypeID
-        tag['TagTypeID'] = data[0]
-        if verbose:
-            print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
+            # read tag
+            tag = {}
             
-        # Time    
-        tag['Time'] = data[1]
-        if verbose:
-            print('Time:\t{}'.format(data[1]))
+            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
         
-        # check for position
-        if tag['TagTypeID'] == 0x4142:
-            data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
-            
-            # PositionX
-            tag['PositionX'] = data[0]
+            # TagTypeID
+            tag['TagTypeID'] = data[0]
             if verbose:
-                print('PositionX:\t{}'.format(data[0]))
-            
-            # PositionY
-            tag['PositionY'] = data[1]
+                print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
+                
+            # Time    
+            tag['Time'] = data[1]
             if verbose:
-                print('PositionY:\t{}'.format(data[1]))   
+                print('Time:\t{}'.format(data[1]))
+            
+            # check for position
+            if tag['TagTypeID'] == 0x4142:
+                data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+                
+                # PositionX
+                tag['PositionX'] = data[0]
+                if verbose:
+                    print('PositionX:\t{}'.format(data[0]))
+                
+                # PositionY
+                tag['PositionY'] = data[1]
+                if verbose:
+                    print('PositionY:\t{}'.format(data[1]))
+                    
+        except:
+            tag = []
+            tag['TagTypeID'] = 0
+            tag['Time'] = np.nan
+            tag['PositionX'] = np.nan
+            tag['PositionY'] = np.nan
+        
      
         return tag
         
