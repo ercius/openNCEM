@@ -674,44 +674,72 @@ class fileSER:
                     
                     
                 else:
-                    # simple series
-                    dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
-        
-                    # collect time
-                    time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
-        
-                    for i in range(self.head['ValidNumberElements']):
-                        print('converting dataset {} of {}'.format(i+1, self.head['ValidNumberElements']))
-            
-                        # retrieve dataset and put into buffer
-                        data, meta = self.getDataset(i)
-                        dset[i,:,:] = data[:,:]
-            
-                        # get tag data per image
-                        tag = self.getTag(i)
-                        time[i] = tag['Time']
-                        
-                    # create dimension datasets
-                    dims = []
-                        
-                    # first SER dimension is number
-                    assert self.head['Dimensions'][0]['Description'] == 'Number'
-                        
-                    dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
-                    dims.append( (dim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
-
-                    dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
-                    dims.append( (dim, 'y', '[m]') )
-                                                                      
-                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
-                    dims.append( (dim, 'x', '[m]') )
-
-                    # write dimensions
-                    for i in range(len(dims)):
-                        f.write_dim('dim{:d}'.format(i+1), dims[i], grp)
+                
+                    # 1 entry series to single image
+                    if self.head['ValidNumberElements'] == 1:
                     
-                    # write out time as additional dim vector
-                    f.write_dim('dim3_time', (time, 'timestamp', '[s]'), grp)
+                        # get image
+                        data, meta = self.getDataset(0)
+                        tag = self.getTag(0)
+                        
+                        # create dimensions
+                        dims = []
+                        
+                        dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                        dims.append( (dim, 'y', '[m]') )
+                                                                          
+                        dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                        dims.append( (dim, 'x', '[m]') )
+                        
+                        dset = grp.create_dataset( 'data', (first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']])
+                        
+                        dset[:,:] = data[:,:]
+                        
+                        for i in range(len(dims)):
+                            f.write_dim('dim{:d}'.format(i+1), dims[i], grp)
+                            
+                        dset.attrs['timestamp'] = tag['Time']
+                        
+                    else:
+                
+                        # simple series
+                        dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
+            
+                        # collect time
+                        time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
+            
+                        for i in range(self.head['ValidNumberElements']):
+                            print('converting dataset {} of {}'.format(i+1, self.head['ValidNumberElements']))
+                
+                            # retrieve dataset and put into buffer
+                            data, meta = self.getDataset(i)
+                            dset[i,:,:] = data[:,:]
+                
+                            # get tag data per image
+                            tag = self.getTag(i)
+                            time[i] = tag['Time']
+                            
+                        # create dimension datasets
+                        dims = []
+                            
+                        # first SER dimension is number
+                        assert self.head['Dimensions'][0]['Description'] == 'Number'
+                            
+                        dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
+                        dims.append( (dim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+
+                        dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                        dims.append( (dim, 'y', '[m]') )
+                                                                          
+                        dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                        dims.append( (dim, 'x', '[m]') )
+
+                        # write dimensions
+                        for i in range(len(dims)):
+                            f.write_dim('dim{:d}'.format(i+1), dims[i], grp)
+                        
+                        # write out time as additional dim vector
+                        f.write_dim('dim1_time', (time, 'timestamp', '[s]'), grp)
         
         
         elif self.head['DataTypeID'] == 0x4120:
@@ -807,7 +835,7 @@ class fileSER:
                         f.write_dim('dim{:d}'.format(i+1), dims[i], grp)
  
                     # write out time as additional dim vector
-                    f.write_dim('dim2_time', (time, 'timestamp', '[s]'), grp)    
+                    f.write_dim('dim1_time', (time, 'timestamp', '[s]'), grp)    
                     
         else:
             raise RuntimeError('Unknown DataTypeID')    

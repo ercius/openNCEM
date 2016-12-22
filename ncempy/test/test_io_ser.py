@@ -41,7 +41,7 @@ class test_ser(unittest.TestCase):
         fser = ncempy.io.ser.fileSER('ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01_1.ser','ncempy/test/resources/Au_SAED_D910mm_20x_at_800/pos01.emi', verbose=True)
         
         # mapping of 2D images
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_2.ser', verbose=True)
+        #fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_2.ser', verbose=True)
         
         # mapping of 1D datasets
         fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_1.ser', verbose=True)
