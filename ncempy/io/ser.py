@@ -646,8 +646,11 @@ class fileSER:
                             dset[y, x, :,:] = data[:,:]
                             
                             # get tag data per image
-                            tag = self.getTag(index)
-                            time[y,x] = tag['Time']
+                            try:
+                                tag = self.getTag(index)
+                                time[y,x] = tag['Time']
+                            except:
+                                time[y,x] = 0
 
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
                             assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
@@ -695,10 +698,13 @@ class fileSER:
                         # retrieve dataset and put into buffer
                         data, meta = self.getDataset(i)
                         dset[i,:,:] = data[:,:]
-            
+                        
                         # get tag data per image
-                        tag = self.getTag(i)
-                        time[i] = tag['Time']
+                        try:
+                            tag = self.getTag(i)
+                            time[i] = tag['Time']
+                        except:
+                            time[i] = 0
                         
                     # create dimension datasets
                     dims = []
@@ -750,9 +756,11 @@ class fileSER:
                             dset[y, x, :] = np.copy(data[:])
                             
                             # get tag data per image
-                            tag = self.getTag(index)
-                            time[y,x] = tag['Time']
-
+                            try:
+                                tag = self.getTag(index)
+                                time[y,x] = tag['Time']
+                            except:
+                                time[y,x] = 0
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
                             assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
                     
@@ -797,9 +805,11 @@ class fileSER:
                         dset[i,:] = data[:]
             
                         # get tag data per image
-                        tag = self.getTag(i)
-                        time[i] = tag['Time']
-                        
+                        try:
+                            tag = self.getTag(i)
+                            time[i] = tag['Time']
+                        except:
+                            time[i] = 0
                     # create dimension datasets
                     dims = []
 
