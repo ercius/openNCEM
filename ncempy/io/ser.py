@@ -404,15 +404,14 @@ class fileSER:
 
         if verbose:
             print('Getting tag {} of {}.'.format(index, self.head['ValidNumberElements']))
+        
+        tag = {}
             
         try:
             # bad tagoffsets occured pointing to the end of the file
         
             # go to dataset in file
             self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
-
-            # read tag
-            tag = {}
             
             data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
         
@@ -441,7 +440,6 @@ class fileSER:
                     print('PositionY:\t{}'.format(data[1]))
                     
         except:
-            tag = []
             tag['TagTypeID'] = 0
             tag['Time'] = np.nan
             tag['PositionX'] = np.nan
