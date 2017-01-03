@@ -417,31 +417,37 @@ class fileSER:
         
             # TagTypeID
             tag['TagTypeID'] = data[0]
-            if verbose:
-                print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
-                
-            # Time    
-            tag['Time'] = data[1]
-            if verbose:
-                print('Time:\t{}'.format(data[1]))
             
-            # check for position
-            if tag['TagTypeID'] == 0x4142:
-                data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
-                
-                # PositionX
-                tag['PositionX'] = data[0]
+            # only proceed if TagTypeID is the same like in the file header (bad TagOffsetArray issue)
+            if tag['TagTypeID'] == head['TagTypeID']:
                 if verbose:
-                    print('PositionX:\t{}'.format(data[0]))
-                
-                # PositionY
-                tag['PositionY'] = data[1]
+                    print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
+                    
+                # Time    
+                tag['Time'] = data[1]
                 if verbose:
-                    print('PositionY:\t{}'.format(data[1]))
+                    print('Time:\t{}'.format(data[1]))
+                
+                # check for position
+                if tag['TagTypeID'] == 0x4142:
+                    data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+                    
+                    # PositionX
+                    tag['PositionX'] = data[0]
+                    if verbose:
+                        print('PositionX:\t{}'.format(data[0]))
+                    
+                    # PositionY
+                    tag['PositionY'] = data[1]
+                    if verbose:
+                        print('PositionY:\t{}'.format(data[1]))
+            else:
+                # otherwise raise to get to default tag
+                raise
                     
         except:
             tag['TagTypeID'] = 0
-            tag['Time'] = np.nan
+            tag['Time'] = 0
             tag['PositionX'] = np.nan
             tag['PositionY'] = np.nan
         
@@ -646,11 +652,8 @@ class fileSER:
                             dset[y, x, :,:] = data[:,:]
                             
                             # get tag data per image
-                            try:
-                                tag = self.getTag(index)
-                                time[y,x] = tag['Time']
-                            except:
-                                time[y,x] = 0
+                            tag = self.getTag(index)
+                            time[y,x] = tag['Time']
 
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
                             assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
@@ -700,11 +703,8 @@ class fileSER:
                         dset[i,:,:] = data[:,:]
                         
                         # get tag data per image
-                        try:
-                            tag = self.getTag(i)
-                            time[i] = tag['Time']
-                        except:
-                            time[i] = 0
+                        tag = self.getTag(i)
+                        time[i] = tag['Time']
                         
                     # create dimension datasets
                     dims = []
@@ -756,11 +756,9 @@ class fileSER:
                             dset[y, x, :] = np.copy(data[:])
                             
                             # get tag data per image
-                            try:
-                                tag = self.getTag(index)
-                                time[y,x] = tag['Time']
-                            except:
-                                time[y,x] = 0
+                            tag = self.getTag(index)
+                            time[y,x] = tag['Time']
+                                
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
                             assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
                     
@@ -805,11 +803,9 @@ class fileSER:
                         dset[i,:] = data[:]
             
                         # get tag data per image
-                        try:
-                            tag = self.getTag(i)
-                            time[i] = tag['Time']
-                        except:
-                            time[i] = 0
+                        tag = self.getTag(i)
+                        time[i] = tag['Time']
+
                     # create dimension datasets
                     dims = []
 
