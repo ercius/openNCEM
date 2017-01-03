@@ -404,38 +404,53 @@ class fileSER:
 
         if verbose:
             print('Getting tag {} of {}.'.format(index, self.head['ValidNumberElements']))
-            
-        # go to dataset in file
-        self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
-
-        # read tag
+        
         tag = {}
-        
-        data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
-        
-        # TagTypeID
-        tag['TagTypeID'] = data[0]
-        if verbose:
-            print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
             
-        # Time    
-        tag['Time'] = data[1]
-        if verbose:
-            print('Time:\t{}'.format(data[1]))
+        try:
+            # bad tagoffsets occured pointing to the end of the file
         
-        # check for position
-        if tag['TagTypeID'] == 0x4142:
-            data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+            # go to dataset in file
+            self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
             
-            # PositionX
-            tag['PositionX'] = data[0]
-            if verbose:
-                print('PositionX:\t{}'.format(data[0]))
+            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+        
+            # TagTypeID
+            tag['TagTypeID'] = data[0]
             
-            # PositionY
-            tag['PositionY'] = data[1]
-            if verbose:
-                print('PositionY:\t{}'.format(data[1]))   
+            # only proceed if TagTypeID is the same like in the file header (bad TagOffsetArray issue)
+            if tag['TagTypeID'] == head['TagTypeID']:
+                if verbose:
+                    print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
+                    
+                # Time    
+                tag['Time'] = data[1]
+                if verbose:
+                    print('Time:\t{}'.format(data[1]))
+                
+                # check for position
+                if tag['TagTypeID'] == 0x4142:
+                    data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+                    
+                    # PositionX
+                    tag['PositionX'] = data[0]
+                    if verbose:
+                        print('PositionX:\t{}'.format(data[0]))
+                    
+                    # PositionY
+                    tag['PositionY'] = data[1]
+                    if verbose:
+                        print('PositionY:\t{}'.format(data[1]))
+            else:
+                # otherwise raise to get to default tag
+                raise
+                    
+        except:
+            tag['TagTypeID'] = 0
+            tag['Time'] = 0
+            tag['PositionX'] = np.nan
+            tag['PositionY'] = np.nan
+        
      
         return tag
         
@@ -726,7 +741,7 @@ class fileSER:
                         assert self.head['Dimensions'][0]['Description'] == 'Number'
                             
                         dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
-                        dims.append( (dim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                        dims.append( (dim[0:self.head['ValidNumberElements']], self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
 
                         dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
                         dims.append( (dim, 'y', '[m]') )
@@ -771,7 +786,7 @@ class fileSER:
                             # get tag data per image
                             tag = self.getTag(index)
                             time[y,x] = tag['Time']
-
+                                
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
                             assert( np.abs(tag['PositionY'] - map_ydim[y]) < np.abs(tag['PositionY']*1e-8) )
                     
@@ -818,14 +833,14 @@ class fileSER:
                         # get tag data per image
                         tag = self.getTag(i)
                         time[i] = tag['Time']
-                        
+
                     # create dimension datasets
                     dims = []
 
                     # first SER dimension is number
                     assert self.head['Dimensions'][0]['Description'] == 'Number'
                     dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
-                    dims.append( (dim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
+                    dims.append( (dim[0:self.head['ValidNumberElements']], self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                         
                     dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                     dims.append( (dim, 'E', '[m_eV]') )

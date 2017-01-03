@@ -44,7 +44,7 @@ class test_ser(unittest.TestCase):
         #fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_2.ser', verbose=True)
         
         # mapping of 1D datasets
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_1.ser', verbose=True)
+        #fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_1.ser', verbose=True)
         
         # single 1D dataset
         # time series of 1D datasets
@@ -100,6 +100,29 @@ class test_ser(unittest.TestCase):
         # try tag
         tag = fser.getTag(0, verbose=True)
         
+    
+    def test_badtagoffset(self):
+        '''
+        Bad TagOffsetArray found in some files.
+        '''
+        
+        fser = ncempy.io.ser.fileSER('ncempy/test/resources/ser_badtagoffset/01_Si110_5images_1.ser', 'ncempy/test/resources/ser_badtagoffset/01_Si110_5images.emi', verbose=True)
+        
+        for i in range(fser.head['ValidNumberElements']):
+            tag = fser.getTag(i)
+            
+            assert(tag['TagTypeID'] == 0)
+            assert(tag['Time'] == 0)
+            assert(np.isnan(tag['PositionX']))
+            assert(np.isnan(tag['PositionY']))
+        
+        if os.path.isfile('ncempy/test/resources/output/01_Si110_5images.emd'):
+            os.remove('ncempy/test/resources/output/01_Si110_5images.emd')
+        fser.writeEMD('ncempy/test/resources/output/01_Si110_5images.emd')
+        
+        #import pdb; pdb.set_trace()
+        
+        
         
     def test_write_emd(self):
         '''
@@ -133,10 +156,10 @@ class test_ser(unittest.TestCase):
      
         
         # mapping of 1D datasets
-        fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_1.ser', 'ncempy/test/resources/CBED_mapping/map01.emi')
-        if os.path.isfile('ncempy/test/resources/output/CBED_mapping_edx.emd'):
-            os.remove('ncempy/test/resources/output/CBED_mapping_edx.emd')
-        fser.writeEMD('ncempy/test/resources/output/CBED_mapping_edx.emd')
+        #fser = ncempy.io.ser.fileSER('ncempy/test/resources/CBED_mapping/map01_1.ser', 'ncempy/test/resources/CBED_mapping/map01.emi')
+        #if os.path.isfile('ncempy/test/resources/output/CBED_mapping_edx.emd'):
+        #    os.remove('ncempy/test/resources/output/CBED_mapping_edx.emd')
+        #fser.writeEMD('ncempy/test/resources/output/CBED_mapping_edx.emd')
         
         
         # large time series of 2D images
