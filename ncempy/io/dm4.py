@@ -1,10 +1,10 @@
 """
-A module to load data and meta data from DM3 files into python
+A module to load data and meta data from DM4 files into python
 
 """
 import numpy as np
 
-class fileDM3:
+class fileDM4:
     def __init__(self, filename, verbose = False):
         '''Init opening the file and reading in the header.
         '''
@@ -28,14 +28,15 @@ class fileDM3:
         except :
             raise
         
-        if not self.validDM3():
-            print('Not a valid DM3 file: "{}"'.format(filename))
+        if not self.validDM4():
+            print('Not a valid DM4 file: "{}"'.format(filename))
             raise IOError('Improperly formated file')
         
         #Lists that will contain information about binary data arrays
         self.xSize = []
         self.ySize = []
         self.zSize = []
+        self.zsize2 = []
         self.dataType = []
         self.dataSize = []
         self.dataOffset = []
@@ -75,21 +76,23 @@ class fileDM3:
             print('Closing output file')
             self.fidOut.close()
     
-    def validDM3(self):
-        '''Test whether a file is a valid DM3 file and written in Little Endian format
+    def validDM4(self):
+        '''Test whether a file is a valid DM4 file and written in Little Endian format
         '''
-        output = True #output will stay == 1 if the file is a true DM3 file
+        output = True #output will stay == 1 if the file is a true DM4 file
 
-        head = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=3)
+        head1 = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1) #file type == 4 for DM4
+        head2 = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1) #file size
+        head3 = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1) #endian type
         
-        if head[0] != 3:
-            print('File is not a dm3. DM file type number is {}'.format(dmType[0]))
+        if head1 != 4:
+            print('File is not a dm4. DM4 file type number is {}'.format(dmType[0]))
             output = False
         
         #Useful to test against current file size
-        self.fileSize = head[1]
+        self.fileSize = head2
             
-        if head[2] != 1:
+        if head3 != 1:
             print('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
         
