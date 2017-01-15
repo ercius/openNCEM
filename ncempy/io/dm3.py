@@ -4,7 +4,7 @@ A module to read DM3 files into python
 """
 import numpy as np
 
-class DM3:
+class fileDM3:
     def __init__(self, filename, verbose = False):
         '''Init opening the file and reading in the header.
         '''
