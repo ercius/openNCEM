@@ -104,7 +104,7 @@ class fileDM4:
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
         np.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
-        nTags = np.fromfile(self.fid,dtype='>u4',count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
+        nTags = np.fromfile(self.fid,dtype='>u8',count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
         
         #Iterate of the number of tag entries
         oldTotalTag = self.curGroupNameAtLevelX
@@ -143,23 +143,27 @@ class fileDM4:
         else:
             #This is a nested tag group
             self.curGroupNameAtLevelX += '.' + tagLabel #add to group names
+            
+            #An unknown part of the DM4 tags
+            temp1 = np.fromfile(self.fid,dtype='>u8',count=1)[0]
+            
             self.readTagGroup()
         self.curGroupNameAtLevelX = oldGroupName
     
     def readTagType(self):
+        #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
+        temp1 = np.fromfile(self.fid,dtype='>u8',count=1)[0]
+        
         delim = np.fromfile(self.fid,dtype='<i1',count=4)
         assert((delim == 37).all()) #delim has to be [37,37,37,37] which is %%%% in ASCII.
         if self.v:
             print('readTagType: should be %%%% = {}'.format(self.bin2str(delim)))
-        nInTag = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #nInTag: unnecessary redundant info
-
-        #readAnyData() #calling this separately is unnecessary
-     
-     #def readAnyData() #remove separate readAnyData
+        
+        nInTag = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #nInTag: unnecessary redundant info
         
         #Determine the type of the data in the tag
         #specifies data type: int8, uint16, float32, etc.
-        encodedType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #big endian
+        encodedType = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #big endian
         
         etSize = self.encodedTypeSize(encodedType)
         
@@ -228,8 +232,8 @@ class fileDM4:
     def readStructTypes(self):
         '''Analyze the types of data in a struct
         '''
-        structNameLength = np.fromfile(self.fid,count=1,dtype='>u4')[0] #this is not needed
-        nFields = np.fromfile(self.fid,count=1,dtype='>u4')[0]
+        structNameLength = np.fromfile(self.fid,count=1,dtype='>u8')[0] #this is not needed
+        nFields = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         if self.v:
             print('readStructTypes: nFields = {}'.format(nFields))
         
@@ -238,7 +242,8 @@ class fileDM4:
         
         fieldTypes = np.zeros(nFields)
         for ii in range(0,nFields):
-            aa = np.fromfile(self.fid,count=2,dtype=np.dtype('>u4')) #nameLength, fieldType
+            aa = np.fromfile(self.fid,count=2,dtype=np.dtype('>u8')) #nameLength, fieldType
+            nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
     
@@ -253,16 +258,16 @@ class fileDM4:
     
     def readNativeData(self,encodedType):
         #reads ordinary data types
-        # 	VAL_SHORT   = 2;
-        # 	VAL_LONG    = 3;
-        # 	VAL_USHORT  = 4;
-        # 	VAL_ULONG   = 5;
-        # 	VAL_FLOAT   = 6;
-        # 	VAL_DOUBLE  = 7;
-        # 	VAL_BOOLEAN = 8;
-        # 	VAL_CHAR    = 9;
-        # 	VAL_OCTET   = 10;   
-        #   VAL_UINT64 = 11;
+        # 	SHORT (in16)   = 2;
+        # 	LONG (in32)    = 3;
+        # 	USHORT (uint16)  = 4;
+        # 	ULONG (uint32)   = 5;
+        # 	FLOAT (float32)  = 6;
+        # 	DOUBLE (float64)  = 7;
+        # 	BOOLEAN (bool) = 8;
+        # 	CHAR (uint8 character)    = 9;
+        # 	OCTET (??)  = 10;   
+        #   UINT64 (uint64) = 11;
         if encodedType == 2:
             val = np.fromfile(self.fid,count=1,dtype='<i2')[0]
         elif encodedType == 3:
@@ -286,6 +291,8 @@ class fileDM4:
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0]
         elif encodedType == 11:
             val = np.fromfile(self.fid,count=1,dtype='<i8')[0]
+        elif encodedType == 12:
+            val = np.fromfile(self.fid,count=1,dtype='<i8')[0] #unknown type, but this works
         else:
             print('readNativeData unknown data type: {}'.format(encodedType))
             raise
@@ -297,7 +304,7 @@ class fileDM4:
     def readArrayTypes(self):
         '''Analyze te types of data in an array
         '''
-        arrayType = np.fromfile(self.fid,count=1,dtype='>u4')[0]
+        arrayType = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
         itemTypes = []
         
@@ -316,7 +323,7 @@ class fileDM4:
     def readArrayData(self,arrayTypes):
         '''Read information in an array based on the types provided. Binary data is not read at this point.
         '''
-        arraySize = np.fromfile(self.fid,count=1,dtype='>u4')[0]
+        arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
         itemSize = 0
         encodedType = 0
