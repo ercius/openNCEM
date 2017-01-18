@@ -337,6 +337,7 @@ class fileDM4:
             itemSize += etSize
             
         bufSize = arraySize * itemSize
+        bufSize = bufSize.astype('<u8') #change to an integer
         
         print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
@@ -361,7 +362,8 @@ class fileDM4:
             self.storeTag(self.curTagName + '.arraySize', bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             self.storeTag(self.curTagName + '.arrayType', encodedType)
-            self.fid.seek(bufSize,1) #advance the pointer by bufsize from current position
+            print(bufSize)
+            self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Array data unread. Encoded type = {}'.format(encodedType)
             
         return arrOut
