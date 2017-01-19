@@ -36,7 +36,7 @@ class fileDM4:
         self.xSize = []
         self.ySize = []
         self.zSize = []
-        self.zsize2 = []
+        self.zSize2 = []
         self.dataType = []
         self.dataSize = []
         self.dataOffset = []
@@ -112,24 +112,27 @@ class fileDM4:
             self.readTagEntry()
         
         #Go back up a level after reading all entries
-        self.curGroupLevel=1
+        self.curGroupLevel -= 1
         self.curGroupNameAtLevelX = oldTotalTag
         
     def readTagEntry(self):
         dataType = np.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
         
-        if self.v:
-            print('readTagEntry: dataType = {}'.format(dataType))
-        
         #Record tag at this level
         self.curTagAtLevelX[self.curGroupLevel] += 1
         
         #get the tag
-        lenTagLabel = np.fromfile(self.fid,dtype=np.dtype('>u2'),count=1)[0]
+        lenTagLabel = np.fromfile(self.fid,dtype='>u2',count=1)[0]
+        
+        if self.v:
+            print('readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType,lenTagLabel))
+            #print('readTagEntry: lenTagLabel = {}'.format(lenTagLabel))
+            
         if lenTagLabel > 0:
             tagLabelBinary = np.fromfile(self.fid,dtype='<u1',count=lenTagLabel) #read as binary
-            #tagLabel = ''.join([chr(item) for item in tagLabelBinary]) #convert to python string
             tagLabel = self.bin2str(tagLabelBinary)
+            if self.v:
+                print('readTagEntry: tagLabel = {}'.format(tagLabel))
         else:
             tagLabel = str(self.curTagAtLevelX[self.curGroupLevel]) #unlabeled tag.
         
@@ -148,6 +151,7 @@ class fileDM4:
             temp1 = np.fromfile(self.fid,dtype='>u8',count=1)[0]
             
             self.readTagGroup()
+            
         self.curGroupNameAtLevelX = oldGroupName
     
     def readTagType(self):
@@ -196,10 +200,11 @@ class fileDM4:
             self.storeTag(self.curTagName,arrInfo)
     
     def bin2str(self,bin):
-        '''Utility function to convert an numpy array of binary values to a python string
+        '''Utility function to convert a numpy array of binary values to a python string
         '''
         if self.v:
             print('bin2str: input binary numbers = {}'.format(bin))
+            #print(''.join([chr(item) for item in bin]))
         return ''.join([chr(item) for item in bin])
         
     def encodedTypeSize(self, encodedType):
@@ -224,7 +229,7 @@ class fileDM4:
             return 2 #2 bytes
         elif (encodedType == 3) | (encodedType == 5) | (encodedType == 6):
             return 4 #4 bytes
-        elif (encodedType == 7):
+        elif (encodedType == 7) | (encodedType == 12):
             return 8 #8 bytes
         else:
             return -1
@@ -242,7 +247,7 @@ class fileDM4:
         
         fieldTypes = np.zeros(nFields)
         for ii in range(0,nFields):
-            aa = np.fromfile(self.fid,count=2,dtype=np.dtype('>u8')) #nameLength, fieldType
+            aa = np.fromfile(self.fid,dtype='>u8',count=2) #nameLength, fieldType
             nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
@@ -290,9 +295,9 @@ class fileDM4:
             print('readNativeData untested type: {}'.format(encodedType))
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0]
         elif encodedType == 11:
-            val = np.fromfile(self.fid,count=1,dtype='<i8')[0]
+            val = np.fromfile(self.fid,count=1,dtype='<u8')[0]
         elif encodedType == 12:
-            val = np.fromfile(self.fid,count=1,dtype='<i8')[0] #unknown type, but this works
+            val = np.fromfile(self.fid,count=1,dtype='<u8')[0] #unknown type, but this works
         else:
             print('readNativeData unknown data type: {}'.format(encodedType))
             raise
@@ -304,7 +309,7 @@ class fileDM4:
     def readArrayTypes(self):
         '''Analyze te types of data in an array
         '''
-        arrayType = np.fromfile(self.fid,count=1,dtype='>u8')[0]
+        arrayType = np.fromfile(self.fid,dtype='>u8',count=1)[0]
         
         itemTypes = []
         
@@ -398,6 +403,7 @@ class fileDM4:
             self.xSize.append(curTagValue)
             self.ySize.append(1) 
             self.zSize.append(1)
+            self.zSize2.append(1)
         elif totalTag.find('Dimensions.2')>-1:
             self.ySize[-1] = curTagValue #OR self.ysize[self.numObjects] = self.curTagValue
         elif totalTag.find('Dimensions.3')>-1:
