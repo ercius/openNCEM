@@ -83,7 +83,7 @@ class fileDM3:
         head = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=3)
         
         if head[0] != 3:
-            print('File is not a dm3. DM file type number is {}'.format(dmType[0]))
+            print('File is not a dm3. DM file type number is {}'.format(head[0]))
             output = False
         
         #Useful to test against current file size
@@ -109,7 +109,7 @@ class fileDM3:
             self.readTagEntry()
         
         #Go back up a level after reading all entries
-        self.curGroupLevel=1
+        self.curGroupLevel -= 1
         self.curGroupNameAtLevelX = oldTotalTag
         
     def readTagEntry(self):
