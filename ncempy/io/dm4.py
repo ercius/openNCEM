@@ -495,13 +495,15 @@ class fileDM4:
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
             outputDict['scaleUnit'] = self.scaleUnit[ii]
-            pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]
+            pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
-            if self.zSize[ii] == 1:
-                outputDict['image'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+            if self.zSize[ii] == 1: #2D data
+                outputDict['image2D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+            elif self.zsize2[ii] > 1: #4D data
+                outputDict['image4D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
             else: #3D array
-                outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['image3D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
                 #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
             
         
