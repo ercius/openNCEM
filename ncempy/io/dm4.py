@@ -331,13 +331,14 @@ class fileDM4:
         arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
         itemSize = 0
-        encodedType = 0
+        #encodedType = 0
         
         if self.v:
             print('readArrayData: arrayTypes = {}'.format(arrayTypes))
         
         for encodedType in arrayTypes:
-            print('encodedType = {}'.format(encodedType))
+            if self.v:
+                print('encodedType = {}'.format(encodedType))
             etSize = self.encodedTypeSize(encodedType)
             itemSize += etSize
             
@@ -352,14 +353,11 @@ class fileDM4:
             self.storeTag(self.curTagName + '.arraySize',bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
-            #print('readArrayData: stringData =  {}'.format(stringData))
             arrOut = stringData.replace('\x00','') #remove all spaces from the string data
-            #print('readArrayData: arrOut =  {}'.format(arrOut))
             
             #Catch useful tags for images and spectra (nm, eV, etc.)
             fullTagName = self.curGroupNameAtLevelX + '.' + self.curTagName
             if((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1) & (self.numObjects > 0)):
-                #tt = len(self.scale) #the number of dimension and units already saved
                 self.scale.append(self.scale_temp)
                 self.scaleUnit.append(arrOut)
                 self.origin.append(self.origin_temp)
@@ -368,7 +366,6 @@ class fileDM4:
             self.storeTag(self.curTagName + '.arraySize', bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             self.storeTag(self.curTagName + '.arrayType', encodedType)
-            print(bufSize)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Array data unread. Encoded type = {}'.format(encodedType)
             
