@@ -344,7 +344,8 @@ class fileDM4:
         bufSize = arraySize * itemSize
         bufSize = bufSize.astype('<u8') #change to an integer
         
-        print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
+        if self.v:
+            print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
         if encodedType == 4:
             #String data
