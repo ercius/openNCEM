@@ -65,7 +65,7 @@ class fileDM4:
         self.allTags = {}
         
         #Read the DM3 header as a set of DM tags
-        self.readTagGroup()
+        #self.readTagGroup()
     
     def __del__(self):
         #close the file
@@ -103,6 +103,9 @@ class fileDM4:
         np.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
         nTags = np.fromfile(self.fid,dtype='>u8',count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
         
+        if self.v:
+            print('Total number of root tags = {}'.format(nTags))
+        
         #Iterate of the number of tag entries
         oldTotalTag = self.curGroupNameAtLevelX
         for ii in range(0,nTags):
@@ -123,7 +126,6 @@ class fileDM4:
         
         if self.v:
             print('readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType,lenTagLabel))
-            #print('readTagEntry: lenTagLabel = {}'.format(lenTagLabel))
             
         if lenTagLabel > 0:
             tagLabelBinary = np.fromfile(self.fid,dtype='<u1',count=lenTagLabel) #read as binary
@@ -283,14 +285,17 @@ class fileDM4:
         elif encodedType == 7:
             val = np.fromfile(self.fid,count=1,dtype='<f8')[0]
         elif encodedType == 8: #matlab uchar
-            print('readNativeData untested type: {}'.format(encodedType))
             val = np.fromfile(self.fid,count=1,dtype='<u1')[0] #return character or number?
+            if self.v:
+                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 9: #matlab *char
-            print('readNativeData untested type: {}'.format(encodedType))
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0] #return character or number?
+            if self.v:
+                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 10: #matlab *char
-            print('readNativeData untested type: {}'.format(encodedType))
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0]
+            if self.v:
+                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 11:
             val = np.fromfile(self.fid,count=1,dtype='<u8')[0]
         elif encodedType == 12:
@@ -304,7 +309,7 @@ class fileDM4:
         
         return val
     def readArrayTypes(self):
-        '''Analyze te types of data in an array
+        '''Analyze the types of data in an array
         '''
         arrayType = np.fromfile(self.fid,dtype='>u8',count=1)[0]
         
