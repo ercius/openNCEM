@@ -333,14 +333,14 @@ class fileDM4:
         arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
         itemSize = 0
-        #encodedType = 0
+        encodedType = 0
         
         if self.v:
             print('readArrayData: arrayTypes = {}'.format(arrayTypes))
         
         for encodedType in arrayTypes:
             if self.v:
-                print('encodedType = {}'.format(encodedType))
+                print('readArrayData: encodedType = {}'.format(encodedType))
             etSize = self.encodedTypeSize(encodedType)
             itemSize += etSize
             
