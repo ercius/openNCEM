@@ -81,18 +81,15 @@ class fileDM4:
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
 
-        head1 = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1) #file type == 4 for DM4
-        head2 = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1) #file size
-        head3 = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1) #endian type
+        self.dmType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type == 4 for DM4
+        self.fileSize = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #file size
+        self.endianType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type
         
-        if head1 != 4:
-            print('File is not a dm4. DM4 file type number is {}'.format(dmType[0]))
+        if self.dmType != 4:
+            print('File is not a dm4. DM4 file type number is {}'.format(self.dmType))
             output = False
-        
-        #Useful to test against current file size
-        self.fileSize = head2
             
-        if head3 != 1:
+        if self.endianType != 1:
             print('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
         
