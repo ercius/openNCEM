@@ -350,7 +350,7 @@ class fileDM4:
         if self.v:
             print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
-        if encodedType == 4:
+        if encodedType == 18:
             #String data
             self.storeTag(self.curTagName + '.arraySize',bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
