@@ -380,7 +380,7 @@ class fileDM4:
         #Build the full tag name (key) and add the tag value
         if self.v:
             print('storeTag: curTagName, curTagValue = {}, {}'.format(curTagName,curTagValue))
-        totalTag = self.curGroupNameAtLevelX + '.' + '{}'.format(curTagName) + '= {}'.format(curTagValue)
+        totalTag = self.curGroupNameAtLevelX + '.' + '{}'.format(curTagName) #+ '= {}'.format(curTagValue)
         
         self.catchUsefulTags(totalTag,curTagName,curTagValue)
         
