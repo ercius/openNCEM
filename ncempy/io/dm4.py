@@ -63,9 +63,6 @@ class fileDM4:
         
         self.outputDic = {}
         self.allTags = {}
-        
-        #Read the DM3 header as a set of DM tags
-        #self.readTagGroup()
     
     def __del__(self):
         #close the file
@@ -92,16 +89,18 @@ class fileDM4:
         if self.endianType != 1:
             print('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
-        
+            
         return output
     
     def parseHeader(self):
-        '''Alias for readTagGroup. Better naming convention to start reading the header
+        '''Parse the header by simply reading the root tag group. This ensures the file pointer is in the correct place.
         '''
+        self.fid.seek(16,0)
         self.readTagGroup()
         
     def readTagGroup(self):
-        
+        '''Read a tag group in a DM file
+        '''
         self.curGroupLevel += 1
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
@@ -121,6 +120,8 @@ class fileDM4:
         self.curGroupNameAtLevelX = oldTotalTag
         
     def readTagEntry(self):
+        '''Read one entry in a tag group
+        '''
         dataType = np.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
         
         #Record tag at this level
@@ -206,9 +207,8 @@ class fileDM4:
     def bin2str(self,bin):
         '''Utility function to convert a numpy array of binary values to a python string
         '''
-        if self.v:
-            print('bin2str: input binary numbers = {}'.format(bin))
-            #print(''.join([chr(item) for item in bin]))
+        #if self.v:
+        #    print('bin2str: input binary numbers = {}'.format(bin))
         return ''.join([chr(item) for item in bin])
         
     def encodedTypeSize(self, encodedType):
