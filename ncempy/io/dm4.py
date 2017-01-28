@@ -95,6 +95,11 @@ class fileDM4:
         
         return output
     
+    def parseHeader(self):
+        '''Alias for readTagGroup. Better naming convention to start reading the header
+        '''
+        self.readTagGroup()
+        
     def readTagGroup(self):
         
         self.curGroupLevel += 1
@@ -508,3 +513,9 @@ class fileDM4:
             
         
         return outputDict
+        
+    def dm4Reader(self):
+        '''Simple function to parse and read the first data set.
+        '''
+        self.parseHeader()
+        return self.getDataset(0)
