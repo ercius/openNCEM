@@ -335,14 +335,14 @@ class fileDM4:
     def readArrayData(self,arrayTypes):
         '''Read information in an array based on the types provided. Binary data is not read at this point.
         '''
+        
+        #The number of elements in the array
         arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
-        itemSize = 0
-        encodedType = 0
-        
         if self.v:
-            print('readArrayData: arrayTypes = {}'.format(arrayTypes))
+            print('readArrayData: arraySize, arrayTypes = {}'.format(arrayTypes))
         
+        itemSize = 0
         for encodedType in arrayTypes:
             if self.v:
                 print('readArrayData: encodedType = {}'.format(encodedType))
