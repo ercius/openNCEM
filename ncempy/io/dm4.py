@@ -375,13 +375,12 @@ class fileDM4:
                 self.scaleUnit.append(arrOut)
                 self.origin.append(self.origin_temp)
         else:
-            #This is a binary array. Save its location to read later if needed
             self.storeTag(self.curTagName + '.arraySize', bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             self.storeTag(self.curTagName + '.arrayType', encodedType)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
-            arrOut = 'Array data unread. Encoded type = {}'.format(encodedType)
-            
+            arrOut = 'Array unread. Encoded type = {}'.format(encodedType)
+  
         return arrOut
     
     def storeTag(self,curTagName,curTagValue):
