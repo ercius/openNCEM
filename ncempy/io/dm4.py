@@ -401,9 +401,12 @@ class fileDM4:
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
         elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
             #treat as a string
+            stringData = np.fromfile(self.fid,count=arraySize,dtype=self.encodedTypeDtype(arrayTypes[0]))
+            arrOut = self.bin2str(stringData)
             
-            stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
-            arrOut = stringData.replace('\x00','') #remove all spaces from the string data
+            #THis is the old way to read this in. Its not really correct though.
+            #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
+            #arrOut = stringData.replace('\x00','') #remove all spaces from the string data
             
             #Catch useful tags for images and spectra (nm, eV, etc.)
             fullTagName = self.curGroupNameAtLevelX + '.' + self.curTagName
