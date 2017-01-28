@@ -214,16 +214,17 @@ class fileDM4:
     def encodedTypeSize(self, encodedType):
         '''Return the number of bytes in a data type for the encodings used by DM
         Constants for the different encoded data types used in DM3 files
-         	VAL_SHORT   = 2;
-         	VAL_LONG    = 3;
-         	VAL_USHORT  = 4;
-         	VAL_ULONG   = 5;
-         	VAL_FLOAT   = 6;
-         	VAL_DOUBLE  = 7;
-         	VAL_BOOLEAN = 8;
-         	VAL_CHAR    = 9;
-         	VAL_OCTET   = 10;
-           -1 will signal an unlisted type
+            SHORT   = 2
+            LONG    = 3
+            USHORT  = 4
+            ULONG   = 5
+            FLOAT   = 6
+            DOUBLE  = 7
+            BOOLEAN = 8
+            CHAR    = 9
+            OCTET   = 10
+            uint64  = 12
+            -1 will signal an unlisted type
         '''
         if encodedType == 0:
             return 0
@@ -238,6 +239,42 @@ class fileDM4:
         else:
             return -1
     
+    def encodedTypeDtype(self,encodedType):
+        '''Translate the encodings used by DM to numpy dtypes according to:
+            SHORT   = 2
+            LONG    = 3
+            USHORT  = 4
+            ULONG   = 5
+            FLOAT   = 6
+            DOUBLE  = 7
+            BOOLEAN = 8
+            CHAR    = 9
+            OCTET   = 10
+            uint64  = 12
+            -1 will signal an unlisted type
+        '''
+        if encodedType == 2:
+            return np.dtype('<i2')
+        elif encodedType == 3:
+            return np.dtype('<i4')
+        elif encodedType == 4:
+            return np.dtype('<u2')
+        elif encodedType == 5:
+            return np.dtype('<u4')
+        elif encodedType == 6:
+            return np.dtype('<f4')
+        elif encodedType == 7:
+            return np.dtype('<f8')
+        elif encodedType == 8:
+            return np.dtype('<u1')
+        elif encodedType == 9:
+            return np.dtype('<u1')
+        elif encodedType == 10:
+            return np.dtype('<u1')
+        elif encodedType == 12:
+            return np.dtype('<u8')
+        else:
+            return -1
     def readStructTypes(self):
         '''Analyze the types of data in a struct
         '''
