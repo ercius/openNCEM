@@ -377,7 +377,7 @@ class fileDM4:
         arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
         
         if self.v:
-            print('readArrayData: arraySize, arrayTypes = {}'.format(arrayTypes))
+            print('readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
         
         itemSize = 0
         for encodedType in arrayTypes:
@@ -390,7 +390,7 @@ class fileDM4:
         bufSize = bufSize.astype('<u8') #change to an integer
         
         if self.v:
-            print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
+            print('readArrayData: arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
         if self.curTagName == 'Data':
             #This is a binary array. Save its location to read later if needed
@@ -495,7 +495,7 @@ class fileDM4:
         return        
     
     def getNPDataType(self, dd):
-        '''Convert the DM data type value into a numpy datatype
+        '''Convert the DM data type value into a numpy dtype
         '''
         if dd == 6:
             return np.uint8
