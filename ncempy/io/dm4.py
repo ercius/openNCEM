@@ -355,10 +355,16 @@ class fileDM4:
         if self.v:
             print('arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
-        if encodedType == 18:
-            #String data
-            self.storeTag(self.curTagName + '.arraySize',bufSize)
+        if self.curTagName == 'Data':
+            #This is a binary array. Save its location to read later if needed
+            self.storeTag(self.curTagName + '.arraySize', bufSize)
             self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
+            self.storeTag(self.curTagName + '.arrayType', encodedType)
+            self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
+            arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
+        elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
+            #treat as a string
+            
             stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
             arrOut = stringData.replace('\x00','') #remove all spaces from the string data
             
