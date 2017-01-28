@@ -379,6 +379,7 @@ class fileDM4:
         if self.v:
             print('readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
         
+        #Everything used to calcualte the bufSize is not needed anymore. THis can be removed after testing
         itemSize = 0
         for encodedType in arrayTypes:
             if self.v:
@@ -401,8 +402,9 @@ class fileDM4:
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
         elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
             #treat as a string
-            stringData = np.fromfile(self.fid,count=arraySize,dtype=self.encodedTypeDtype(arrayTypes[0]))
-            arrOut = self.bin2str(stringData)
+            for encodedType in arrayTypes:
+                stringData = np.fromfile(self.fid,count=arraySize,dtype=self.encodedTypeDtype(encodedType))
+                arrOut = self.bin2str(stringData)
             
             #THis is the old way to read this in. Its not really correct though.
             #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
