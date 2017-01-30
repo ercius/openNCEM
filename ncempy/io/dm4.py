@@ -561,8 +561,9 @@ class fileDM4:
         
         return outputDict
         
-    def dm4Reader(self):
-        '''Simple function to parse and read the first data set.
-        '''
-        self.parseHeader()
-        return self.getDataset(0)
+def dm4Reader(fName,dSetNum=0,verbose=False):
+    '''Simple function to parse and read the first data set.
+    '''
+    im1 = fileDM4(fName,verbose)
+    im1.parseHeader()
+    return im1.getDataset(dSetNum)
