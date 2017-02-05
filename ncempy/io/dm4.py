@@ -67,10 +67,12 @@ class fileDM4:
     def __del__(self):
         #close the file
         if(self.fid):
-            print('Closing input file')
+            if self.v:
+                print('Closing input file')
             self.fid.close()
         if(self.fidOut):
-            print('Closing output file')
+            if self.v:
+                print('Closing output file')
             self.fidOut.close()
     
     def validDM4(self):
@@ -564,6 +566,8 @@ class fileDM4:
 def dm4Reader(fName,dSetNum=0,verbose=False):
     '''Simple function to parse and read the first data set.
     '''
-    im1 = fileDM4(fName,verbose)
-    im1.parseHeader()
-    return im1.getDataset(dSetNum)
+    f1 = fileDM4(fName,verbose)
+    f1.parseHeader()
+    im1 = f1.getDataset(dSetNum)
+    del f1
+    return im1
