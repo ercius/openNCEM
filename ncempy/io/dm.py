@@ -106,17 +106,27 @@ class fileDM:
             output = False
         
         #Test file size for corruption
-        #osSize = fileStats(self.filename).st_size - 24
-        #if self.fileSize != osSize:
-        #    raise IOError('File size does not match expected file size. Invalid file')
-        #    output = False
+        osSize = fileStats(self.filename).st_size
+        if self.dmType == 3:
+            if self.fileSize != osSize-20:
+                raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
+                output = False
+        elif self.dmType == 4:
+            if self.fileSize != osSize-24:
+                raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
+                output = False
             
         return output
     
     def parseHeader(self):
         '''Parse the header by simply reading the root tag group. This ensures the file pointer is in the correct place.
         '''
-        self.fid.seek(16,0)
+        #skip the bytes read by dmType
+        if self.dmType == 3:
+            self.fid.seek(12,0)
+        elif self.dmType == 4:
+            self.fid.seek(16,0)
+        #Read the first root tag the same as any other group
         self.readTagGroup()
         
     def readTagGroup(self):
@@ -178,7 +188,8 @@ class fileDM:
             self.curGroupNameAtLevelX += '.' + tagLabel #add to group names
             
             #An unknown part of the DM4 tags
-            temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
+            if self.dmType == 4:
+                temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
             
             self.readTagGroup()
             
@@ -186,7 +197,8 @@ class fileDM:
     
     def readTagType(self):
         #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
-        temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
+        if self.dmType == 4:
+            temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
         
         delim = np.fromfile(self.fid,dtype='<i1',count=4)
         assert((delim == 37).all()) #delim has to be [37,37,37,37] which is %%%% in ASCII.
@@ -586,10 +598,10 @@ class fileDM:
         
         return outputDict
         
-def dm4Reader(fName,dSetNum=0,verbose=False):
-    '''Simple function to parse and read the first data set.
+def dmReader(fName,dSetNum=0,verbose=False):
+    '''Simple function to parse and read the requested dataset
     '''
-    f1 = fileDM4(fName,verbose)
+    f1 = fileDM(fName,verbose)
     f1.parseHeader()
     im1 = f1.getDataset(dSetNum)
     del f1
