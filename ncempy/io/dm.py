@@ -5,7 +5,7 @@ A module to load data and meta data from DM4 files into python
 import numpy as np
 from os import stat as fileStats
 
-class fileDM4:
+class fileDM:
     def __init__(self, filename, verbose = False):
         '''Init opening the file and reading in the header.
         '''
@@ -35,12 +35,12 @@ class fileDM4:
         if not self.validDM():
             #print('Not a valid DM3 or DM4 file: "{}"'.format(filename))
             raise IOError('Can not read file: {}'.format(filename))
-        
+            
         #Lists that will contain information about binary data arrays
         self.xSize = []
         self.ySize = []
         self.zSize = []
-        self.zSize2 = []
+        self.zSize2 = [] #only used for 4D datasets in DM4 files
         self.dataType = []
         self.dataSize = []
         self.dataOffset = []
@@ -84,29 +84,32 @@ class fileDM4:
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
 
-        self.dmType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type == 4 for DM4
-        self.fileSize = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #file size
-        self.endianType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type
+        self.dmType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type: == 3 for DM3 or == 4 for DM4
         
         if self.v:
             print('validDM: DM file type numer = {}'.format(self.dmType))
-            
-        if (self.dmType == 3) or (self.dmType == 4):
-            pass
+       
+        if self.dmType == 3:
+            self.specialType = np.dtype('>u4') #uint32
+        elif self.dmType == 4:
+            self.specialType = np.dtype('>u8') #uint64
         else:
             raise IOError('File is not a valid DM3 or DM4')
             output = False
-            
+        
+        self.fileSize = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
+        self.endianType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
+        
         if self.endianType != 1:
             #print('File is not written Little Endian (PC) format and can not be read by this program.')
             raise IOError('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
         
         #Test file size for corruption
-        osSize = fileStats(self.filename).st_size - 24
-        if self.fileSize != osSize:
-            raise IOError('File size does not match expected file size. Invalid file')
-            output = False
+        #osSize = fileStats(self.filename).st_size - 24
+        #if self.fileSize != osSize:
+        #    raise IOError('File size does not match expected file size. Invalid file')
+        #    output = False
             
         return output
     
@@ -120,10 +123,14 @@ class fileDM4:
         '''Read a tag group in a DM file
         '''
         self.curGroupLevel += 1
+        #Check to see if the maximum group level is reached.
+        if self.curGroupLevel > self.maxDepth:
+            raise IOError('Maximum tag group depth of {} reached. This file is most likely corrupt.'.format(self.maxDepth))
+            
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
         np.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
-        nTags = np.fromfile(self.fid,dtype='>u8',count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
+        nTags = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
         
         if self.v:
             print('Total number of root tags = {}'.format(nTags))
@@ -133,7 +140,7 @@ class fileDM4:
         for ii in range(0,nTags):
             self.readTagEntry()
         
-        #Go back up a level after reading all entries
+        #Go back down a level after reading all entries
         self.curGroupLevel -= 1
         self.curGroupNameAtLevelX = oldTotalTag
         
@@ -171,7 +178,7 @@ class fileDM4:
             self.curGroupNameAtLevelX += '.' + tagLabel #add to group names
             
             #An unknown part of the DM4 tags
-            temp1 = np.fromfile(self.fid,dtype='>u8',count=1)[0]
+            temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
             
             self.readTagGroup()
             
@@ -179,18 +186,18 @@ class fileDM4:
     
     def readTagType(self):
         #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
-        temp1 = np.fromfile(self.fid,dtype='>u8',count=1)[0]
+        temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
         
         delim = np.fromfile(self.fid,dtype='<i1',count=4)
         assert((delim == 37).all()) #delim has to be [37,37,37,37] which is %%%% in ASCII.
         if self.v:
             print('readTagType: should be %%%% = {}'.format(self.bin2str(delim)))
         
-        nInTag = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #nInTag: unnecessary redundant info
+        nInTag = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #nInTag: unnecessary redundant info
         
         #Determine the type of the data in the tag
         #specifies data type: int8, uint16, float32, etc.
-        encodedType = np.fromfile(self.fid,dtype=np.dtype('>u8'),count=1)[0] #big endian
+        encodedType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #big endian
         
         etSize = self.encodedTypeSize(encodedType)
         
@@ -296,8 +303,8 @@ class fileDM4:
     def readStructTypes(self):
         '''Analyze the types of data in a struct
         '''
-        structNameLength = np.fromfile(self.fid,count=1,dtype='>u8')[0] #this is not needed
-        nFields = np.fromfile(self.fid,count=1,dtype='>u8')[0]
+        structNameLength = np.fromfile(self.fid,count=1,dtype=self.specialType)[0] #this is not needed
+        nFields = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         if self.v:
             print('readStructTypes: nFields = {}'.format(nFields))
         
@@ -306,7 +313,7 @@ class fileDM4:
         
         fieldTypes = np.zeros(nFields)
         for ii in range(0,nFields):
-            aa = np.fromfile(self.fid,dtype='>u8',count=2) #nameLength, fieldType
+            aa = np.fromfile(self.fid,dtype=self.specialType,count=2) #nameLength, fieldType
             nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
@@ -371,7 +378,7 @@ class fileDM4:
     def readArrayTypes(self):
         '''Analyze the types of data in an array
         '''
-        arrayType = np.fromfile(self.fid,dtype='>u8',count=1)[0]
+        arrayType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
         
         itemTypes = []
         
@@ -392,7 +399,7 @@ class fileDM4:
         '''
         
         #The number of elements in the array
-        arraySize = np.fromfile(self.fid,count=1,dtype='>u8')[0]
+        arraySize = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         
         if self.v:
             print('readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
