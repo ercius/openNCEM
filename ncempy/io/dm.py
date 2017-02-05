@@ -561,14 +561,18 @@ class fileDM:
             return np.complex64
         elif dd == 13:
             return np.complex128
+        elif dd == 23:
+            raise IOError('RGB data type is not supported yet.')
+            #return np.uint8
         else:
-            print('dm3reader: Unsupported data type: DM dataType == {}'.format(dd))
+            raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
     
     def getDataset(self, index):
-        '''Retrieve a dataseet from the DM3 file.
+        '''Retrieve a dataseet from the DM file.
+        Note: All DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data.
+        This function ignores that dataset. To retrieve the thumbnail set index = -1
         '''
-        
-        #The first dataset is always a thumbnail. Skip it
+        #The first dataset is always a thumbnail. Skip it automatically
         ii = index + 1
         
         #Check that the dataset exists.
@@ -596,6 +600,17 @@ class fileDM:
                 #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
         
         return outputDict
+    
+    def _readRGB(self,xSizeRGB,ySizeRGB):
+        '''Read in a uint8 type array with [Red,green,blue,alpha] channels.
+        '''
+        return np.fromfile(self.fid,count=xSizeRGB*ySizeRGB*4,dtype='<u1').reshape(xSizeRGB,ySizeRGB,4)
+        
+    def getThumbnail(self):
+        '''Read the thumbnail saved as the first dataset in the DM file as an RGB array
+        '''
+        self.fid.seek(self.dataOffset[0],0)
+        return self._readRGB(self.xSize[0],self.ySize[0])
         
 def dmReader(fName,dSetNum=0,verbose=False):
     '''Simple function to parse and read the requested dataset
