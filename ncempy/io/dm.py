@@ -32,7 +32,7 @@ class fileDM:
         except :
             raise
         
-        if not self.validDM():
+        if not self._validDM():
             #print('Not a valid DM3 or DM4 file: "{}"'.format(filename))
             raise IOError('Can not read file: {}'.format(filename))
             
@@ -72,14 +72,14 @@ class fileDM:
         #close the file
         if(self.fid):
             if self.v:
-                print('Closing input file')
+                print('Closing input file: {}'.format(self.filename))
             self.fid.close()
         if(self.fidOut):
             if self.v:
                 print('Closing tags output file')
             self.fidOut.close()
     
-    def validDM(self):
+    def _validDM(self):
         '''Test whether a file is a valid DM3 or DM4 file and written in Little Endian format
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
@@ -105,7 +105,7 @@ class fileDM:
             raise IOError('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
         
-        #Test file size for corruption
+        #Test file size for corruption. Note that DM3/DM4 file size is always off by 20/24 bytes from what is written in the header
         osSize = fileStats(self.filename).st_size
         if self.dmType == 3:
             if self.fileSize != osSize-20:
@@ -127,9 +127,9 @@ class fileDM:
         elif self.dmType == 4:
             self.fid.seek(16,0)
         #Read the first root tag the same as any other group
-        self.readTagGroup()
+        self._readTagGroup()
         
-    def readTagGroup(self):
+    def _readTagGroup(self):
         '''Read a tag group in a DM file
         '''
         self.curGroupLevel += 1
@@ -148,13 +148,13 @@ class fileDM:
         #Iterate of the number of tag entries
         oldTotalTag = self.curGroupNameAtLevelX
         for ii in range(0,nTags):
-            self.readTagEntry()
+            self._readTagEntry()
         
         #Go back down a level after reading all entries
         self.curGroupLevel -= 1
         self.curGroupNameAtLevelX = oldTotalTag
         
-    def readTagEntry(self):
+    def _readTagEntry(self):
         '''Read one entry in a tag group
         '''
         dataType = np.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
@@ -166,13 +166,13 @@ class fileDM:
         lenTagLabel = np.fromfile(self.fid,dtype='>u2',count=1)[0]
         
         if self.v:
-            print('readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType,lenTagLabel))
+            print('_readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType,lenTagLabel))
             
         if lenTagLabel > 0:
             tagLabelBinary = np.fromfile(self.fid,dtype='<u1',count=lenTagLabel) #read as binary
-            tagLabel = self.bin2str(tagLabelBinary)
+            tagLabel = self._bin2str(tagLabelBinary)
             if self.v:
-                print('readTagEntry: tagLabel = {}'.format(tagLabel))
+                print('_readTagEntry: tagLabel = {}'.format(tagLabel))
         else:
             tagLabel = str(self.curTagAtLevelX[self.curGroupLevel]) #unlabeled tag.
         
@@ -182,7 +182,7 @@ class fileDM:
         if dataType == 21:
             #This tag entry contains data
             self.curTagName = tagLabel #save its name
-            self.readTagType()
+            self._readTagType()
         else:
             #This is a nested tag group
             self.curGroupNameAtLevelX += '.' + tagLabel #add to group names
@@ -191,11 +191,11 @@ class fileDM:
             if self.dmType == 4:
                 temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
             
-            self.readTagGroup()
+            self._readTagGroup()
             
         self.curGroupNameAtLevelX = oldGroupName
     
-    def readTagType(self):
+    def _readTagType(self):
         #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
         if self.dmType == 4:
             temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
@@ -203,7 +203,7 @@ class fileDM:
         delim = np.fromfile(self.fid,dtype='<i1',count=4)
         assert((delim == 37).all()) #delim has to be [37,37,37,37] which is %%%% in ASCII.
         if self.v:
-            print('readTagType: should be %%%% = {}'.format(self.bin2str(delim)))
+            print('_readTagType: should be %%%% = {}'.format(self._bin2str(delim)))
         
         nInTag = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #nInTag: unnecessary redundant info
         
@@ -211,44 +211,42 @@ class fileDM:
         #specifies data type: int8, uint16, float32, etc.
         encodedType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #big endian
         
-        etSize = self.encodedTypeSize(encodedType)
+        etSize = self._encodedTypeSize(encodedType)
         
         if etSize > 0:
             #regular data. Read it and store it with the tag name
             if self.v:
                 print('regular')
-            self.storeTag(self.curTagName, self.readNativeData(encodedType))
+            self._storeTag(self.curTagName, self._readNativeData(encodedType))
         elif encodedType == 18: #string
             if self.v:
                 print('string')
             stringSize = np.fromfile(self.fid,dtype='>u4',count=1)[0]
             #strtemp = '' #in case stringSize == 0
             strTempBin = np.fromfile(self.fid,dtype='<u1',count=stringSize) #read as uint8 little endian
-            strTemp = self.bin2str(strTempBin)
-            self.storeTag(self.curTagName,strTemp)
+            strTemp = self._bin2str(strTempBin)
+            self._storeTag(self.curTagName,strTemp)
         elif encodedType == 15: #struct
             #This does not work for field names that are non-zero. This is uncommon
             if self.v:
                 print('struct')
-            structTypes = self.readStructTypes()
-            structs = self.readStructData(structTypes)
-            self.storeTag(self.curTagName,structs)
+            structTypes = self._readStructTypes()
+            structs = self._readStructData(structTypes)
+            self._storeTag(self.curTagName,structs)
         elif encodedType == 20: #array
             #The array data is not read. It will be read later if needed
             if self.v:
                 print('array')
-            arrayTypes = self.readArrayTypes() #could be recursive if array contains array(s)
-            arrInfo = self.readArrayData(arrayTypes) #only info of the array is read. It is read later if needed
-            self.storeTag(self.curTagName,arrInfo)
+            arrayTypes = self._readArrayTypes() #could be recursive if array contains array(s)
+            arrInfo = self._readArrayData(arrayTypes) #only info of the array is read. It is read later if needed
+            self._storeTag(self.curTagName,arrInfo)
     
-    def bin2str(self,bin):
+    def _bin2str(self,bin):
         '''Utility function to convert a numpy array of binary values to a python string
         '''
-        #if self.v:
-        #    print('bin2str: input binary numbers = {}'.format(bin))
         return ''.join([chr(item) for item in bin])
         
-    def encodedTypeSize(self, encodedType):
+    def _encodedTypeSize(self, encodedType):
         '''Return the number of bytes in a data type for the encodings used by DM
         Constants for the different encoded data types used in DM3 files
             SHORT   = 2
@@ -276,7 +274,7 @@ class fileDM:
         else:
             return -1
     
-    def encodedTypeDtype(self,encodedType):
+    def _encodedTypeDtype(self,encodedType):
         '''Translate the encodings used by DM to numpy dtypes according to:
             SHORT   = 2
             LONG    = 3
@@ -312,13 +310,14 @@ class fileDM:
             return np.dtype('<u8')
         else:
             return -1
-    def readStructTypes(self):
+    
+    def _readStructTypes(self):
         '''Analyze the types of data in a struct
         '''
         structNameLength = np.fromfile(self.fid,count=1,dtype=self.specialType)[0] #this is not needed
         nFields = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         if self.v:
-            print('readStructTypes: nFields = {}'.format(nFields))
+            print('_readStructTypes: nFields = {}'.format(nFields))
         
         if(nFields > 100):
             raise RuntimeError('Too many fields in a struct.')
@@ -330,27 +329,28 @@ class fileDM:
             fieldTypes[ii] = aa[1]
         return fieldTypes
     
-    def readStructData(self,structTypes):
+    def _readStructData(self,structTypes):
         '''Read the data in a struct
         '''
         struct = np.zeros(structTypes.shape[0])
         for ii, encodedType in enumerate(structTypes):
-            etSize = self.encodedTypeSize(encodedType) #the size of the data type
-            struct[ii] = self.readNativeData(encodedType) #read this type of data
+            etSize = self._encodedTypeSize(encodedType) #the size of the data type
+            struct[ii] = self._readNativeData(encodedType) #read this type of data
         return struct
     
-    def readNativeData(self,encodedType):
-        #reads ordinary data types
-        # 	SHORT (in16)   = 2;
-        # 	LONG (in32)    = 3;
-        # 	USHORT (uint16)  = 4;
-        # 	ULONG (uint32)   = 5;
-        # 	FLOAT (float32)  = 6;
-        # 	DOUBLE (float64)  = 7;
-        # 	BOOLEAN (bool) = 8;
-        # 	CHAR (uint8 character)    = 9;
-        # 	OCTET (??)  = 10;   
-        #   UINT64 (uint64) = 11;
+    def _readNativeData(self,encodedType):
+        '''reads ordinary data types in tags
+            SHORT (in16)   = 2;
+            LONG (in32)    = 3;
+            USHORT (uint16)  = 4;
+            ULONG (uint32)   = 5;
+            FLOAT (float32)  = 6;
+            DOUBLE (float64)  = 7;
+            BOOLEAN (bool) = 8;
+            CHAR (uint8 character)    = 9;
+            OCTET (??)  = 10;   
+            UINT64 (uint64) = 11;
+        '''
         if encodedType == 2:
             val = np.fromfile(self.fid,count=1,dtype='<i2')[0]
         elif encodedType == 3:
@@ -366,28 +366,28 @@ class fileDM:
         elif encodedType == 8: #matlab uchar
             val = np.fromfile(self.fid,count=1,dtype='<u1')[0] #return character or number?
             if self.v:
-                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
+                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 9: #matlab *char
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0] #return character or number?
             if self.v:
-                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
+                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 10: #matlab *char
             val = np.fromfile(self.fid,count=1,dtype='<i1')[0]
             if self.v:
-                print('readNativeData untested type, val: {}, {}'.format(encodedType,val))
+                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 11:
             val = np.fromfile(self.fid,count=1,dtype='<u8')[0]
         elif encodedType == 12:
             val = np.fromfile(self.fid,count=1,dtype='<u8')[0] #unknown type, but this works
         else:
-            print('readNativeData unknown data type: {}'.format(encodedType))
+            print('_readNativeData unknown data type: {}'.format(encodedType))
             raise
         
         if self.v:
-            print('readNativeData: encodedType == {} and val = {}'.format(encodedType, val))
+            print('_readNativeData: encodedType == {} and val = {}'.format(encodedType, val))
         
         return val
-    def readArrayTypes(self):
+    def _readArrayTypes(self):
         '''Analyze the types of data in an array
         '''
         arrayType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
@@ -396,17 +396,17 @@ class fileDM:
         
         if arrayType == 15: 
             #nested Struct
-            itemTypes = self.readStructTypes()
+            itemTypes = self._readStructTypes()
         elif arrayType == 20:
             #Nested array
-            itemTypes = readArrayTypes()
+            itemTypes = _readArrayTypes()
         else:
             itemTypes.append(arrayType)
         if self.v:
-            print('readArrayTypes: itemTypes = {}'.format(itemTypes))
+            print('_readArrayTypes: itemTypes = {}'.format(itemTypes))
         return itemTypes
     
-    def readArrayData(self,arrayTypes):
+    def _readArrayData(self,arrayTypes):
         '''Read information in an array based on the types provided. Binary data is not read at this point.
         '''
         
@@ -414,34 +414,34 @@ class fileDM:
         arraySize = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         
         if self.v:
-            print('readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
+            print('_readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
         
         #Everything used to calcualte the bufSize is not needed anymore. THis can be removed after testing
         itemSize = 0
         for encodedType in arrayTypes:
             if self.v:
-                print('readArrayData: encodedType = {}'.format(encodedType))
-            etSize = self.encodedTypeSize(encodedType)
+                print('_readArrayData: encodedType = {}'.format(encodedType))
+            etSize = self._encodedTypeSize(encodedType)
             itemSize += etSize
             
         bufSize = arraySize * itemSize
         bufSize = bufSize.astype('<u8') #change to an integer
         
         if self.v:
-            print('readArrayData: arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
+            print('_readArrayData: arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
         
         if self.curTagName == 'Data':
             #This is a binary array. Save its location to read later if needed
-            self.storeTag(self.curTagName + '.arraySize', bufSize)
-            self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
-            self.storeTag(self.curTagName + '.arrayType', encodedType)
+            self._storeTag(self.curTagName + '.arraySize', bufSize)
+            self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
+            self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
         elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
             #treat as a string
             for encodedType in arrayTypes:
-                stringData = np.fromfile(self.fid,count=arraySize,dtype=self.encodedTypeDtype(encodedType))
-                arrOut = self.bin2str(stringData)
+                stringData = np.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
+                arrOut = self._bin2str(stringData)
             
             #THis is the old way to read this in. Its not really correct though.
             #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
@@ -454,31 +454,31 @@ class fileDM:
                 self.scaleUnit.append(arrOut)
                 self.origin.append(self.origin_temp)
         else:
-            self.storeTag(self.curTagName + '.arraySize', bufSize)
-            self.storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
-            self.storeTag(self.curTagName + '.arrayType', encodedType)
+            self._storeTag(self.curTagName + '.arraySize', bufSize)
+            self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
+            self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Array unread. Encoded type = {}'.format(encodedType)
   
         return arrOut
     
-    def storeTag(self,curTagName,curTagValue):
+    def _storeTag(self,curTagName,curTagValue):
         '''Builds the full tag name and key/value pair as text. Also calls another
         function to catch useful tags and values. Also saves all tags in a dictionary.
         '''
         #Build the full tag name (key) and add the tag value
         if self.v:
-            print('storeTag: curTagName, curTagValue = {}, {}'.format(curTagName,curTagValue))
+            print('_storeTag: curTagName, curTagValue = {}, {}'.format(curTagName,curTagValue))
         totalTag = self.curGroupNameAtLevelX + '.' + '{}'.format(curTagName) #+ '= {}'.format(curTagValue)
         
-        self.catchUsefulTags(totalTag,curTagName,curTagValue)
+        self._catchUsefulTags(totalTag,curTagName,curTagValue)
         
         self.allTags[totalTag] = curTagValue #this needs to be done better. 
         
         return(totalTag)
     
-    def catchUsefulTags(self,totalTag,curTagName,curTagValue):
-        '''Find interesting keys and keep their values for later. This is separate from storeTag
+    def _catchUsefulTags(self,totalTag,curTagName,curTagValue):
+        '''Find interesting keys and keep their values for later. This is separate from _storeTag
         so that it is easy to find and modify.
         '''
         if curTagName.find('Data.arraySize')>-1:
@@ -518,7 +518,7 @@ class fileDM:
         except:
             raise
     
-    def checkIndex(self, i):
+    def _checkIndex(self, i):
         '''Check index i for sanity, otherwise raise Exception.
         
         Parameters:
@@ -536,7 +536,7 @@ class fileDM:
             
         return        
     
-    def getNPDataType(self, dd):
+    def _DM2NPDataType(self, dd):
         '''Convert the DM data type value into a numpy dtype
         '''
         if dd == 6:
@@ -573,7 +573,7 @@ class fileDM:
         
         #Check that the dataset exists.
         try:
-            self.checkIndex(ii)
+            self._checkIndex(ii)
         except:
             raise
         
@@ -588,13 +588,12 @@ class fileDM:
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
             if self.zSize[ii] == 1: #2D data
-                outputDict['image2D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+                outputDict['image2D'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
             elif self.zsize2[ii] > 1: #4D data
-                outputDict['image4D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['image4D'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
             else: #3D array
-                outputDict['image3D'] = np.fromfile(self.fid,count=pixelCount,dtype=self.getNPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['image3D'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
                 #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
-            
         
         return outputDict
         
