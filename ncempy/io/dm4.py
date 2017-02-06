@@ -473,7 +473,7 @@ class fileDM4:
         fnameOutPrefix = self.filename.split('.dm3')[0]
         try:
             #open a text file to write out the tags
-            with fopen(fnameOutPrefix+'_tags.txt','w') as fidOut:
+            with open(fnameOutPrefix+'_tags.txt','w') as fidOut:
                 for nn in self.allTags:
                     fidOut.write(nn + ' = ' + str(self.allTags[nn]))
             fidOut.close() #this might not be necessary
