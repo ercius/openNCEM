@@ -510,7 +510,12 @@ class fileDM:
             #open a text file to write out the tags
             with open(fnameOutPrefix+'_tags.txt','w') as fidOut:
                 for nn in self.allTags:
-                    fidOut.write(nn + ' = ' + str(self.allTags[nn]))
+                    try:
+                        oo = '{} = {}'.format(nn,str(self.allTags[nn]))
+                        fidOut.write(oo)
+                    except:
+                        fidOut.write('{} = dm.py error'.format(nn))
+                    fidOut.write('\n')
             fidOut.close() #this might not be necessary
         except NameError:
             print("Issue opening tags output file.")
@@ -587,7 +592,7 @@ class fileDM:
         
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
-            outputDict['scaleUnit'] = self.scaleUnit[ii]
+            outputDict['scaleUnit'] = self.scaleUnit
             pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
