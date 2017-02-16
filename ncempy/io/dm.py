@@ -109,12 +109,14 @@ class fileDM:
         osSize = fileStats(self.filename).st_size
         if self.dmType == 3:
             if self.fileSize != osSize-20:
-                raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
-                output = False
+                #raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
+                #output = False
+                print('Warning: file size on disk ({}) does not match expected file size in header ({}).'.format(osSize, self.fileSize))
         elif self.dmType == 4:
             if self.fileSize != osSize-24:
-                raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
-                output = False
+                #raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
+                #output = False
+                print('Warning: file size on disk ({}) does not match expected file size in header ({}).'.format(osSize, self.fileSize))
             
         return output
     
