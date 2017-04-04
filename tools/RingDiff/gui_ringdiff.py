@@ -689,7 +689,7 @@ class Main(QtGui.QMainWindow):
             
             self.gui_localmax['txt_lmax_r'].setText('{}'.format(self.settings['lmax_r']))
             self.gui_localmax['txt_lmax_thresh'].setText('{}'.format(self.settings['lmax_thresh']))
-            self.gui_localmax['txt_lmax_cinit'].setText('{:g}, {:g}'.format(self.settings['lmax_cinit'][0], self.settings['lmax_cinit'][1]))
+            self.gui_localmax['txt_lmax_cinit'].setText('{:g}, {:g}'.format(self.settings['lmax_cinit'][1], self.settings['lmax_cinit'][0]))
             self.gui_localmax['txt_lmax_range'].setText('{:g}, {:g}'.format(self.settings['lmax_range'][0], self.settings['lmax_range'][1]))
             
             self.gui_polar['dist_txt'].setText( ', '.join(map(str, self.settings['ns']) ) )
@@ -825,11 +825,11 @@ class Main(QtGui.QMainWindow):
                 
             else:
                 if not self.radprof[self.idx] is None:
-                    femd.put_emdgroup('radial_profile', self.radprof[0][:,1], ( (self.radprof[0][:,0], 'radial_distance', self.dims[2][2]), ), parent=hdl, overwrite=True)
+                    femd.put_emdgroup('radial_profile', self.radprof[0][:,1], ( (self.radprof[0][:,0], 'radial_distance', self.dims[0][2]), ), parent=hdl, overwrite=True)
                 if not self.res[self.idx] is None:
                     femd.put_emdgroup('fit_results', self.res[0], ( ( np.array(range(self.res[0].shape[0])), 'parameters', '[]'), ), parent=hdl, overwrite=True)
                 if not self.center[self.idx] is None:
-                    femd.put_emdgroup('centers', self.center[0], ( ( np.array(range(2)), 'dimension', self.dims[2][2]), ), parent=hdl, overwrite=True) 
+                    femd.put_emdgroup('centers', self.center[0], ( ( np.array(range(2)), 'dimension', self.dims[0][2]), ), parent=hdl, overwrite=True) 
                 if not self.dists[self.idx] is None:
                     femd.put_emdgroup('distortions', self.dists[0], ( ( np.array(range(self.dists[0].shape[0])), 'parameters', '[]'), ), parent=hdl, overwrite=True)
                 if not self.back_params[self.idx] is None:
@@ -914,18 +914,36 @@ class Main(QtGui.QMainWindow):
         
         if not self.data is None:
         
-            # set axis
-            axis1 = self.plt_localmax.getAxis('bottom')
-            axis1.setLabel(self.dims[1][1], self.dims[1][2])
-            axis2 = self.plt_localmax.getAxis('left')
-            axis2.setLabel(self.dims[2][1], self.dims[2][2])
-           
-            # plot image
-            self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
-            self.plt_localmax_img.setZValue(-100)
-            self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims[2][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[2][0][-1]-self.dims[2][0][0]))
-            self.plt_localmax.addItem(self.plt_localmax_img)
+            # sgl image versus series
+            if len(self.dims) == 2:
             
+                # set axis
+                axis1 = self.plt_localmax.getAxis('bottom')
+                axis1.setLabel(self.dims[1][1], self.dims[1][2])
+                axis2 = self.plt_localmax.getAxis('left')
+                axis2.setLabel(self.dims[0][1], self.dims[0][2])
+               
+                # plot image
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img.setZValue(-100)
+                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims[0][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[0][0][-1]-self.dims[0][0][0]))
+                self.plt_localmax.addItem(self.plt_localmax_img)
+                
+            else:
+            
+                # set axis
+                axis1 = self.plt_localmax.getAxis('bottom')
+                axis1.setLabel(self.dims[2][1], self.dims[2][2])
+                axis2 = self.plt_localmax.getAxis('left')
+                axis2.setLabel(self.dims[1][1], self.dims[1][2])
+               
+                # plot image
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img.setZValue(-100)
+                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[2][0][0],self.dims[1][0][0],self.dims[2][0][-1]-self.dims[2][0][0],self.dims[1][0][-1]-self.dims[1][0][0]))
+                self.plt_localmax.addItem(self.plt_localmax_img)
+                
+            # plot points
             if not self.points[self.idx] is None:
             
                 # draw points
@@ -960,6 +978,7 @@ class Main(QtGui.QMainWindow):
                 rrange = []
             else:
                 cinit = [float(item.strip()) for item in cinit.split(',')]
+                cinit = cinit[::-1]
                 rrange = [float(item.strip()) for item in rrange.split(',')]
                 assert(len(cinit)==2 and len(rrange)==2)
                 
@@ -972,10 +991,16 @@ class Main(QtGui.QMainWindow):
         self.settings['lmax_thresh'] = thresh
         self.settings['lmax_cinit'] = cinit
         self.settings['lmax_range'] = rrange
-            
+        
+        if len(self.dims) == 2:
+            c_dims = self.dims
+        else:
+            c_dims = self.dims[1:3]
+        
+        
         # find local max
         points = ncempy.algo.local_max.local_max(self.data[self.idx,:,:], self.settings['lmax_r'], self.settings['lmax_thresh'])
-        points = ncempy.algo.local_max.points_todim(points, self.dims[1:3])
+        points = ncempy.algo.local_max.points_todim(points, c_dims)
                 
         self.log('.. found {:d} candidate points.'.format(points.shape[0]))
                 
@@ -1007,10 +1032,10 @@ class Main(QtGui.QMainWindow):
     
             mousePoint = self.plt_localmax.getPlotItem().vb.mapSceneToView(evt.scenePos())
         
-            cinit = (mousePoint.x(), mousePoint.y())
+            cinit = (mousePoint.y(), mousePoint.x())
             self.settings['lmax_cinit'] = cinit
             self.log('Selected initial center guess: ({:g}, {:g}).'.format(self.settings['lmax_cinit'][0], self.settings['lmax_cinit'][1]))
-            self.gui_localmax['txt_lmax_cinit'].setText( ', '.join(map('{:g}'.format, self.settings['lmax_cinit'])) )
+            self.gui_localmax['txt_lmax_cinit'].setText( ', '.join(map('{:g}'.format, self.settings['lmax_cinit'][::-1])) )
 
             self.gui_localmax['btn_lmax_cinit'].setChecked(False)
             
@@ -1135,10 +1160,15 @@ class Main(QtGui.QMainWindow):
         
         self.plt_radprof.clear()
         
+        if len(self.dims) == 2:
+            c_dims = self.dims
+        else:
+            c_dims = self.dims[1:3]
+        
         if (not self.radprof is None) and (not self.radprof[self.idx] is None):
         
             axis1 = self.plt_radprof.getAxis('bottom')
-            axis1.setLabel('radial distance', self.dims[0][2])
+            axis1.setLabel('radial distance', c_dims[0][2])
             axis2 = self.plt_radprof.getAxis('left')
             axis2.setLabel('intensity')
         
@@ -1237,11 +1267,16 @@ class Main(QtGui.QMainWindow):
             self.log('Failed to parse given input to extract radial profile.')
             raise TypeError('Bad input in ')
         
+        if len(self.dims) == 2:
+            c_dims = self.dims
+        else:
+            c_dims = self.dims[1:3]
+        
         # save settings
         if len(pars) == 0:
-            self.settings['rad_rmax'] = np.abs(self.dims[2][0][0]-self.dims[2][0][1])*np.min(self.data[self.idx,:,:].shape)/2.0
-            self.settings['rad_dr'] = np.abs(self.dims[2][0][0]-self.dims[2][0][1])/10.
-            self.settings['rad_sigma'] = np.abs(self.dims[2][0][0]-self.dims[2][0][1])
+            self.settings['rad_rmax'] = np.abs(c_dims[1][0][0]-c_dims[1][0][1])*np.min(self.data[self.idx,:,:].shape)/2.0
+            self.settings['rad_dr'] = np.abs(c_dims[1][0][0]-c_dims[1][0][1])/10.
+            self.settings['rad_sigma'] = np.abs(c_dims[1][0][0]-c_dims[1][0][1])
             self.log('.. calculating adaptive defaults: r_max: {:g}, dr: {:g}, sigma: {:g}'.format(self.settings['rad_rmax'], self.settings['rad_dr'], self.settings['rad_sigma']))
         else:
             self.settings['rad_rmax'] = pars[0]
@@ -1253,10 +1288,10 @@ class Main(QtGui.QMainWindow):
         
         # get the polar coordinate system
         if self.gui_radprof['crct_check'].isChecked():
-            rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], self.dims[1:3], self.settings['ns'], self.dists[self.idx] )
+            rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], c_dims, self.settings['ns'], self.dists[self.idx] )
             self.log('.. calculating coordinate system, correcting for distortions.')
         else:
-            rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], self.dims[1:3] )
+            rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], c_dims )
             self.log('.. calculating coordinate system, not correcting distortions.')
         
         # get the radial profile
@@ -1504,6 +1539,8 @@ class Main(QtGui.QMainWindow):
                 self.log('Running evaluation of {:d}/{:d}.'.format(self.idx+1, self.data.shape[0]))
                 
                 self.on_runsgl()
+        else:
+            self.on_runsgl()
     
     
     def on_saveCorrPattern(self):
@@ -1522,6 +1559,11 @@ class Main(QtGui.QMainWindow):
             
             data_corr = np.zeros(self.data.shape)
             
+            if len(self.dims) == 2:
+                c_dims = self.dims
+            else:
+                c_dims = self.dims[1:3]
+            
             for i in range(self.data.shape[0]):
                 
                 self.idx = i
@@ -1530,7 +1572,7 @@ class Main(QtGui.QMainWindow):
                  
                     self.log('.. correcting image {:d}/{:d}.'.format(self.idx+1, self.data.shape[0]))
                         
-                    data_corr[self.idx,:,:] = ncempy.algo.radial_profile.correct_distortion( self.data[self.idx,:,:], self.dims[1:3], self.center[self.idx], self.settings['ns'], self.dists[self.idx])
+                    data_corr[self.idx,:,:] = ncempy.algo.radial_profile.correct_distortion( self.data[self.idx,:,:], c_dims, self.center[self.idx], self.settings['ns'], self.dists[self.idx])
                 else:
                     self.log('.. skipping image {:d}/{:d} for missing results.'.format(self.idx+1, self.data.shape[0]))
             
