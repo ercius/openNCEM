@@ -15,12 +15,9 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     Optional Inputs:
         'phase' or 'cross' or 'hybrid' - string that specifies correlation method used. (default = 'cross')
         upsampleFactor - scalar integer specifying 1/subpixel_precision of fit. (default = 1)
-        peakList - [N x 3] array consisting of the (rough) peak locations to search for, where each row consists of [x0 y0 searchRadius]. (default - return only highest global peak)
-        Note that (x0,y0) are the shift vectors, where (0,0) is unshifted.
+
     Outputs:
         xyShift - the shift between G1 and G2 in pixels
-        G2shift - the Fourier transform of G2 such that it is shifted to most closely correlate with G1
-        imageCorrIFT - the correlogram for G1 and G2, useful for debugging.
 
     Defaults -
         method = 'phase';
@@ -159,6 +156,11 @@ def dftUpsample(imageCorr, upsampleFactor, xyShift):
     return np.real(np.dot(np.dot(rowKern.transpose(), imageCorr), colKern.transpose()))
 
 def imageShifter(G2, xyShift):
+    '''
+    This function fourier shifts G2 by [x, y] pixels.
+    G2 is an image
+    xyShift is a two element list
+    '''
     imageSize = G2.shape
     qx = makeFourierCoords(imageSize[0], 1) # does this need to be a column vector
     if imageSize[1] == imageSize[0]:
