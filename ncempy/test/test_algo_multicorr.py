@@ -68,7 +68,8 @@ class test_shiftedimages(unittest.TestCase):
         Test to check if the correlation is working.
         '''
         g2 = np.zeros((3,3))
-        test = mc.multicorr(np.fft.fft2(g2), np.fft.fft2(g2), 'phase', 10)
+        test = mc.multicorr(np.fft.fft2(g2), np.fft.fft2(g2), 'phase', 3)
+        print(test)
         assert list(test) == [0, 0]
 
         filename = '/Users/Tom/Downloads/matt_beard.jpg'
@@ -111,17 +112,19 @@ class test_shiftedimages(unittest.TestCase):
         '''
         filename = '/Users/Tom/Downloads/matt_beard.jpg'
         G1 = cv2.imread(filename, 0)
-        G1 = G1[0:100, 0:100]
-        shifts = [[30, 10], [-30, -10], [-30, 10], [30,-10]]
+        G1 = G1[0:102, 0:102]
+        shifts = [[30., 10.], [-30., -10.], [-30., 10.], [30.,-10.]]
         shifts2 = [[30.3, 10.1], [-30.3, -10.1], [-30.3, 10.1], [30.3,-10.1]]
         for i in shifts:
             # print(i)
             G2 = np.real(np.fft.ifft2(mc.imageShifter(np.fft.fft2(G1), i)))
+            # plt.imshow(np.concatenate((G1, G2)))
+            # plt.show(block = True)
             with self.subTest(i = i):
-                out_phase = mc.multicorr(np.fft.fft2(G1), (np.fft.fft2(G2)), 'phase', 2)
-                self.assertEqual(out_phase, i)
-                out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 1)
-                self.assertEqual(out_cross, i)
+                out_phase = mc.multicorr(np.fft.fft2(G1), (np.fft.fft2(G2)), 'phase', 3)
+                np.testing.assert_almost_equal(out_phase, i, decimal = 6)
+                out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 3)
+                np.testing.assert_almost_equal(out_cross, i, decimal = 6)
                 out_hybrid = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'hybrid', 3)
                 out_hybrid = list(out_hybrid)
                 np.testing.assert_almost_equal(out_hybrid, i, decimal = 6)
