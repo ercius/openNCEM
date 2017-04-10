@@ -632,8 +632,8 @@ class fileDM:
 def dmReader(fName,dSetNum=0,verbose=False):
     '''Simple function to parse the file and read the requested dataset
     '''
-    f1 = fileDM(fName,verbose)
-    f1.parseHeader()
-    im1 = f1.getDataset(dSetNum)
-    del f1
-    return im1
+    f1 = fileDM(fName,verbose) #open the file and init the class
+    f1.parseHeader() #parse the header
+    im1 = f1.getDataset(dSetNum) #get the requested dataset (first by default)
+    del f1 #delete the class and close the file
+    return im1 #return the dataset and metadata as a dictionary
