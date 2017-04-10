@@ -579,10 +579,13 @@ class fileDM:
     def getDataset(self, index):
         '''Retrieve a dataseet from the DM file.
         Note: All DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data.
-        This function ignores that dataset. To retrieve the thumbnail set index = -1
+        This function ignores that dataset if it exists (numObjects > 1). To retrieve the thumbnail use the getThumbnail() function
         '''
-        #The first dataset is always a thumbnail. Skip it automatically
-        ii = index + 1
+        #The first dataset is always a thumbnail. Test for this and skip the thumbnail automatically
+        if self.numObjects == 1:
+            ii = index
+        else:
+            ii = index + 1
         
         #Check that the dataset exists.
         try:
@@ -622,7 +625,7 @@ class fileDM:
         return self._readRGB(self.xSize[0],self.ySize[0])
         
 def dmReader(fName,dSetNum=0,verbose=False):
-    '''Simple function to parse and read the requested dataset
+    '''Simple function to parse the file and read the requested dataset
     '''
     f1 = fileDM(fName,verbose)
     f1.parseHeader()
