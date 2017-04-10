@@ -4,6 +4,7 @@ A module to load data and meta data from DM4 files into python
 """
 import numpy as np
 from os import stat as fileStats
+from os.path import basename as osBasename
 
 class fileDM:
     def __init__(self, filename, verbose = False):
@@ -597,9 +598,13 @@ class fileDM:
         
         outputDict = {}
         
+        outputDict['filename'] = osBasename(self.filename)
+        
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
-            outputDict['scaleUnit'] = self.scaleUnit
+            outputDict['pixelUnit'] = self.scaleUnit[::-1] #need to reverse the order to match the C-ordering of the data
+            outputDict['pixelSize'] = self.scale[::-1]
+            outputDict['pixelOrigin'] = self.origin[::-1]
             pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
