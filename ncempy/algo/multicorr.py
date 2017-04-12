@@ -28,6 +28,8 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     method, upsampleFactor = parse_input(G1, G2, method, upsampleFactor)
     imageCorr = initial_correlation_image(G1, G2, method, upsampleFactor)
     xyShift = upsampled_correlation(imageCorr, upsampleFactor)
+    print(method)
+    print('------------')
     return xyShift
 
 def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
@@ -261,5 +263,5 @@ def makeFourierCoords(N, pSize):
     if N % 2 == 0:
         q = np.roll(np.arange(-N/2, N/2, dtype = 'float64') / (N * pSize), int(-N/2), axis=0)
     else:
-        q = np.roll(np.arange(-N/2 + 0.5, N/2 + 0.5) / ((N-1) * pSize), int(-N/2 + 0.5), axis=0)
+        q = np.roll(np.arange((1-N)/2, (N+1)/2) / (N * pSize), int((1-N)/2), axis=0)
     return q

@@ -72,10 +72,12 @@ class test_shiftedimages(unittest.TestCase):
         print(test)
         assert list(test) == [0, 0]
 
-        filename = '/Users/Tom/Downloads/matt_beard.jpg'
-        filename_shifted = '/Users/Tom/Downloads/matt_beard_shifted.jpg'
-        G1 = cv2.imread(filename, 0)
-        G1 = G1[0:100, 0:100]
+        # filename = '/Users/Tom/Downloads/matt_beard.jpg'
+        # filename_shifted = '/Users/Tom/Downloads/matt_beard_shifted.jpg'
+        # G1 = cv2.imread(filename, 0)
+        # G1 = G1[0:100, 0:100]
+        G1 = np.zeros((100,100))
+        G1[42,35] = 12
         # G2 = cv2.imread(filename_shifted, 0)
         G2 = np.real(np.fft.ifft2(mc.imageShifter(np.fft.fft2(G1), [-30, 10])))
         print(G1.shape, G2.shape)
@@ -110,11 +112,15 @@ class test_shiftedimages(unittest.TestCase):
         '''
         Tests to check if mod is working correctly
         '''
-        filename = '/Users/Tom/Downloads/matt_beard.jpg'
-        G1 = cv2.imread(filename, 0)
-        G1 = G1[0:102, 0:102]
-        shifts = [[30., 10.], [-30., -10.], [-30., 10.], [30.,-10.]]
-        shifts2 = [[30.3, 10.1], [-30.3, -10.1], [-30.3, 10.1], [30.3,-10.1]]
+        # filename = '/Users/Tom/Downloads/matt_beard.jpg'
+        # G1 = cv2.imread(filename, 0)
+        # G1 = G1[0:501, 0:501]
+        G1 = np.zeros((101,101))
+        G1[55,55] = 12
+        # plt.imshow(G1)
+        # plt.show(block = True)
+        shifts = [[3., 1.], [-3., -1.], [-3., 1.], [3.,-1.]]
+        shifts2 = [[10.3, 14.1], [-10.3, -14.1], [-10.3, 14.1], [10.3,-14.1]]
         for i in shifts:
             # print(i)
             G2 = np.real(np.fft.ifft2(mc.imageShifter(np.fft.fft2(G1), i)))
@@ -137,13 +143,13 @@ class test_shiftedimages(unittest.TestCase):
                 out_phase = list(out_phase)
                 np.testing.assert_almost_equal(out_phase, i, decimal = 2)
 
-                out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 10)
-                out_cross = list(out_cross)
-                np.testing.assert_almost_equal(out_cross, i, decimal = 2)
-
                 out_hybrid = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'hybrid', 10)
                 out_hybrid = list(out_hybrid)
                 np.testing.assert_almost_equal(out_hybrid, i, decimal = 2)
+
+                out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 10)
+                out_cross = list(out_cross)
+                np.testing.assert_almost_equal(out_cross, i, decimal = 2)
 
 if __name__ == "__main__":
     unittest.main()
