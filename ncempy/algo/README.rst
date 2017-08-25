@@ -20,3 +20,5 @@ Overview of contents with short description:
 +--------------------+--------------------------------------------------------------------+
 | radial_profile     | Calculate azimuthally averaged radial profiles of images.          |
 +--------------------+--------------------------------------------------------------------+
+| multicorr          | Perform a correlation function to arbitrary precision using phase, cross, or hybrid correlation.          |
++--------------------+--------------------------------------------------------------------+

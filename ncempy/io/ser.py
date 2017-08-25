@@ -377,7 +377,7 @@ class fileSER:
 
             # dataset
             dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0]*meta['ArrayShape'][1])
-            dataset = dataset.reshape(meta['ArrayShape'])
+            dataset = dataset.reshape(meta['ArrayShape'][::-1]) #needs to be reversed for little endian data
         
             dataset = np.flipud(dataset)
 
