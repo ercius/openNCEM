@@ -2,7 +2,9 @@
 A module to load data and meta data from DM4 files into python
 
 """
-from io import BufferedReader
+from io import BufferedReader, BufferedRandom, BytesIO
+import mmap
+import struct
 from os import stat as fileStats
 from os.path import basename as osBasename
 
@@ -34,11 +36,36 @@ class fileDM:
         
         # try opening the file
         try:
-            self.fid = open(filename, 'rb')
+            if not self._on_memory:
+                self.fid = open(filename, 'rb')
             if self._on_memory:
-                self._real_fid=self.fid
-                self.fid=BufferedReader(self.fid,
-                                        buffer_size=get_file_size(filename))
+                print("Hi!")
+                self._buffer_offset = 0
+                _fid = open(filename, 'rb')
+                self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
+                self._buffer_size=get_file_size(filename)
+                _fid.close()
+                #self.fid = np.memmap(filename, mode='r')
+                self._real_fid=1
+                # _fid = open(filename, 'rb')
+                # self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
+                # _fid.close
+                
+                # self._real_fid = open(filename, 'rb')
+                # self.fid = BufferedRandom(BytesIO(self._real_fid.read()))
+                # self.fid.fileno=self._real_fid.fileno()
+                # self._real_fid.close()
+                
+                # self._real_fid = open(filename, 'rb')
+                # self.fid=self._real_fid.read(get_file_size(filename))
+                # self._real_fid.close()
+                
+                
+                # self.fid = open(filename, 'r+b')
+                # self.fid.seek(0, 0)
+                # self._real_fid=self.fid
+                # self.fid=BufferedRandom(self.fid,
+                #                         buffer_size=get_file_size(filename))
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise
@@ -83,7 +110,7 @@ class fileDM:
     
     def __del__(self):
         #close the file
-        if(self.fid):
+        if(not self._on_memory and self.fid):
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
@@ -91,13 +118,66 @@ class fileDM:
             if self.v:
                 print('Closing tags output file')
             self.fidOut.close()
-    
+    def fromfile(self, *args, **kwargs):
+        if self._on_memory:
+            kwargs["offset"]=self._buffer_offset
+            dtype=kwargs["dtype"]
+            count=kwargs["count"]
+            dtype=np.dtype(dtype)
+            item_size=int(dtype.itemsize)
+            count=int(count)
+            offset_jump=item_size*count
+            
+            # print("OFFSET", type(self._buffer_offset), "DTYPE", dtype,
+            #     "ITEMSIZE", dtype.itemsize, "COUNT", count,
+            #     "JUMP",  type(offset_jump))
+            self._buffer_offset+=offset_jump
+            # print("ItemSize", dtype.itemsize, "jump", offset_jump)
+            return np.frombuffer(*args, **kwargs)
+        else:
+            return np.fromfile(*args, **kwargs)
+    def seek(self, fid, offset, from_what=0):
+        if self._on_memory:
+            # print("SEEK", self._buffer_offset, "OFFSET", offset,
+            #     "FROM_WHAT", from_what)
+            offset=int(offset)
+            old_b = self._buffer_offset
+            if from_what==0:
+                self._buffer_offset=offset
+            elif from_what==1:
+                self._buffer_offset+=offset
+            elif from_what==2:
+                self._buffer_offset=self._buffer_size+offset-1
+            else:
+                raise ValueError("Unkown from_what value: {}".format(from_what))
+            offset_jump=self._buffer_offset-old_b
+            # print("JUMP",  offset_jump, "NEW_OFFSET", self._buffer_offset)
+        else:
+            return fid.seek(offset, from_what)
+
+
     def _validDM(self):
         '''Test whether a file is a valid DM3 or DM4 file and written in Little Endian format
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
+        
 
-        self.dmType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type: == 3 for DM3 or == 4 for DM4
+        # old_fid=self.fid
+        # #self.fid = np.memmap(self.filename, mode='r+', dtype='byte')
+        # self.fid = mmap.mmap(old_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
+        # vec_file=np.fromfile(old_fid,dtype='>u4',count=8)
+        # vec_mem=np.frombuffer(self.fid,dtype='>u4',count=8)
+
+        # print("FILE: {}".format(vec_file))
+        # print("MEM : {}".format(vec_mem))
+        # self.fid.seek(4)
+        # vec_file=np.fromfile(old_fid,dtype='>u4',count=8)
+        # vec_mem=np.frombuffer(self.fid,dtype='>u4',count=8, offset=8*4)
+
+        # print("FILE: {}".format(vec_file))
+        # print("MEM : {}".format(vec_mem))
+
+        self.dmType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type: == 3 for DM3 or == 4 for DM4
         
         if self.v:
             print('validDM: DM file type numer = {}'.format(self.dmType))
@@ -109,9 +189,9 @@ class fileDM:
         else:
             raise IOError('File is not a valid DM3 or DM4')
             output = False
-        
-        self.fileSize = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
-        self.endianType = np.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
+                
+        self.fileSize = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
+        self.endianType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
         
         if self.endianType != 1:
             #print('File is not written Little Endian (PC) format and can not be read by this program.')
@@ -140,9 +220,9 @@ class fileDM:
         '''
         #skip the bytes read by dmType
         if self.dmType == 3:
-            self.fid.seek(12,0)
+            self.seek(self.fid, 12,0)
         elif self.dmType == 4:
-            self.fid.seek(16,0)
+            self.seek(self.fid, 16,0)
         #Read the first root tag the same as any other group
         self._readTagGroup()
         
@@ -156,8 +236,8 @@ class fileDM:
             
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
-        np.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
-        nTags = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
+        self.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
+        nTags = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
         
         if self.v:
             print('Total number of root tags = {}'.format(nTags))
@@ -174,19 +254,19 @@ class fileDM:
     def _readTagEntry(self):
         '''Read one entry in a tag group
         '''
-        dataType = np.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
+        dataType = self.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
         
         #Record tag at this level
         self.curTagAtLevelX[self.curGroupLevel] += 1
         
         #get the tag
-        lenTagLabel = np.fromfile(self.fid,dtype='>u2',count=1)[0]
+        lenTagLabel = self.fromfile(self.fid,dtype='>u2',count=1)[0]
         
         if self.v:
             print('_readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType,lenTagLabel))
             
         if lenTagLabel > 0:
-            tagLabelBinary = np.fromfile(self.fid,dtype='<u1',count=lenTagLabel) #read as binary
+            tagLabelBinary = self.fromfile(self.fid,dtype='<u1',count=lenTagLabel) #read as binary
             tagLabel = self._bin2str(tagLabelBinary)
             if self.v:
                 print('_readTagEntry: tagLabel = {}'.format(tagLabel))
@@ -206,7 +286,7 @@ class fileDM:
             
             #An unknown part of the DM4 tags
             if self.dmType == 4:
-                temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
+                temp1 = self.fromfile(self.fid,dtype=self.specialType,count=1)[0]
             
             self._readTagGroup()
             
@@ -215,18 +295,18 @@ class fileDM:
     def _readTagType(self):
         #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
         if self.dmType == 4:
-            temp1 = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
+            temp1 = self.fromfile(self.fid,dtype=self.specialType,count=1)[0]
         
-        delim = np.fromfile(self.fid,dtype='<i1',count=4)
+        delim = self.fromfile(self.fid,dtype='<i1',count=4)
         assert((delim == 37).all()) #delim has to be [37,37,37,37] which is %%%% in ASCII.
         if self.v:
             print('_readTagType: should be %%%% = {}'.format(self._bin2str(delim)))
         
-        nInTag = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #nInTag: unnecessary redundant info
+        nInTag = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #nInTag: unnecessary redundant info
         
         #Determine the type of the data in the tag
         #specifies data type: int8, uint16, float32, etc.
-        encodedType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0] #big endian
+        encodedType = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #big endian
         
         etSize = self._encodedTypeSize(encodedType)
         
@@ -238,9 +318,9 @@ class fileDM:
         elif encodedType == 18: #string
             if self.v:
                 print('string')
-            stringSize = np.fromfile(self.fid,dtype='>u4',count=1)[0]
+            stringSize = self.fromfile(self.fid,dtype='>u4',count=1)[0]
             #strtemp = '' #in case stringSize == 0
-            strTempBin = np.fromfile(self.fid,dtype='<u1',count=stringSize) #read as uint8 little endian
+            strTempBin = self.fromfile(self.fid,dtype='<u1',count=stringSize) #read as uint8 little endian
             strTemp = self._bin2str(strTempBin)
             self._storeTag(self.curTagName,strTemp)
         elif encodedType == 15: #struct
@@ -331,8 +411,8 @@ class fileDM:
     def _readStructTypes(self):
         '''Analyze the types of data in a struct
         '''
-        structNameLength = np.fromfile(self.fid,count=1,dtype=self.specialType)[0] #this is not needed
-        nFields = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
+        structNameLength = self.fromfile(self.fid,count=1,dtype=self.specialType)[0] #this is not needed
+        nFields = self.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         if self.v:
             print('_readStructTypes: nFields = {}'.format(nFields))
         
@@ -341,7 +421,7 @@ class fileDM:
         
         fieldTypes = np.zeros(nFields)
         for ii in range(0,nFields):
-            aa = np.fromfile(self.fid,dtype=self.specialType,count=2) #nameLength, fieldType
+            aa = self.fromfile(self.fid,dtype=self.specialType,count=2) #nameLength, fieldType
             nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
@@ -369,33 +449,33 @@ class fileDM:
             UINT64 (uint64) = 11;
         '''
         if encodedType == 2:
-            val = np.fromfile(self.fid,count=1,dtype='<i2')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<i2')[0]
         elif encodedType == 3:
-            val = np.fromfile(self.fid,count=1,dtype='<i4')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<i4')[0]
         elif encodedType == 4:
-            val = np.fromfile(self.fid,count=1,dtype='<u2')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<u2')[0]
         elif encodedType == 5:
-            val = np.fromfile(self.fid,count=1,dtype='<u4')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<u4')[0]
         elif encodedType == 6:
-            val = np.fromfile(self.fid,count=1,dtype='<f4')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<f4')[0]
         elif encodedType == 7:
-            val = np.fromfile(self.fid,count=1,dtype='<f8')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<f8')[0]
         elif encodedType == 8: #matlab uchar
-            val = np.fromfile(self.fid,count=1,dtype='<u1')[0] #return character or number?
+            val = self.fromfile(self.fid,count=1,dtype='<u1')[0] #return character or number?
             if self.v:
                 print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 9: #matlab *char
-            val = np.fromfile(self.fid,count=1,dtype='<i1')[0] #return character or number?
+            val = self.fromfile(self.fid,count=1,dtype='<i1')[0] #return character or number?
             if self.v:
                 print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 10: #matlab *char
-            val = np.fromfile(self.fid,count=1,dtype='<i1')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<i1')[0]
             if self.v:
                 print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
         elif encodedType == 11:
-            val = np.fromfile(self.fid,count=1,dtype='<u8')[0]
+            val = self.fromfile(self.fid,count=1,dtype='<u8')[0]
         elif encodedType == 12:
-            val = np.fromfile(self.fid,count=1,dtype='<u8')[0] #unknown type, but this works
+            val = self.fromfile(self.fid,count=1,dtype='<u8')[0] #unknown type, but this works
         else:
             print('_readNativeData unknown data type: {}'.format(encodedType))
             raise
@@ -407,7 +487,7 @@ class fileDM:
     def _readArrayTypes(self):
         '''Analyze the types of data in an array
         '''
-        arrayType = np.fromfile(self.fid,dtype=self.specialType,count=1)[0]
+        arrayType = self.fromfile(self.fid,dtype=self.specialType,count=1)[0]
         
         itemTypes = []
         
@@ -428,7 +508,7 @@ class fileDM:
         '''
         
         #The number of elements in the array
-        arraySize = np.fromfile(self.fid,count=1,dtype=self.specialType)[0]
+        arraySize = self.fromfile(self.fid,count=1,dtype=self.specialType)[0]
         
         if self.v:
             print('_readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
@@ -452,16 +532,16 @@ class fileDM:
             self._storeTag(self.curTagName + '.arraySize', bufSize)
             self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             self._storeTag(self.curTagName + '.arrayType', encodedType)
-            self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
+            self.seek(self.fid, bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
         elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
             #treat as a string
             for encodedType in arrayTypes:
-                stringData = np.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
+                stringData = self.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
                 arrOut = self._bin2str(stringData)
             
             #THis is the old way to read this in. Its not really correct though.
-            #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
+            #stringData = self.bin2str(self.fromfile(self.fid,count=bufSize,dtype='<u1'))
             #arrOut = stringData.replace('\x00','') #remove all spaces from the string data
             
             #Catch useful tags for images and spectra (nm, eV, etc.)
@@ -474,7 +554,7 @@ class fileDM:
             self._storeTag(self.curTagName + '.arraySize', bufSize)
             self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
             self._storeTag(self.curTagName + '.arrayType', encodedType)
-            self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
+            self.seek(self.fid, bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Array unread. Encoded type = {}'.format(encodedType)
   
         return arrOut
@@ -584,9 +664,11 @@ class fileDM:
         elif dd == 13:
             return np.complex128
         elif dd == 23:
+            print("1234")
             raise IOError('RGB data type is not supported yet.')
             #return np.uint8
         else:
+            print("4321")
             raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
     
     def getDataset(self, index):
@@ -606,7 +688,7 @@ class fileDM:
         except:
             raise
         
-        self.fid.seek(self.dataOffset[ii],0) #Seek to start of dataset from beginning of the file
+        self.seek(self.fid, self.dataOffset[ii],0) #Seek to start of dataset from beginning of the file
         
         outputDict = {}
         
@@ -619,26 +701,26 @@ class fileDM:
             outputDict['pixelOrigin'] = self.origin[::-1]
             pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
             #if self.dataType == 23: #RGB image(s)
-            #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
+            #    temp = self.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
             if self.zSize[ii] == 1: #2D data
-                outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
             elif self.zSize2[ii] > 1: #4D data
-                outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
             else: #3D array
-                outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
-                #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                #outputDict['cube'] = self.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
         
         return outputDict
     
     def _readRGB(self,xSizeRGB,ySizeRGB):
         '''Read in a uint8 type array with [Red,green,blue,alpha] channels.
         '''
-        return np.fromfile(self.fid,count=xSizeRGB*ySizeRGB*4,dtype='<u1').reshape(xSizeRGB,ySizeRGB,4)
+        return self.fromfile(self.fid,count=xSizeRGB*ySizeRGB*4,dtype='<u1').reshape(xSizeRGB,ySizeRGB,4)
         
     def getThumbnail(self):
         '''Read the thumbnail saved as the first dataset in the DM file as an RGB array
         '''
-        self.fid.seek(self.dataOffset[0],0)
+        self.seek(self.fid, self.dataOffset[0],0)
         return self._readRGB(self.xSize[0],self.ySize[0])
         
 def dmReader(fName,dSetNum=0,verbose=False):
