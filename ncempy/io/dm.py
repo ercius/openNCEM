@@ -1,7 +1,13 @@
 """
-A module to load data and meta data from DM4 files into python
+A module to load data and meta data from DM3 and DM4 files into python.
 
+On Memory mode:
+  The fileDM support and "on memory" mode that preoliads the file data in memory
+and data read operations during data parsing are performed against memory. This
+is critical to matain good performance when the file resides in a parallel file
+system (PFS) because latency of seek operations PFSs is very high.
 """
+
 import mmap
 from os import stat as fileStats
 from os.path import basename as osBasename
@@ -12,6 +18,13 @@ import numpy as np
 class fileDM:
     def __init__(self, filename, verbose = False, on_memory=False):
         '''Init opening the file and reading in the header.
+        
+        Args:
+            filename: string pointing to the filesystem location of the file.
+            verbose: if True, debug information is printed.
+            on_memory: if True, file data is pre-loaded in memory and all data
+              parsing is performed against memory. Use this mode if the file
+              is in a network based or paralle file system.
         '''
         
         self.filename = filename
