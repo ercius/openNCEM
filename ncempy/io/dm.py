@@ -93,17 +93,30 @@ class fileDM:
             if self.v:
                 print('Closing tags output file')
             self.fidOut.close()
-    def fromfile(self, *args, **kwargs):
-        if self._on_memory:
-            kwargs["offset"]=self._buffer_offset
-            dtype=kwargs["dtype"]
-            count=kwargs["count"]
-            dtype=np.dtype(dtype)
-            item_size=int(dtype.itemsize)
-            count=int(count)
-            offset_jump=item_size*count
-            self._buffer_offset+=offset_jump
             
+    def fromfile(self, *args, **kwargs):
+        """ Reads data from a file or momery map. 
+        Calls np.fromfile and np.frombuffer depending on the on_memory mode of
+        the fileDM.
+        
+        Args, it supports whatever frombuffer, fromfile support but it requires:
+            dtype: np.dtype (object or string) to be read.
+            count: number of dtype items to be read.
+            
+        Returns: A list of count dtype elements.        
+        """
+        if self._on_memory:
+            if "dtype" not in kwargs:
+                raise ValueError("In on_memory mode, reads require always a"
+                                 " named dtype argument to be specified.")
+            if "count" not in kwargs:
+                raise ValueError("In on_memory mode, reads require always a"
+                                 " named count argument to be specified.")
+
+            dtype=np.dtype(kwargs["dtype"])
+            count=int(kwargs["count"])
+            kwargs["offset"]=self._buffer_offset
+            self._buffer_offset+=int(dtype.itemsize)*count
             return np.frombuffer(*args, **kwargs)
         else:
             return np.fromfile(*args, **kwargs)
