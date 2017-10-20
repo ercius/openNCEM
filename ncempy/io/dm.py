@@ -2,13 +2,12 @@
 A module to load data and meta data from DM4 files into python
 
 """
-from io import BufferedReader, BufferedRandom, BytesIO
 import mmap
-import struct
 from os import stat as fileStats
 from os.path import basename as osBasename
 
 import numpy as np
+
 
 def get_file_size(file_route):
     st = fileStats(file_route)
@@ -39,33 +38,13 @@ class fileDM:
             if not self._on_memory:
                 self.fid = open(filename, 'rb')
             if self._on_memory:
-                print("Hi!")
                 self._buffer_offset = 0
                 _fid = open(filename, 'rb')
                 self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
                 self._buffer_size=get_file_size(filename)
                 _fid.close()
-                #self.fid = np.memmap(filename, mode='r')
                 self._real_fid=1
-                # _fid = open(filename, 'rb')
-                # self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
-                # _fid.close
-                
-                # self._real_fid = open(filename, 'rb')
-                # self.fid = BufferedRandom(BytesIO(self._real_fid.read()))
-                # self.fid.fileno=self._real_fid.fileno()
-                # self._real_fid.close()
-                
-                # self._real_fid = open(filename, 'rb')
-                # self.fid=self._real_fid.read(get_file_size(filename))
-                # self._real_fid.close()
-                
-                
-                # self.fid = open(filename, 'r+b')
-                # self.fid.seek(0, 0)
-                # self._real_fid=self.fid
-                # self.fid=BufferedRandom(self.fid,
-                #                         buffer_size=get_file_size(filename))
+
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise
@@ -127,19 +106,13 @@ class fileDM:
             item_size=int(dtype.itemsize)
             count=int(count)
             offset_jump=item_size*count
-            
-            # print("OFFSET", type(self._buffer_offset), "DTYPE", dtype,
-            #     "ITEMSIZE", dtype.itemsize, "COUNT", count,
-            #     "JUMP",  type(offset_jump))
             self._buffer_offset+=offset_jump
-            # print("ItemSize", dtype.itemsize, "jump", offset_jump)
+            
             return np.frombuffer(*args, **kwargs)
         else:
             return np.fromfile(*args, **kwargs)
     def seek(self, fid, offset, from_what=0):
         if self._on_memory:
-            # print("SEEK", self._buffer_offset, "OFFSET", offset,
-            #     "FROM_WHAT", from_what)
             offset=int(offset)
             old_b = self._buffer_offset
             if from_what==0:
@@ -151,7 +124,6 @@ class fileDM:
             else:
                 raise ValueError("Unkown from_what value: {}".format(from_what))
             offset_jump=self._buffer_offset-old_b
-            # print("JUMP",  offset_jump, "NEW_OFFSET", self._buffer_offset)
         else:
             return fid.seek(offset, from_what)
 
@@ -160,22 +132,6 @@ class fileDM:
         '''Test whether a file is a valid DM3 or DM4 file and written in Little Endian format
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
-        
-
-        # old_fid=self.fid
-        # #self.fid = np.memmap(self.filename, mode='r+', dtype='byte')
-        # self.fid = mmap.mmap(old_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
-        # vec_file=np.fromfile(old_fid,dtype='>u4',count=8)
-        # vec_mem=np.frombuffer(self.fid,dtype='>u4',count=8)
-
-        # print("FILE: {}".format(vec_file))
-        # print("MEM : {}".format(vec_mem))
-        # self.fid.seek(4)
-        # vec_file=np.fromfile(old_fid,dtype='>u4',count=8)
-        # vec_mem=np.frombuffer(self.fid,dtype='>u4',count=8, offset=8*4)
-
-        # print("FILE: {}".format(vec_file))
-        # print("MEM : {}".format(vec_mem))
 
         self.dmType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type: == 3 for DM3 or == 4 for DM4
         

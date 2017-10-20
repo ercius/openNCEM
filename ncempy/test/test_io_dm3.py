@@ -71,18 +71,18 @@ class test_dm3(unittest.TestCase):
         
     def test_dm4_memory_vs(self):
         m0=get_measure()
-        file_route="/project/projectdirs/m2657/NCEM/TEAM_I/Jihan/FocalSeriesImages_tip3.dm4"
-        #metadata, img = self._read_dm3_data(
-        #                        _get_image_route("FocalSeriesImages_tip3.dm4"))
-        metadata, img = self._read_dm3_data(file_route)
+        #file_route="/project/projectdirs/m2657/NCEM/TEAM_I/Jihan/FocalSeriesImages_tip3.dm4"
+        metadata, img = self._read_dm3_data(
+                                _get_image_route("FocalSeriesImages_tip3.dm4"))
+        #metadata, img = self._read_dm3_data(file_route)
         delta0=get_measure(m0, "No buffer read")
         
         m1=get_measure()
-        #metadata, img = self._read_dm3_data(
-        #                    _get_image_route("FocalSeriesImages_tip3_copy.dm4"),
-        #                    on_memory=True)
-        metadata, img = self._read_dm3_data(file_route+".copy",
+        metadata, img = self._read_dm3_data(
+                            _get_image_route("FocalSeriesImages_tip3_copy.dm4"),
                             on_memory=True)
+        #metadata, img = self._read_dm3_data(file_route+".copy",
+         #                   on_memory=True)
         delta1=get_measure(m1, "With buffer read")
         
         self.assertGreater(delta0, delta1)
