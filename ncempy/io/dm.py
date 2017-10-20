@@ -120,10 +120,21 @@ class fileDM:
             return np.frombuffer(*args, **kwargs)
         else:
             return np.fromfile(*args, **kwargs)
+    
     def seek(self, fid, offset, from_what=0):
+        """Positions the reading head for fid. fid can be a file or memory map.
+        Follows the same convention as file.seek
+        
+        Args:
+            fid: file or memory map.
+            offset: number of bytes to move the head forward (positive value)
+              or backwards (negative value).
+            from_what: reference point to use in the head movement. 0:
+              for beginning of the file (default behavior), 1: from the
+              current head position, and 2: from the end of the file.
+        """
         if self._on_memory:
             offset=int(offset)
-            old_b = self._buffer_offset
             if from_what==0:
                 self._buffer_offset=offset
             elif from_what==1:
@@ -132,7 +143,8 @@ class fileDM:
                 self._buffer_offset=self._buffer_size+offset-1
             else:
                 raise ValueError("Unkown from_what value: {}".format(from_what))
-            offset_jump=self._buffer_offset-old_b
+            if self._buffer_offset<0:
+                raise ValueError("Resulting head position cannot be negative.")
         else:
             return fid.seek(offset, from_what)
 
