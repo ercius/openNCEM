@@ -35,12 +35,12 @@ class fileDM:
                 self.fid = open(filename, 'rb')
             if self._on_memory:
                 self._buffer_offset = 0
-                _fid = open(filename, 'rb')
-                self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
-                self._buffer_size=fileStats(filename).st_size
-                _fid.close()
-                self._real_fid=1
-
+                # Pre-load the file as a memory map that supports operations
+                # similar to a file.
+                with open(filename, 'rb') as _fid:
+                    self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
+                    self._buffer_size=fileStats(filename).st_size
+                
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise

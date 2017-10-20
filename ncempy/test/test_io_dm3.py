@@ -31,7 +31,7 @@ class test_dm3(unittest.TestCase):
     def _read_dm3_data(self, file_route, on_memory=False):
         f = ncempy.io.dm.fileDM(file_route, on_memory=on_memory)
         if on_memory:
-            self.assertIsNotNone(f._real_fid)
+            self.assertTrue(f._on_memory)
         f.parseHeader()
         ds = f.getDataset(0)
         img3D = ds['data']
