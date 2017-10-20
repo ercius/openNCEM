@@ -2,12 +2,18 @@
 A module to load data and meta data from DM4 files into python
 
 """
-import numpy as np
+from io import BufferedReader
 from os import stat as fileStats
 from os.path import basename as osBasename
 
+import numpy as np
+
+def get_file_size(file_route):
+    st = fileStats(file_route)
+    return st.st_size
+
 class fileDM:
-    def __init__(self, filename, verbose = False):
+    def __init__(self, filename, verbose = False, on_memory=False):
         '''Init opening the file and reading in the header.
         '''
         
@@ -16,6 +22,8 @@ class fileDM:
         # necessary declarations, if something fails
         self.fid = None
         self.fidOut = None
+        
+        self._on_memory = on_memory
         
         # check for string
         if not isinstance(filename, str):
@@ -27,6 +35,10 @@ class fileDM:
         # try opening the file
         try:
             self.fid = open(filename, 'rb')
+            if self._on_memory:
+                self._real_fid=self.fid
+                self.fid=BufferedReader(self.fid,
+                                        buffer_size=get_file_size(filename))
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise
