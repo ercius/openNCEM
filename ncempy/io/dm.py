@@ -9,10 +9,6 @@ from os.path import basename as osBasename
 import numpy as np
 
 
-def get_file_size(file_route):
-    st = fileStats(file_route)
-    return st.st_size
-
 class fileDM:
     def __init__(self, filename, verbose = False, on_memory=False):
         '''Init opening the file and reading in the header.
@@ -41,7 +37,7 @@ class fileDM:
                 self._buffer_offset = 0
                 _fid = open(filename, 'rb')
                 self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
-                self._buffer_size=get_file_size(filename)
+                self._buffer_size=fileStats(filename).st_size
                 _fid.close()
                 self._real_fid=1
 
