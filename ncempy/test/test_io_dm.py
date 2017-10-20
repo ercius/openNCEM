@@ -100,16 +100,19 @@ class test_dm3(unittest.TestCase):
     def test_dm4_memory_vs_file(self):
         """ Even with a local HD, memory read should be x10 faster."""
         m0=get_measure()
-        metadata, img = self._read_dm3_data(
-                         self._get_image_route("FocalSeriesImages_tip3.dm4"))
-        delta0=get_measure(m0, "No buffer read")
-        
-        m1=get_measure()
-        metadata, img = self._read_dm3_data(self._get_image_route(
-                                            "FocalSeriesImages_tip3_copy.dm4"),
-                                            on_memory=True)
-        delta1=get_measure(m1, "With buffer read")
-        
-        self.assertGreater(delta0, delta1)
+        for i in range(10):
+            metadata, img = self._read_dm3_data(
+                             self._get_image_route(
+                                 "FocalSeriesImages_tip3.dm4"))
+            delta0=get_measure(m0)
+            
+            m1=get_measure()
+            metadata, img = self._read_dm3_data(
+                                self._get_image_route(
+                                    "FocalSeriesImages_tip3_copy.dm4"),
+                                on_memory=True)
+            delta1=get_measure(m1)
+            
+            self.assertGreater(delta0, delta1)
         
         
