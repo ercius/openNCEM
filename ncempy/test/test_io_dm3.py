@@ -77,7 +77,8 @@ class test_dm3(unittest.TestCase):
         
         m1=get_measure()
         metadata, img = self._read_dm3_data(
-                            _get_image_route("FocalSeriesImages_tip3_copy.dm4"))
+                            _get_image_route("FocalSeriesImages_tip3_copy.dm4"),
+                            on_memory=True)
         delta1=get_measure(m1, "With buffer read")
         
         self.assertGreater(delta0, delta1)
