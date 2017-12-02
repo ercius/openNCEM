@@ -919,28 +919,28 @@ class Main(QtGui.QMainWindow):
             
                 # set axis
                 axis1 = self.plt_localmax.getAxis('bottom')
-                axis1.setLabel(self.dims[0][1], self.dims[0][2])
+                axis1.setLabel(self.dims[1][1], self.dims[1][2])
                 axis2 = self.plt_localmax.getAxis('left')
-                axis2.setLabel(self.dims[1][1], self.dims[1][2])
+                axis2.setLabel(self.dims[0][1], self.dims[0][2])
                
                 # plot image
-                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose((1,0)).astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
                 self.plt_localmax_img.setZValue(-100)
-                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[0][0][0],self.dims   [1][0][0],self.dims[0][0][-1]-self.dims[0][0][0],self.dims[1][0][-1]-self.dims[1][0][0]))
+                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims   [0][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[0][0][-1]-self.dims[0][0][0]))
                 self.plt_localmax.addItem(self.plt_localmax_img)
                 
             else:
             
                 # set axis
                 axis1 = self.plt_localmax.getAxis('bottom')
-                axis1.setLabel(self.dims[1][1], self.dims[1][2])
+                axis1.setLabel(self.dims[2][1], self.dims[2][2])
                 axis2 = self.plt_localmax.getAxis('left')
-                axis2.setLabel(self.dims[2][1], self.dims[2][2])
+                axis2.setLabel(self.dims[1][1], self.dims[1][2])
                
                 # plot image
-                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose((1,0)).astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
                 self.plt_localmax_img.setZValue(-100)
-                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims[2][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[2][0][-1]-self.dims[2][0][0]))
+                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[2][0][0],self.dims[1][0][0],self.dims[2][0][-1]-self.dims[2][0][0],self.dims[1][0][-1]-self.dims[1][0][0]))
                 self.plt_localmax.addItem(self.plt_localmax_img)
                 
             # plot points
@@ -996,10 +996,7 @@ class Main(QtGui.QMainWindow):
             c_dims = self.dims
         else:
             c_dims = self.dims[1:3]
-            
-        #import pdb;pdb.set_trace()
-        
-        
+
         # find local max
         points = ncempy.algo.local_max.local_max(self.data[self.idx,:,:], self.settings['lmax_r'], self.settings['lmax_thresh'])
         points = ncempy.algo.local_max.points_todim(points, c_dims)
@@ -1013,6 +1010,11 @@ class Main(QtGui.QMainWindow):
         
         # save points in main
         self.points[self.idx] = points
+        
+        print('center')
+        print(self.settings['lmax_cinit'])
+        print('points')
+        print(points)
         
         # update localmax view
         self.update_localmax() 
