@@ -1011,8 +1011,6 @@ class Main(QtGui.QMainWindow):
         # save points in main
         self.points[self.idx] = points
         
-        print('center localmax')
-        print(self.settings['lmax_cinit'])
         
         # update localmax view
         self.update_localmax() 
