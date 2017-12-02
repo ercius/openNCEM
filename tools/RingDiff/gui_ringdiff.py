@@ -1011,15 +1011,12 @@ class Main(QtGui.QMainWindow):
         # save points in main
         self.points[self.idx] = points
         
-        print('center')
+        print('center localmax')
         print(self.settings['lmax_cinit'])
-        print('points')
-        print(points)
         
         # update localmax view
         self.update_localmax() 
             
-
     
     def localmax_mouseMoved(self, evt):
         pos = evt[0]
@@ -1056,7 +1053,7 @@ class Main(QtGui.QMainWindow):
         
         if not self.center[self.idx] is None:
             # update center in left column
-            self.gui_polar['center_lbl'].setText('center: ({:.3f}, {:.3f})'.format(self.center[self.idx][0], self.center[self.idx][1]))
+            self.gui_polar['center_lbl'].setText('center: ({:.3f}, {:.3f})'.format(self.center[self.idx][1], self.center[self.idx][0]))
         
             if not self.points[self.idx] is None:
                 points_plr = ncempy.algo.distortion.points_topolar(self.points[self.idx], self.center[self.idx])
@@ -1107,6 +1104,7 @@ class Main(QtGui.QMainWindow):
         if len(cinit) == 0:
             self.log('Failed to copy initial center guess from input.')
         else:
+            cinit = cinit[::-1]
             self.settings['lmax_cinit'] = cinit
             self.center[self.idx]=np.array(cinit)
             self.log('Copied initial center guess: ({:g}, {:g}).'.format(self.center[self.idx][0], self.center[self.idx][1]))
@@ -1297,7 +1295,7 @@ class Main(QtGui.QMainWindow):
         else:
             rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], c_dims )
             self.log('.. calculating coordinate system, not correcting distortions.')
-        
+              
         # get the radial profile
         R, I = ncempy.algo.radial_profile.calc_radialprofile( self.data[self.idx,:,:], rs, self.settings['rad_rmax'], self.settings['rad_dr'], self.settings['rad_sigma'], self.mask )
         
