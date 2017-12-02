@@ -114,10 +114,10 @@ class Converter(QtGui.QWidget):
             os.remove(self.emd_txt.text())
         
         
-        img = np.array(Image.open(tif_name))
+        img = np.array(Image.open(tif_name)).transpose()
         dims = []
-        dims.append( (np.array(range(img.shape[0])), 'x', 'px'))
         dims.append( (np.array(range(img.shape[1])), 'y', 'px'))
+        dims.append( (np.array(range(img.shape[0])), 'x', 'px'))
         
         femd = ncempy.io.emd.fileEMD(self.emd_txt.text())
         
@@ -126,7 +126,7 @@ class Converter(QtGui.QWidget):
         
         dset = grp.create_dataset( 'data', (img.shape[1], img.shape[0]), dtype=img.dtype)
         
-        dset[:,:] = img[:,:]
+        dset[:,:] = img[:,:].transpose((1,0))
         
         for i in range(len(dims)):
             femd.write_dim('dim{:d}'.format(i+1), dims[i], grp)

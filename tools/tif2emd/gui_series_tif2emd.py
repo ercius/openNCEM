@@ -135,11 +135,11 @@ class Converter(QtGui.QWidget):
         
         if list1:
             
-            img = np.array(Image.open(list1[0]))
+            img = np.array(Image.open(list1[0])).transpose()
             dims = []
             dims.append( (np.array(temp_dim), 'n', '') )
-            dims.append( (np.array(range(img.shape[0])), 'x', 'px'))
             dims.append( (np.array(range(img.shape[1])), 'y', 'px'))
+            dims.append( (np.array(range(img.shape[0])), 'x', 'px'))
             
             femd = ncempy.io.emd.fileEMD(self.emd_txt.text())
             
@@ -149,8 +149,8 @@ class Converter(QtGui.QWidget):
             dset = grp.create_dataset( 'data', (len(list1), img.shape[1], img.shape[0]), dtype=img.dtype)
             
             for i in range(len(list1)):
-                img = np.array(Image.open(list1[i]))
-                dset[i,:,:] = img[:,:]
+                img = np.array(Image.open(list1[i])).transpose()
+                dset[i,:,:] = img[:,:].transpose((1,0))
             
             
             for i in range(len(dims)):
