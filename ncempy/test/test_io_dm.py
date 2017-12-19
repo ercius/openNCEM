@@ -115,4 +115,27 @@ class test_dm3(unittest.TestCase):
             
             self.assertGreater(delta0, delta1)
         
+    def test_extract_on_memory(self):
+        from matplotlib.image import imsave
+        from matplotlib import cm
+        f = ncempy.io.dm.fileDM(
+            self._get_image_route("Capture5_Hour_00_Minute_02_Second_40_Frame_0323.dm4"),
+            on_memory=False)
+        
+        f.parseHeader()
+        ds = f.getDataset(0)
+        img3D_no_on_mem = ds['data']
+        
+        del f
+        
+        f = ncempy.io.dm.fileDM(
+            self._get_image_route("Capture5_Hour_00_Minute_02_Second_40_Frame_0323.dm4"),
+            on_memory=True)
+        
+        f.parseHeader()
+        ds = f.getDataset(0)
+        img3D_on_mem = ds['data']
+      
+        del f
+        self.assertTrue((img3D_no_on_mem==img3D_on_mem).all())
         
