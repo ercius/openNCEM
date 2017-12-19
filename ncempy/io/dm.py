@@ -50,6 +50,9 @@ class fileDM:
         #The number of objects found in the DM3 file
         self.numObjects = 0
         
+        #Indicator that a thumbnail exists (tested for later)
+        self.thumbnail = False
+        
         self.curGroupLevel = 0 #track how deep we currently are in a group
         self.maxDepth = 64 #maximum number of group levels allowed
         self.curGroupAtLevelX = np.zeros((self.maxDepth,),dtype=np.int8) #track group at current level
@@ -134,6 +137,12 @@ class fileDM:
             self.fid.seek(16,0)
         #Read the first root tag the same as any other group
         self._readTagGroup()
+        
+        #Check for thumbnail
+        if( (self.dataType[0] == 23) && (self.dataShape == 2):
+            self.thumbnail = True
+        else:
+            self.thumbnail = False
         
     def _readTagGroup(self):
         '''Read a tag group in a DM file
