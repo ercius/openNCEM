@@ -621,19 +621,27 @@ class fileDM:
         
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
-            outputDict['pixelUnit'] = self.scaleUnit[::-1] #need to reverse the order to match the C-ordering of the data
-            outputDict['pixelSize'] = self.scale[::-1]
-            outputDict['pixelOrigin'] = self.origin[::-1]
             pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
+            jj = 0 #counter to determine where the first scale value starts
+            for nn in self.dataShape[0:ii]:
+                    jj += nn #sum up all number of dimensions for previous datasets
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
             if self.zSize[ii] == 1: #2D data
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
             elif self.zSize2[ii] > 1: #4D data
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
             else: #3D array
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
-                #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
         
         return outputDict
     
@@ -644,9 +652,10 @@ class fileDM:
         
     def getThumbnail(self):
         '''Read the thumbnail saved as the first dataset in the DM file as an RGB array
+        Unsure if this is correct.
         '''
         self.fid.seek(self.dataOffset[0],0)
-        return self._readRGB(self.xSize[0],self.ySize[0])
+        return self._readRGB(self.ySize[0],self.xSize[0])
         
 def dmReader(fName,dSetNum=0,verbose=False):
     '''Simple function to parse the file and read the requested dataset
