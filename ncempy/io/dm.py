@@ -45,6 +45,7 @@ class fileDM:
         self.dataType = []
         self.dataSize = []
         self.dataOffset = []
+        self.dataShape = [] #1,2,3, or 4. The total number of dimensions in a data set
         
         #The number of objects found in the DM3 file
         self.numObjects = 0
@@ -498,10 +499,16 @@ class fileDM:
             self.ySize.append(1) 
             self.zSize.append(1)
             self.zSize2.append(1)
+            self.dataShape.append(1) # indicate as at least 1D data
         elif totalTag.find('Dimensions.2')>-1:
             self.ySize[-1] = curTagValue #OR self.ysize[self.numObjects] = self.curTagValue
+            self.dataShape[-1] = 2 # indicate as at least 2D data
         elif totalTag.find('Dimensions.3')>-1:
             self.zSize[-1] = curTagValue
+            self.dataShape[-1] = 3 # indicate as at least 3D data
+        elif totalTag.find('Dimensions.4')>-1:
+            self.zSize2[-1] = curTagValue
+            self.dataShape[-1] = 4 # indicate as at least 3D data
         elif (totalTag.find('Dimension.')>-1) & (totalTag.find('.Scale')>-1):
             self.scale_temp = curTagValue
         elif (totalTag.find('Dimension.')>-1) & (totalTag.find('.Origin')>-1):
