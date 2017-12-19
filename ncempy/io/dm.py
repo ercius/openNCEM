@@ -139,7 +139,7 @@ class fileDM:
         self._readTagGroup()
         
         #Check for thumbnail
-        if( (self.dataType[0] == 23) && (self.dataShape == 2):
+        if( (self.dataType[0] == 23) & (self.dataShape[0] == 2) ):
             self.thumbnail = True
         else:
             self.thumbnail = False
