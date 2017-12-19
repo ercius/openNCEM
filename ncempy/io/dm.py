@@ -454,7 +454,7 @@ class fileDM:
             
             #Catch useful tags for images and spectra (nm, eV, etc.)
             fullTagName = self.curGroupNameAtLevelX + '.' + self.curTagName
-            if((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1) & (self.numObjects > 0)):
+            if((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1) ):# & (self.numObjects > 0)):
                 self.scale.append(self.scale_temp)
                 self.scaleUnit.append(arrOut)
                 self.origin.append(self.origin_temp)
