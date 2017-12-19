@@ -107,6 +107,12 @@ class fileDM:
                 print('Closing tags output file')
             self.fidOut.close()
             
+    def tell(self):
+        if self._on_memory:
+            return self._buffer_offset
+        else:
+            return self.fid.tell()
+        
     def fromfile(self, *args, **kwargs):
         """ Reads data from a file or momery map. 
         Calls np.fromfile and np.frombuffer depending on the on_memory mode of
@@ -520,7 +526,7 @@ class fileDM:
         if self.curTagName == 'Data':
             #This is a binary array. Save its location to read later if needed
             self._storeTag(self.curTagName + '.arraySize', bufSize)
-            self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
+            self._storeTag(self.curTagName + '.arrayOffset', self.tell())
             self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.seek(self.fid, bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
@@ -542,7 +548,7 @@ class fileDM:
                 self.origin.append(self.origin_temp)
         else:
             self._storeTag(self.curTagName + '.arraySize', bufSize)
-            self._storeTag(self.curTagName + '.arrayOffset', self.fid.tell())
+            self._storeTag(self.curTagName + '.arrayOffset', self.tell())
             self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.seek(self.fid, bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Array unread. Encoded type = {}'.format(encodedType)
