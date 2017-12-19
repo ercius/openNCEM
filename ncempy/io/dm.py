@@ -583,17 +583,16 @@ class fileDM:
         elif dd == 13:
             return np.complex128
         elif dd == 23:
-            raise IOError('RGB data type is not supported yet.')
+            raise IOError('RGB data type is not generally supported yet. Try dmFile._readRGB')
             #return np.uint8
         else:
             raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
     
     def getDataset(self, index):
-        '''Retrieve a dataseet from the DM file.
-        Note: All DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data.
-        This function ignores that dataset if it exists (numObjects > 1). To retrieve the thumbnail use the getThumbnail() function
+        '''Retrieve a dataset from the DM file.
+        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function
         '''
-        #The first dataset is always a thumbnail. Test for this and skip the thumbnail automatically
+        #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         if self.numObjects == 1:
             ii = index
         else:
