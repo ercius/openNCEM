@@ -487,8 +487,12 @@ class fileDM:
         '''Find interesting keys and keep their values for later. This is separate from _storeTag
         so that it is easy to find and modify.
         '''
+        
+        #Save that a useful object has been found
+        if totalTag.find('ImageData.Calibrations.Dimension.1.Scale')>-1:
+            self.numObjects += 1 #data is contained in this file
+        
         if curTagName.find('Data.arraySize')>-1:
-            self.numObjects += 1 #add this as an interesting object
             self.dataSize.append(curTagValue)
         elif curTagName.find('Data.arrayOffset') >-1:
             self.dataOffset.append(curTagValue)
