@@ -345,8 +345,8 @@ class fileDM:
     
     def _readNativeData(self,encodedType):
         '''reads ordinary data types in tags
-            SHORT (in16)   = 2;
-            LONG (in32)    = 3;
+            SHORT (int16)   = 2;
+            LONG (int32)    = 3;
             USHORT (uint16)  = 4;
             ULONG (uint32)   = 5;
             FLOAT (float32)  = 6;
@@ -421,7 +421,7 @@ class fileDM:
         if self.v:
             print('_readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
         
-        #Everything used to calcualte the bufSize is not needed anymore. THis can be removed after testing
+        #Everything used to calculate the bufSize is not needed anymore. THis can be removed after testing
         itemSize = 0
         for encodedType in arrayTypes:
             if self.v:
@@ -442,13 +442,13 @@ class fileDM:
             self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
-        elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
+        elif bufSize < 1e3: #set an upper limit on the size of array that will be read in as a string
             #treat as a string
             for encodedType in arrayTypes:
                 stringData = np.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
                 arrOut = self._bin2str(stringData)
             
-            #THis is the old way to read this in. Its not really correct though.
+            #This is the old way to read this in. Its not really correct though.
             #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
             #arrOut = stringData.replace('\x00','') #remove all spaces from the string data
             
