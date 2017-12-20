@@ -7,6 +7,7 @@ import inspect
 import ncempy.io.dm
 import os
 import unittest
+import numpy as np
 
 
 def get_measure(start=None, operation=None):
@@ -47,6 +48,28 @@ class test_dm3(unittest.TestCase):
     def _get_image_route(self, file_name):
         return os.path.join(self._images_folder, file_name)
     
+    def _read_tags_file(self, file_route):
+        tags_dic = {}
+        with open(file_route, "r") as f:
+            for line in f:
+                if line:
+                    print(line)
+                    parts = line.split("=")
+                    key=parts[0].strip()
+                    value=parts[1].strip()
+                    try:
+                        value_parts = value.split(" ")
+                        if len(value_parts)==1:
+                            value = float(value)
+                        else:
+                            value= np.array([
+                                float(x) for x in value_parts if x])
+                    except Exception as e:
+                        pass
+                    tags_dic[key]=value
+        return tags_dic
+            
+    
     def _read_dm3_data(self, file_route, on_memory=False):
         '''Creates a DMobject and reads its data metadata
         
@@ -64,10 +87,17 @@ class test_dm3(unittest.TestCase):
         ds = f.getDataset(0)
         img3D = ds['data']
         dimensions=len(img3D.shape);
-        if dimensions==2:
-            img = img3D
-        else:
-            img = img3D[int(img3D.shape[0]/2),:,:]
+        
+        img = img3D
+        if dimensions == 3:
+            img = img[:,:,int(img.shape[2]/2),]
+        elif dimensions == 4:
+            img = img[:,:,
+                  int(img.shape[2]/2),
+                  int(img.shape[3]/2)]
+        elif dimensions>4:
+            raise ValueError("Images with more than four dimensions not"
+                            " supported.")
         metadata = dict(dimensions=dimensions,
                               header=f.allTags,
                               metadata={x:ds[x]
@@ -78,38 +108,39 @@ class test_dm3(unittest.TestCase):
     
     def test_read_dm3(self):
         
-        metadata, img = self._read_dm3_data(
-                            self._get_image_route("Frame_115K_spot4_300V.dm3"))
-        
-        self.assertEqual(metadata["dimensions"], 2)
-        self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 0.0])
+        metadata, img = self._read_dm3_data(self._get_image_route(
+                            "dmTest_3D_float32_nonSquare_diffPixelSize.dm3"))
+
+        self.assertEqual(metadata["dimensions"], 3)
+        self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 0.0, 0.0])
         self.assertEqual(metadata["header"]['.ImageSourceList.1.ImageRef'], 1)
+
         
     
     def test_read_dm3_on_memory(self):
         
-        metadata, img = self._read_dm3_data(
-                            self._get_image_route("Frame_115K_spot4_300V.dm3"),
+        metadata, img = self._read_dm3_data(self._get_image_route(
+                            "dmTest_3D_float32_nonSquare_diffPixelSize.dm3"),
                             on_memory=True)
         
         
-        self.assertEqual(metadata["dimensions"], 2)
-        self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 0.0])
+        self.assertEqual(metadata["dimensions"], 3)
+        self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 0.0, 0.0])
         self.assertEqual(metadata["header"]['.ImageSourceList.1.ImageRef'], 1)
         
-    def test_dm4_memory_vs_file(self):
+    def test_dm4_memory_vs_file_performance(self):
         """ Even with a local HD, memory read should be x10 faster."""
         m0=get_measure()
         for i in range(10):
             metadata, img = self._read_dm3_data(
                              self._get_image_route(
-                                 "FocalSeriesImages_tip3.dm4"))
+                                 "Si-SiGe-test-01-31x12x448x480.dm4"))
             delta0=get_measure(m0)
             
             m1=get_measure()
             metadata, img = self._read_dm3_data(
                                 self._get_image_route(
-                                    "FocalSeriesImages_tip3_copy.dm4"),
+                                    "Si-SiGe-test-01-31x12x448x480_copy.dm4"),
                                 on_memory=True)
             delta1=get_measure(m1)
             
@@ -119,7 +150,7 @@ class test_dm3(unittest.TestCase):
         from matplotlib.image import imsave
         from matplotlib import cm
         f = ncempy.io.dm.fileDM(
-            self._get_image_route("Capture5_Hour_00_Minute_02_Second_40_Frame_0323.dm4"),
+            self._get_image_route("Si-SiGe-test-01-31x12x448x480.dm4"),
             on_memory=False)
         
         f.parseHeader()
@@ -129,7 +160,7 @@ class test_dm3(unittest.TestCase):
         del f
         
         f = ncempy.io.dm.fileDM(
-            self._get_image_route("Capture5_Hour_00_Minute_02_Second_40_Frame_0323.dm4"),
+            self._get_image_route("Si-SiGe-test-01-31x12x448x480.dm4"),
             on_memory=True)
         
         f.parseHeader()
