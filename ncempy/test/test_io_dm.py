@@ -93,6 +93,15 @@ class test_dm3(unittest.TestCase):
         self.assertEqual(metadata["dimensions"], 3)
         self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 0.0, 0.0])
         self.assertEqual(metadata["header"]['.ImageSourceList.1.ImageRef'], 1)
+        
+    def test_read_dm3_one_dimension(self):
+        
+        metadata, img = self._read_dm3_data(self._get_image_route(
+                            "06_lowLoss.dm3"))
+
+        self.assertEqual(metadata["dimensions"], 2)
+        self.assertEqual(metadata["metadata"]["pixelOrigin"], [0.0, 200.0])
+        self.assertEqual(metadata["header"]['.ImageSourceList.1.ImageRef'], 1)
 
         
     
