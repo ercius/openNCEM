@@ -47,28 +47,7 @@ class test_dm3(unittest.TestCase):
 
     def _get_image_route(self, file_name):
         return os.path.join(self._images_folder, file_name)
-    
-    def _read_tags_file(self, file_route):
-        tags_dic = {}
-        with open(file_route, "r") as f:
-            for line in f:
-                if line:
-                    print(line)
-                    parts = line.split("=")
-                    key=parts[0].strip()
-                    value=parts[1].strip()
-                    try:
-                        value_parts = value.split(" ")
-                        if len(value_parts)==1:
-                            value = float(value)
-                        else:
-                            value= np.array([
-                                float(x) for x in value_parts if x])
-                    except Exception as e:
-                        pass
-                    tags_dic[key]=value
-        return tags_dic
-            
+          
     
     def _read_dm3_data(self, file_route, on_memory=False):
         '''Creates a DMobject and reads its data metadata
