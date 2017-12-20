@@ -10,6 +10,7 @@ system (PFS) because latency of seek operations PFSs is very high.
 
 import mmap
 from os import stat as fileStats
+import os
 from os.path import basename as osBasename
 
 import numpy as np
@@ -51,7 +52,11 @@ class fileDM:
                 # Pre-load the file as a memory map that supports operations
                 # similar to a file.
                 with open(filename, 'rb') as _fid:
-                    self.fid=mmap.mmap(_fid.fileno(), 0, flags=mmap.MAP_PRIVATE)
+                    if os.name == 'nt':
+                        self.fid=mmap.mmap(_fid.fileno(), 0)
+                    else:
+                        self.fid=mmap.mmap(_fid.fileno(), 0,
+                                           prot=mmap.PROT_READ) #, flags=mmap.MAP_PRIVATE)
                     self._buffer_size=fileStats(filename).st_size
 
         except IOError:
