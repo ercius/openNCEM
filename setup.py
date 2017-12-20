@@ -4,11 +4,13 @@ Addapted from https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
-from setuptools import setup , find_packages
-# To use a consistent encoding
 from codecs import open
 from os import path
 
+from setuptools import setup , find_packages
+
+
+# To use a consistent encoding
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -71,7 +73,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'scipy', 'matplotlib', 'h5py']       
+    install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],       
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -94,7 +96,7 @@ setup(
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
     #data_files=[('my_data', ['data/data_file'])],
-
+    scripts=['ncempy/bin/extract.py']
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
