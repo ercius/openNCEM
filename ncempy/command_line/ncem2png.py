@@ -51,31 +51,36 @@ def ser_to_png(source_file, dest_file):
     imsave(dest_file, img, format="png")
     return f
     
-parser = argparse.ArgumentParser(description='Extracts a preview png from'
-                                 ' a SER, DM3, or DM4 file.')
-
-parser.add_argument('source_file', metavar='source_file', type=str, nargs=1,
+def main():
+    parser = argparse.ArgumentParser(description='Extracts a preview png from'
+                                     ' a SER, DM3, or DM4 file.')
+    
+    parser.add_argument('source_file', metavar='source_file', type=str, nargs=1,
                     help='Source file, must have ser, dm3, o dm4 extension.')
+    
+    parser.add_argument('dest_file', metavar='dest_file', type=str, nargs='?',
+                        help='Filename to write the preview png file. If not set'
+                        ' it defaults to the name of the source file appending'
+                        ' png.',
+                        default=None)
+    
+    args = parser.parse_args()
+    
+    source_file = args.source_file[0]
+    dest_file = args.dest_file
+    if dest_file is None:
+        dest_file="{}.png".format(source_file)
+    
+    extension = source_file.split(".")[-1].lower()
+    if  not extension in ["dm3", "dm4", "ser"]:
+        raise ValueError("Extension/filetype {} not supported!".format(
+                                                            extension))
+    
+    if extension in ["dm3","dm4"]:
+        dm_to_png(source_file, dest_file)
+    
+    if extension in ["ser"]:
+        ser_to_png(source_file, dest_file)
 
-parser.add_argument('dest_file', metavar='dest_file', type=str, nargs='?',
-                    help='Filename to write the preview png file. If not set'
-                    ' it defaults to the name of the source file appending'
-                    ' png.',
-                    default=None)
-
-args = parser.parse_args()
-
-source_file = args.source_file[0]
-dest_file = args.dest_file
-if dest_file is None:
-    dest_file="{}.png".format(source_file)
-
-extension = source_file.split(".")[-1].lower()
-if  not extension in ["dm3", "dm4", "ser"]:
-    raise ValueError("Extension/filetype {} not supported!".format(extension))
-
-if extension in ["dm3","dm4"]:
-    dm_to_png(source_file, dest_file)
-
-if extension in ["ser"]:
-    ser_to_png(source_file, dest_file)
+if __name__ =="__main__":
+    main()
