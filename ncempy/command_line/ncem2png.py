@@ -26,12 +26,23 @@ def _discover_emi(file_route):
 
 def extract_dimension(img, fixed_dimensions=None):
     out_img=img
-    if fixed_dimensions is not None:
-        for d in fixed_dimensions:
-            if d is not None:
-                out_img=out_img[d]
-            else:
-                out_img=out_img[:]
+
+    dimension=len(img.shape)
+    if dimension == 3:
+        out_img = img[int(img.shape[0]/2),:,:]
+        print("{}D: Selecting frame ({},x,x)".format(dimension,
+                  int(img.shape[0]/2)))
+    elif dimension == 4:
+        out_img = img[:,:,
+                  int(img.shape[2]/2),
+                  int(img.shape[3]/2)]
+        print("{}D, Selecting frame (x,x,{},{})".format(dimension,
+                  int(img.shape[2]/2),
+                  int(img.shape[3]/2)))
+    elif dimension > 4:
+        raise ValueError("This scripts cannot extract PNGs from DM files with"
+                         " more than four dimensions")
+    return out_img
 
 def dm_to_png(source_file, dest_file, fixed_dimensions=None):
     """ Saves the DM3 or DM4 source_file as PNG dest_file. If the data has three
@@ -41,22 +52,7 @@ def dm_to_png(source_file, dest_file, fixed_dimensions=None):
     f.parseHeader()
     ds = f.getDataset(0)
     img = ds['data']
-    dimension=len(img.shape)
-    print("Dimensions ({})".format(dimension))
-    if dimension == 3:
-        img = img[int(img.shape[0]/2),:,:]
-        print("Selecting frame ({},x,x)".format(
-                  int(img.shape[0]/2)))
-    elif dimension == 4:
-        img = img[:,:,
-                  int(img.shape[2]/2),
-                  int(img.shape[3]/2)]
-        print("Selecting frame (x,x,{},{})".format(
-                  int(img.shape[2]/2),
-                  int(img.shape[3]/2)))
-    elif dimension > 4:
-        raise ValueError("This scripts cannot extract PNGs from DM files with"
-                         " more than four dimensions")
+    img = extract_dimension(img, fixed_dimensions)
     imsave(dest_file, img, format="png", cmap=cm.gray)
     return f
 
