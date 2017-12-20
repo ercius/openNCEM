@@ -25,6 +25,9 @@ def _discover_emi(file_route):
     return emi_file_route
 
 def dm_to_png(source_file, dest_file):
+    """ Saves the DM3 or DM4 source_file as PNG dest_file. If the data has three
+    of four dimensions. The image taken is from the middle image in those
+    dimensions."""
     f = fileDM(source_file, on_memory=True)
     f.parseHeader()
     ds = f.getDataset(0)
@@ -44,6 +47,7 @@ def dm_to_png(source_file, dest_file):
     return f
 
 def ser_to_png(source_file, dest_file):
+    """ Saves the SER source_file as PNG dest_file."""
     emi_file = _discover_emi(source_file)
     f = fileSER(source_file, emi_file)
     ds = f.getDataset(0)
