@@ -24,7 +24,16 @@ def _discover_emi(file_route):
     
     return emi_file_route
 
-def dm_to_png(source_file, dest_file):
+def extract_dimension(img, fixed_dimensions=None):
+    out_img=img
+    if fixed_dimensions is not None:
+        for d in fixed_dimensions:
+            if d is not None:
+                out_img=out_img[d]
+            else:
+                out_img=out_img[:]
+
+def dm_to_png(source_file, dest_file, fixed_dimensions=None):
     """ Saves the DM3 or DM4 source_file as PNG dest_file. If the data has three
     of four dimensions. The image taken is from the middle image in those
     dimensions."""
@@ -33,13 +42,18 @@ def dm_to_png(source_file, dest_file):
     ds = f.getDataset(0)
     img = ds['data']
     dimension=len(img.shape)
-    print(img.shape)
+    print("Dimensions ({})".format(dimension))
     if dimension == 3:
         img = img[int(img.shape[0]/2),:,:]
+        print("Selecting frame ({},x,x)".format(
+                  int(img.shape[0]/2)))
     elif dimension == 4:
         img = img[:,:,
                   int(img.shape[2]/2),
                   int(img.shape[3]/2)]
+        print("Selecting frame (x,x,{},{})".format(
+                  int(img.shape[2]/2),
+                  int(img.shape[3]/2)))
     elif dimension > 4:
         raise ValueError("This scripts cannot extract PNGs from DM files with"
                          " more than four dimensions")
@@ -59,32 +73,43 @@ def main():
     parser = argparse.ArgumentParser(description='Extracts a preview png from'
                                      ' a SER, DM3, or DM4 file.')
     
-    parser.add_argument('source_file', metavar='source_file', type=str, nargs=1,
-                    help='Source file, must have ser, dm3, o dm4 extension.')
+    parser.add_argument('source_files', metavar='source_files', type=str,
+                        nargs="+",
+                    help='Source files, must have ser, dm3, o dm4 extension.')
     
-    parser.add_argument('dest_file', metavar='dest_file', type=str, nargs='?',
+    parser.add_argument('--out_file', dest='dest_file', action='store', 
+                        type=str, nargs=1,
                         help='Filename to write the preview png file. If not set'
                         ' it defaults to the name of the source file appending'
-                        ' png.',
+                        ' png. Only valid when a single input file is '
+                        ' processed.',
                         default=None)
     
     args = parser.parse_args()
     
-    source_file = args.source_file[0]
-    dest_file = args.dest_file
-    if dest_file is None:
-        dest_file="{}.png".format(source_file)
     
-    extension = source_file.split(".")[-1].lower()
-    if  not extension in ["dm3", "dm4", "ser"]:
-        raise ValueError("Extension/filetype {} not supported!".format(
-                                                            extension))
+    if args.dest_file is not None and len(args.source_files)>1:
+        raise ValueError("--out_file only can be used when a single input file"
+                         " is processed.")
     
-    if extension in ["dm3","dm4"]:
-        dm_to_png(source_file, dest_file)
     
-    if extension in ["ser"]:
-        ser_to_png(source_file, dest_file)
+    for source_file in args.source_files:
+        
+        if args.dest_file is None:
+            dest_file="{}.png".format(source_file)
+        else:
+            dest_file=args.dest_file[0]
+        extension = source_file.split(".")[-1].lower()
+        if  not extension in ["dm3", "dm4", "ser"]:
+            raise ValueError("Extension/filetype {} not supported!".format(
+                                                                extension))
+        print("Extracting from {}, saving image as {}".format(source_file,
+                                                      dest_file ))
+        if extension in ["dm3","dm4"]:
+            dm_to_png(source_file, dest_file)
+        
+        if extension in ["ser"]:
+            ser_to_png(source_file, dest_file)
 
 if __name__ =="__main__":
     main()
