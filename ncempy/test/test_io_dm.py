@@ -7,7 +7,7 @@ import inspect
 import ncempy.io.dm
 import os
 import unittest
-import numpy as np
+from matplotlib.image import imread
 
 
 def get_measure(start=None, operation=None):
@@ -157,4 +157,17 @@ class test_dm3(unittest.TestCase):
       
         del f
         self.assertTrue((img3D_no_on_mem==img3D_on_mem).all())
+        
+    def text_compare_png(self):
+        
+        for file_name in ["dmTest_3D_float32_nonSquare_diffPixelSize.dm3",
+                          "dmTest_uint16_nonSquare_diffPixelSize.dm3",
+                          "dmTest_int32_nonSquare_diffPixelSize.dm4"]:
+            metadata, img = self._read_dm3_data(self._get_image_route(
+                                "{}".format(file_name)),
+                                on_memory=True)
+            png = imread(self._get_image_route(
+                            "{}.png".format(file_name)))
+            self.assertEaual(img, png)
+        
         

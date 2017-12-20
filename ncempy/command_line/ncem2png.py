@@ -35,14 +35,14 @@ def dm_to_png(source_file, dest_file):
     dimension=len(img.shape)
     print(img.shape)
     if dimension == 3:
-        img = img[:,:,int(img.shape[2]/2),]
+        img = img[int(img.shape[0]/2),:,:]
     elif dimension == 4:
         img = img[:,:,
                   int(img.shape[2]/2),
                   int(img.shape[3]/2)]
-    else:
+    elif dimension > 4:
         raise ValueError("This scripts cannot extract PNGs from DM files with"
-                         " more than four dimensions.")
+                         " more than four dimensions")
     imsave(dest_file, img, format="png", cmap=cm.gray)
     return f
 
