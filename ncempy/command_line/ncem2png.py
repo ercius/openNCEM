@@ -28,20 +28,42 @@ def extract_dimension(img, fixed_dimensions=None):
     out_img=img
 
     dimension=len(img.shape)
-    if dimension == 3:
-        out_img = img[int(img.shape[0]/2),:,:]
-        print("{}D: Selecting frame ({},x,x)".format(dimension,
-                  int(img.shape[0]/2)))
-    elif dimension == 4:
-        out_img = img[:,:,
-                  int(img.shape[2]/2),
-                  int(img.shape[3]/2)]
-        print("{}D, Selecting frame (x,x,{},{})".format(dimension,
-                  int(img.shape[2]/2),
-                  int(img.shape[3]/2)))
-    elif dimension > 4:
-        raise ValueError("This scripts cannot extract PNGs from DM files with"
-                         " more than four dimensions")
+    if fixed_dimensions is None:
+        if dimension == 3:
+            fixed_dimensions=[int(img.shape[0]/2),
+                              '','']
+        elif dimension == 4:
+            fixed_dimensions=['',
+                              int(img.shape[2]/2),
+                              int(img.shape[3]/2)]
+        elif dimension > 4:
+            raise ValueError("This scripts cannot extract PNGs from DM files"
+                            " with"
+                             " more than four dimensions without explicit"
+                             " use of --fixed_dimensions.")
+
+    if len(fixed_dimensions)!=dimension:
+        raise ValueError("Number of values to index the image ({}) do not"
+                         " match the image dimension ({}).".format(
+                             len(fixed_dimensions), dimension))
+    d_tuple=()
+    selected_dimensions=0
+    print("{}D Selecting frame ({})".format(dimension,
+                                            fixed_dimensions))
+    for (d, s) in zip(fixed_dimensions, img.shape):
+        if not d:
+            d_tuple+=(slice(None, None, None),)
+        elif d=="m":
+            d_tuple+=(int(s/2),)
+            selected_dimensions+=1
+        elif int(d)<s:
+            selected_dimensions+=1
+            d_tuple+=(int(d),)
+    if dimension-selected_dimensions!=2:
+        raise ValueError("Dimension extractor do not fix enough components"
+                         " to produce a 2D image. Needs to fix: {}"
+                         "".format(dimension-2))
+    out_img = img[d_tuple] 
     return out_img
 
 def dm_to_png(source_file, dest_file, fixed_dimensions=None):
@@ -81,6 +103,16 @@ def main():
                         ' processed.',
                         default=None)
     
+    parser.add_argument('--fixed_dimensions', dest='fixed_dimensions',
+                        action='store', 
+                        type=str, nargs=1,
+                        help="List of numbers, 'm'(for middle), or nothing to"
+                        " extract"
+                        " a particular slice of data. e.g., '2,,' will extract"
+                        " an png with the values y,z of x=2. ',m,,2' will "
+                        " extract all the values x,z for y=1/2shapeY, and w=2.",
+                        default=None)
+    
     args = parser.parse_args()
     
     
@@ -88,6 +120,9 @@ def main():
         raise ValueError("--out_file only can be used when a single input file"
                          " is processed.")
     
+    fixed_dimensions = args.fixed_dimensions
+    if fixed_dimensions is not None:
+        fixed_dimensions=fixed_dimensions[0].split(',')
     
     for source_file in args.source_files:
         
@@ -102,7 +137,7 @@ def main():
         print("Extracting from {}, saving image as {}".format(source_file,
                                                       dest_file ))
         if extension in ["dm3","dm4"]:
-            dm_to_png(source_file, dest_file)
+            dm_to_png(source_file, dest_file, fixed_dimensions=fixed_dimensions)
         
         if extension in ["ser"]:
             ser_to_png(source_file, dest_file)
