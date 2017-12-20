@@ -53,7 +53,8 @@ class fileDM:
                 # similar to a file.
                 with open(filename, 'rb') as _fid:
                     if os.name == 'nt':
-                        self.fid=mmap.mmap(_fid.fileno(), 0)
+                        self.fid=mmap.mmap(_fid.fileno(), 0,
+                                           access=mmap.ACCESS_READ)
                     else:
                         self.fid=mmap.mmap(_fid.fileno(), 0,
                                            prot=mmap.PROT_READ) #, flags=mmap.MAP_PRIVATE)
