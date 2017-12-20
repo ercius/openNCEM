@@ -32,8 +32,6 @@ def get_measure(start=None, operation=None):
                                                   delta))
         return delta
 
-         
-
 class test_dm3(unittest.TestCase):
     '''
     Test the DM3 io module
