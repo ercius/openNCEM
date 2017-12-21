@@ -924,9 +924,9 @@ class Main(QtGui.QMainWindow):
                 axis2.setLabel(self.dims[0][1], self.dims[0][2])
                
                 # plot image
-                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose((1,0)).astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
                 self.plt_localmax_img.setZValue(-100)
-                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims[0][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[0][0][-1]-self.dims[0][0][0]))
+                self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[1][0][0],self.dims   [0][0][0],self.dims[1][0][-1]-self.dims[1][0][0],self.dims[0][0][-1]-self.dims[0][0][0]))
                 self.plt_localmax.addItem(self.plt_localmax_img)
                 
             else:
@@ -938,7 +938,7 @@ class Main(QtGui.QMainWindow):
                 axis2.setLabel(self.dims[1][1], self.dims[1][2])
                
                 # plot image
-                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose().astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
+                self.plt_localmax_img = pg.ImageItem(self.data[self.idx,:,:].transpose((1,0)).astype('float64'), levels=(self.gui_localmax['min_slider'].value(), self.gui_localmax['max_slider'].value()))
                 self.plt_localmax_img.setZValue(-100)
                 self.plt_localmax_img.setRect(pg.QtCore.QRectF( self.dims[2][0][0],self.dims[1][0][0],self.dims[2][0][-1]-self.dims[2][0][0],self.dims[1][0][-1]-self.dims[1][0][0]))
                 self.plt_localmax.addItem(self.plt_localmax_img)
@@ -996,8 +996,7 @@ class Main(QtGui.QMainWindow):
             c_dims = self.dims
         else:
             c_dims = self.dims[1:3]
-        
-        
+
         # find local max
         points = ncempy.algo.local_max.local_max(self.data[self.idx,:,:], self.settings['lmax_r'], self.settings['lmax_thresh'])
         points = ncempy.algo.local_max.points_todim(points, c_dims)
@@ -1012,10 +1011,10 @@ class Main(QtGui.QMainWindow):
         # save points in main
         self.points[self.idx] = points
         
+        
         # update localmax view
         self.update_localmax() 
             
-
     
     def localmax_mouseMoved(self, evt):
         pos = evt[0]
@@ -1052,7 +1051,7 @@ class Main(QtGui.QMainWindow):
         
         if not self.center[self.idx] is None:
             # update center in left column
-            self.gui_polar['center_lbl'].setText('center: ({:.3f}, {:.3f})'.format(self.center[self.idx][0], self.center[self.idx][1]))
+            self.gui_polar['center_lbl'].setText('center: ({:.3f}, {:.3f})'.format(self.center[self.idx][1], self.center[self.idx][0]))
         
             if not self.points[self.idx] is None:
                 points_plr = ncempy.algo.distortion.points_topolar(self.points[self.idx], self.center[self.idx])
@@ -1103,6 +1102,7 @@ class Main(QtGui.QMainWindow):
         if len(cinit) == 0:
             self.log('Failed to copy initial center guess from input.')
         else:
+            cinit = cinit[::-1]
             self.settings['lmax_cinit'] = cinit
             self.center[self.idx]=np.array(cinit)
             self.log('Copied initial center guess: ({:g}, {:g}).'.format(self.center[self.idx][0], self.center[self.idx][1]))
@@ -1293,7 +1293,7 @@ class Main(QtGui.QMainWindow):
         else:
             rs, thes = ncempy.algo.radial_profile.calc_polarcoords( self.center[self.idx], c_dims )
             self.log('.. calculating coordinate system, not correcting distortions.')
-        
+              
         # get the radial profile
         R, I = ncempy.algo.radial_profile.calc_radialprofile( self.data[self.idx,:,:], rs, self.settings['rad_rmax'], self.settings['rad_dr'], self.settings['rad_sigma'], self.mask )
         

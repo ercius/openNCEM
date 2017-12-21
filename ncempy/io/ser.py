@@ -24,24 +24,24 @@ class fileSER:
     
     Parameters:
         filename (str):    Name of the SER file.
-        emifile (str):    Name of an optional EMI file to read metadata.
+        emifile (str):    Name of an optional _emi file to read metadata.
         verbose (bool):    True to get extensive output while reading the file.
         
     '''
 
-    dictByteOrder = {0x4949 : 'little endian'}
+    _dictByteOrder = {0x4949 : 'little endian'}
     '''(dict):    Information on byte order.'''
     
-    dictSeriesVersion = {0x0210 : '< TIA 4.7.3', 0x0220 : '>= TIA 4.7.3'}
+    _dictSeriesVersion = {0x0210 : '< TIA 4.7.3', 0x0220 : '>= TIA 4.7.3'}
     '''(dict):    Information on fileformat version.'''
     
-    dictDataTypeID = {0x4120:'1D datasets', 0x4122:'2D images'}
+    _dictDataTypeID = {0x4120:'1D datasets', 0x4122:'2D images'}
     '''(dict):    Information on data type.'''
     
-    dictTagTypeID = {0x4152:'time only',0x4142:'time and 2D position'}
+    _dictTagTypeID = {0x4152:'time only',0x4142:'time and 2D position'}
     '''(dict):    Information on tag type.'''
     
-    dictDataType = {1:'<u1', 2:'<u2', 3:'<u4', 4:'<i1', 5:'<i2', 6:'<i4', 7:'<f4', 8:'<f8', 9:'<c8', 10:'<c16'}
+    _dictDataType = {1:'<u1', 2:'<u2', 3:'<u4', 4:'<i1', 5:'<i2', 6:'<i4', 7:'<f4', 8:'<f8', 9:'<c8', 10:'<c16'}
     '''(dict):    Information on data format.'''
 
 
@@ -50,8 +50,8 @@ class fileSER:
         
         '''
         # necessary declarations, if something fails
-        self.file_hdl = None
-        self.emi = None
+        self._file_hdl = None
+        self._emi = None
 
         # check for string
         if not isinstance(filename, str):
@@ -59,7 +59,7 @@ class fileSER:
 
         # try opening the file
         try:
-            self.file_hdl = open(filename, 'rb')
+            self._file_hdl = open(filename, 'rb')
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise
@@ -69,9 +69,9 @@ class fileSER:
         # read header
         self.head = self.readHeader(verbose)
         
-        # read emi, if provided
+        # read _emi, if provided
         if emifile:
-            self.emi = self.readEMI(emifile)
+            self._emi = self.read_emi(emifile)
 
 
     def __del__(self):
@@ -80,8 +80,8 @@ class fileSER:
         '''
         
         # close the file
-        if(self.file_hdl):
-            self.file_hdl.close()
+        if(self._file_hdl):
+            self._file_hdl.close()
 
 
     def readHeader(self, verbose=False):
@@ -99,17 +99,17 @@ class fileSER:
         head = {}
 
         # go back to beginning of file
-        self.file_hdl.seek(0,0)
+        self._file_hdl.seek(0,0)
 
         # read 3 int16
-        data = np.fromfile(self.file_hdl, dtype='<i2', count=3)
+        data = np.fromfile(self._file_hdl, dtype='<i2', count=3)
 
         # ByteOrder (only little Endian expected)
-        if not data[0] in self.dictByteOrder:
+        if not data[0] in self._dictByteOrder:
             raise RuntimeError('Only little Endian implemented for SER files')
         head['ByteOrder'] = data[0]
         if verbose:
-            print('ByteOrder:\t"{:#06x}",\t{}'.format(data[0], self.dictByteOrder[data[0]]))
+            print('ByteOrder:\t"{:#06x}",\t{}'.format(data[0], self._dictByteOrder[data[0]]))
 
         # SeriesID, check whether TIA Series Data File   
         if not data[1] == 0x0197:
@@ -119,11 +119,11 @@ class fileSER:
             print('SeriesID:\t"{:#06x},\tTIA Series Data File'.format(data[1]))
 
         # SeriesVersion
-        if not data[2] in self.dictSeriesVersion:
+        if not data[2] in self._dictSeriesVersion:
             raise RuntimeError('Unknown TIA version: "{:#06x}"'.format(data[2]))
         head['SeriesVersion'] = data[2]
         if verbose:
-            print('SeriesVersion:\t"{:#06x}",\t{}'.format(data[2], self.dictSeriesVersion[data[2]]))
+            print('SeriesVersion:\t"{:#06x}",\t{}'.format(data[2], self._dictSeriesVersion[data[2]]))
         # version dependend fileformat for below
         if head['SeriesVersion']==0x0210:
             offset_dtype = '<i4'
@@ -131,21 +131,21 @@ class fileSER:
             offset_dtype = '<i8'
         
         # read 4 int32
-        data = np.fromfile(self.file_hdl, dtype='<i4', count=4)
+        data = np.fromfile(self._file_hdl, dtype='<i4', count=4)
 
         # DataTypeID
-        if not data[0] in self.dictDataTypeID:
+        if not data[0] in self._dictDataTypeID:
             raise RuntimeError('Unknown DataTypeID: "{:#06x}"'.format(data[0]))
         head['DataTypeID'] = data[0]
         if verbose:
-            print('DataTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictDataTypeID[data[0]]))
+            print('DataTypeID:\t"{:#06x}",\t{}'.format(data[0], self._dictDataTypeID[data[0]]))
 
         # TagTypeID
-        if not data[1] in self.dictTagTypeID:
+        if not data[1] in self._dictTagTypeID:
             raise RuntimeError('Unknown TagTypeID: "{:#06x}"'.format(data[1]))
         head['TagTypeID'] = data[1]
         if verbose:
-            print('TagTypeID:\t"{:#06x}",\t{}'.format(data[1], self.dictTagTypeID[data[1]]))
+            print('TagTypeID:\t"{:#06x}",\t{}'.format(data[1], self._dictTagTypeID[data[1]]))
 
         # TotalNumberElements
         if not data[2] >= 0:
@@ -162,13 +162,13 @@ class fileSER:
             print('ValidNumberElements:\t{}'.format(data[3]))
         
         # OffsetArrayOffset, sensitive to SeriesVersion
-        data = np.fromfile(self.file_hdl, dtype=offset_dtype, count=1)
+        data = np.fromfile(self._file_hdl, dtype=offset_dtype, count=1)
         head['OffsetArrayOffset'] = data[0]
         if verbose:
             print('OffsetArrayOffset:\t{}'.format(data[0]))
 
         # NumberDimensions
-        data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+        data = np.fromfile(self._file_hdl, dtype='<i4', count=1)
         if not data[0] >= 0:
             raise RuntimeError('Negative number of dimensions')
         head['NumberDimensions']=data[0]
@@ -184,12 +184,12 @@ class fileSER:
             this_dim = {}
         
             # DimensionSize
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=1)
             this_dim['DimensionSize'] = data[0]
             if verbose:
                 print('DimensionSize:\t{}'.format(data[0]))
             
-            data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+            data = np.fromfile(self._file_hdl, dtype='<f8', count=2)
             
             # CalibrationOffset
             this_dim['CalibrationOffset'] = data[0]
@@ -201,7 +201,7 @@ class fileSER:
             if verbose:
                 print('CalibrationDelta:\t{}'.format(data[1]))
             
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=2)
             
             # CalibrationElement
             this_dim['CalibrationElement'] = data[0]
@@ -212,18 +212,18 @@ class fileSER:
             n = data[1]
             
             # Description
-            data = np.fromfile(self.file_hdl, dtype='<i1', count=n)
+            data = np.fromfile(self._file_hdl, dtype='<i1', count=n)
             data = ''.join(map(chr, data))
             this_dim['Description'] = data
             if verbose:
                 print('Description:\t{}'.format(data))
             
             # UnitsLength
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=1)
             n = data[0]
             
             # Units
-            data = np.fromfile(self.file_hdl, dtype='<i1', count=n)
+            data = np.fromfile(self._file_hdl, dtype='<i1', count=n)
             data = ''.join(map(chr, data))
             this_dim['Units'] = data
             if verbose:
@@ -237,16 +237,16 @@ class fileSER:
         
         
         # Offset array
-        self.file_hdl.seek(head['OffsetArrayOffset'],0)
+        self._file_hdl.seek(head['OffsetArrayOffset'],0)
         
         # DataOffsetArray
-        data = np.fromfile(self.file_hdl, dtype=offset_dtype, count=head['ValidNumberElements'])
+        data = np.fromfile(self._file_hdl, dtype=offset_dtype, count=head['ValidNumberElements'])
         head['DataOffsetArray'] = data.tolist()
         if verbose:
             print('reading in DataOffsetArray')
         
         # TagOffsetArray
-        data = np.fromfile(self.file_hdl, dtype=offset_dtype, count=head['ValidNumberElements'])
+        data = np.fromfile(self._file_hdl, dtype=offset_dtype, count=head['ValidNumberElements'])
         head['TagOffsetArray'] = data.tolist()
         if verbose:
             print('reading in TagOffsetArray')     
@@ -254,7 +254,7 @@ class fileSER:
         return head
 
 
-    def checkIndex(self, i):
+    def _checkIndex(self, i):
         '''Check index i for sanity, otherwise raise Exception.
         
         Parameters:
@@ -291,7 +291,7 @@ class fileSER:
 
         # check index, will raise Exceptions if not
         try:
-            self.checkIndex(index)
+            self._checkIndex(index)
         except:
             raise
 
@@ -299,7 +299,7 @@ class fileSER:
             print('Getting dataset {} of {}.'.format(index, self.head['ValidNumberElements']))
             
         # go to dataset in file
-        self.file_hdl.seek(self.head['DataOffsetArray'][index],0)
+        self._file_hdl.seek(self.head['DataOffsetArray'][index],0)
         
         # read meta
         meta = {}
@@ -320,7 +320,7 @@ class fileSER:
                 
             this_cal = {}
         
-            data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+            data = np.fromfile(self._file_hdl, dtype='<f8', count=2)
             
             # CalibrationOffset
             this_cal['CalibrationOffset'] = data[0]
@@ -332,7 +332,7 @@ class fileSER:
             if verbose:
                 print('CalibrationDelta:\t{}'.format(data[1]))
             
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=1)
             
             # CalibrationElement
             this_cal['CalibrationElement'] = data[0]
@@ -343,32 +343,32 @@ class fileSER:
             
         meta['Calibration'] = tuple(cals)
         
-        data = np.fromfile(self.file_hdl, dtype='<i2', count=1)
+        data = np.fromfile(self._file_hdl, dtype='<i2', count=1)
         
         # DataType
         meta['DataType'] = data[0]
         
-        if not data[0] in self.dictDataType:
+        if not data[0] in self._dictDataType:
             raise RuntimeError('Unknown DataType: "{}"'.format(data[0]))
         if verbose:
-            print('DataType:\t{},\t{}'.format(data[0],self.dictDataType[data[0]]))
+            print('DataType:\t{},\t{}'.format(data[0],self._dictDataType[data[0]]))
                 
         if self.head['DataTypeID'] == 0x4120:
             # 1D data element
         
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=1)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=1)
             # ArrayLength
             data = data.tolist()
             meta['ArrayShape'] = data
             if verbose:
                 print('ArrayShape:\t{}'.format(data))
                 
-            dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0])
+            dataset = np.fromfile(self._file_hdl, dtype=self._dictDataType[meta['DataType']], count=meta['ArrayShape'][0])
         
         elif self.head['DataTypeID'] == 0x4122:
             # 2D data element
             
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=2)
             # ArrayShape
             data = data.tolist()
             meta['ArrayShape'] = data
@@ -376,7 +376,7 @@ class fileSER:
                 print('ArrayShape:\t{}'.format(data))
 
             # dataset
-            dataset = np.fromfile(self.file_hdl, dtype=self.dictDataType[meta['DataType']], count=meta['ArrayShape'][0]*meta['ArrayShape'][1])
+            dataset = np.fromfile(self._file_hdl, dtype=self._dictDataType[meta['DataType']], count=meta['ArrayShape'][0]*meta['ArrayShape'][1])
             dataset = dataset.reshape(meta['ArrayShape'][::-1]) #needs to be reversed for little endian data
         
             dataset = np.flipud(dataset)
@@ -384,7 +384,7 @@ class fileSER:
         return dataset, meta
 
 
-    def getTag(self, index, verbose=False):
+    def _getTag(self, index, verbose=False):
         '''Retrieve tag from data file.
 
         Parameters:
@@ -398,7 +398,7 @@ class fileSER:
 
         # check index, will raise Exceptions if not
         try:
-            self.checkIndex(index)
+            self._checkIndex(index)
         except:
             raise
 
@@ -411,9 +411,9 @@ class fileSER:
             # bad tagoffsets occured pointing to the end of the file
         
             # go to dataset in file
-            self.file_hdl.seek(self.head['TagOffsetArray'][index],0)
+            self._file_hdl.seek(self.head['TagOffsetArray'][index],0)
             
-            data = np.fromfile(self.file_hdl, dtype='<i4', count=2)
+            data = np.fromfile(self._file_hdl, dtype='<i4', count=2)
         
             # TagTypeID
             tag['TagTypeID'] = data[0]
@@ -421,7 +421,7 @@ class fileSER:
             # only proceed if TagTypeID is the same like in the file header (bad TagOffsetArray issue)
             if tag['TagTypeID'] == head['TagTypeID']:
                 if verbose:
-                    print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self.dictTagTypeID[data[0]]))
+                    print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self._dictTagTypeID[data[0]]))
                     
                 # Time    
                 tag['Time'] = data[1]
@@ -430,7 +430,7 @@ class fileSER:
                 
                 # check for position
                 if tag['TagTypeID'] == 0x4142:
-                    data = np.fromfile(self.file_hdl, dtype='<f8', count=2)
+                    data = np.fromfile(self._file_hdl, dtype='<f8', count=2)
                     
                     # PositionX
                     tag['PositionX'] = data[0]
@@ -455,7 +455,7 @@ class fileSER:
         return tag
         
     
-    def createDim(self, size, offset, delta, element):
+    def _createDim(self, size, offset, delta, element):
         '''Create dimension labels from SER information.
         
         Parameters:
@@ -488,7 +488,7 @@ class fileSER:
         return dim
     
     
-    def parseEntryEMI(self, value):
+    def _parseEntry_emi(self, value):
         '''Auxiliary function to parse string entry to int, float or np.string_().
         
         Parameters:
@@ -513,11 +513,11 @@ class fileSER:
         return p
         
     
-    def readEMI(self, filename):
-        '''Read the meta data from an EMI file.
+    def read_emi(self, filename):
+        '''Read the meta data from an _emi file.
         
         Parameters:
-            filename (str):    Name of the EMI file.
+            filename (str):    Name of the _emi file.
         
         Returns:
             (dict):    Dict of metadata.
@@ -537,8 +537,8 @@ class fileSER:
         except :
             raise
         
-        # dict to store emi stuff
-        emi = {}
+        # dict to store _emi stuff
+        _emi = {}
         
         # need anything readable from <ObjectInfo> to </ObjectInfo>
         collect = False
@@ -560,45 +560,45 @@ class fileSER:
         try:
             data = matchObj.group(1)
         except:
-            raise RuntimeError('Could not find EMI metadata in specified file.')
+            raise RuntimeError('Could not find _emi metadata in specified file.')
 
         # parse metadata as xml
-        root = ET.fromstring('<emi>'+data+'</emi>')
+        root = ET.fromstring('<_emi>'+data+'</_emi>')
         
         # single items
-        emi['Uuid'] = root.findtext('Uuid')
-        emi['AcquireDate'] = root.findtext('AcquireDate')
-        emi['Manufacturer'] = root.findtext('Manufacturer')
-        emi['DetectorPixelHeigth'] = root.findtext('DetectorPixelHeight')
-        emi['DetectorPixelWidth'] = root.findtext('DetectorPixelWidth')
+        _emi['Uuid'] = root.findtext('Uuid')
+        _emi['AcquireDate'] = root.findtext('AcquireDate')
+        _emi['Manufacturer'] = root.findtext('Manufacturer')
+        _emi['DetectorPixelHeigth'] = root.findtext('DetectorPixelHeight')
+        _emi['DetectorPixelWidth'] = root.findtext('DetectorPixelWidth')
 
         # Microscope Conditions
         grp = root.find('ExperimentalConditions/MicroscopeConditions')
         
         for elem in grp:
-            emi[elem.tag] = self.parseEntryEMI(elem.text)
+            _emi[elem.tag] = self._parseEntry_emi(elem.text)
             #print('{}:\t{}'.format(elem.tag, elem.text)) 
 
         # Experimental Description
         grp = root.find('ExperimentalDescription/Root')
         
         for elem in grp:
-            emi['{} [{}]'.format(elem.findtext('Label'), elem.findtext('Unit'))] = self.parseEntryEMI(elem.findtext('Value'))
+            _emi['{} [{}]'.format(elem.findtext('Label'), elem.findtext('Unit'))] = self._parseEntry_emi(elem.findtext('Value'))
             #print('{} [{}]: \t{}'.format(elem.findtext('Label'), elem.findtext('Unit'), elem.findtext('Value')))
 
         # AcquireInfo
         grp = root.find('AcquireInfo')
         
         for elem in grp:
-            emi[elem.tag] = self.parseEntryEMI(elem.text)
+            _emi[elem.tag] = self._parseEntry_emi(elem.text)
             
         # DetectorRange
         grp = root.find('DetectorRange')
         
         for elem in grp:
-            emi['DetectorRange_'+elem.tag] = self.parseEntryEMI(elem.text)
+            _emi['DetectorRange_'+elem.tag] = self._parseEntry_emi(elem.text)
 
-        return emi
+        return _emi
         
         
     def writeEMD(self, filename):
@@ -616,27 +616,27 @@ class fileSER:
             raise IOError('Cannot write to file "{}"!'.format(filename))
         
         # create EMD group    
-        grp = f.file_hdl['data'].create_group(os.path.basename(self.file_hdl.name))
+        grp = f._file_hdl['data'].create_group(os.path.basename(self._file_hdl.name))
         grp.attrs['emd_group_type'] = 1
             
         
         # use first dataset to layout memory
         data, first_meta = self.getDataset(0)
-        first_tag = self.getTag(0)
+        first_tag = self._getTag(0)
         
         if self.head['DataTypeID'] == 0x4122:
             # 2D datasets
             
                 if first_tag['TagTypeID'] == 0x4142:
                     # 2D mapping
-                    dset = grp.create_dataset('data', (self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][0]['DimensionSize'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
+                    dset = grp.create_dataset('data', (self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][0]['DimensionSize'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self._dictDataType[first_meta['DataType']] )
                     
                     # collect time
                     time = np.zeros( (self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize']), dtype='i4')
 
                     # create mapping dims for checking
-                    map_xdim = self.createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
-                    map_ydim = self.createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
+                    map_xdim = self._createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
+                    map_ydim = self._createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
                     # weird direction dependend half pixel shifting
                     map_xdim += 0.5*self.head['Dimensions'][0]['CalibrationDelta']
                     map_ydim -= 0.5*self.head['Dimensions'][1]['CalibrationDelta']
@@ -652,7 +652,7 @@ class fileSER:
                             dset[y, x, :,:] = data[:,:]
                             
                             # get tag data per image
-                            tag = self.getTag(index)
+                            tag = self._getTag(index)
                             time[y,x] = tag['Time']
 
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
@@ -674,10 +674,10 @@ class fileSER:
                     dims.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                     dims_time.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                     
-                    dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                    dim = self._createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
                     dims.append( (dim, 'y', '[m]') )
                     
-                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dim = self._createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                     dims.append( (dim, 'x', '[m]') )
                     
                     # write dimensions
@@ -695,18 +695,18 @@ class fileSER:
                     
                         # get image
                         data, meta = self.getDataset(0)
-                        tag = self.getTag(0)
+                        tag = self._getTag(0)
                         
                         # create dimensions
                         dims = []
                         
-                        dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                        dim = self._createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
                         dims.append( (dim, 'y', '[m]') )
                                                                           
-                        dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                        dim = self._createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                         dims.append( (dim, 'x', '[m]') )
                         
-                        dset = grp.create_dataset( 'data', (first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']])
+                        dset = grp.create_dataset( 'data', (first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self._dictDataType[first_meta['DataType']])
                         
                         dset[:,:] = data[:,:]
                         
@@ -718,7 +718,7 @@ class fileSER:
                     else:
                 
                         # simple series
-                        dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
+                        dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][1], first_meta['ArrayShape'][0]), dtype=self._dictDataType[first_meta['DataType']] )
             
                         # collect time
                         time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
@@ -731,7 +731,7 @@ class fileSER:
                             dset[i,:,:] = data[:,:]
                 
                             # get tag data per image
-                            tag = self.getTag(i)
+                            tag = self._getTag(i)
                             time[i] = tag['Time']
                             
                         # create dimension datasets
@@ -740,13 +740,13 @@ class fileSER:
                         # first SER dimension is number
                         assert self.head['Dimensions'][0]['Description'] == 'Number'
                             
-                        dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
+                        dim = self._createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
                         dims.append( (dim[0:self.head['ValidNumberElements']], self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
 
-                        dim = self.createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
+                        dim = self._createDim(first_meta['ArrayShape'][1], first_meta['Calibration'][1]['CalibrationOffset'], first_meta['Calibration'][1]['CalibrationDelta'], first_meta['Calibration'][1]['CalibrationElement'])
                         dims.append( (dim, 'y', '[m]') )
                                                                           
-                        dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                        dim = self._createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                         dims.append( (dim, 'x', '[m]') )
 
                         # write dimensions
@@ -762,13 +762,13 @@ class fileSER:
             
             if first_tag['TagTypeID'] == 0x4142:
                     # 2D mapping
-                    dset = grp.create_dataset( 'data', (self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][0]['DimensionSize'], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']] )
+                    dset = grp.create_dataset( 'data', (self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][0]['DimensionSize'], first_meta['ArrayShape'][0]), dtype=self._dictDataType[first_meta['DataType']] )
                     
                     time = np.zeros( (self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][1]['DimensionSize']), dtype='i4')
 
                     # create mapping dims for checking
-                    map_xdim = self.createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
-                    map_ydim = self.createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
+                    map_xdim = self._createDim( self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'] )
+                    map_ydim = self._createDim( self.head['Dimensions'][1]['DimensionSize'], self.head['Dimensions'][1]['CalibrationOffset'], self.head['Dimensions'][1]['CalibrationDelta'], self.head['Dimensions'][1]['CalibrationElement'] )
                     # weird direction dependend half pixel shifting
                     map_xdim += 0.5*self.head['Dimensions'][0]['CalibrationDelta']
                     map_ydim -= 0.5*self.head['Dimensions'][1]['CalibrationDelta']
@@ -784,7 +784,7 @@ class fileSER:
                             dset[y, x, :] = np.copy(data[:])
                             
                             # get tag data per image
-                            tag = self.getTag(index)
+                            tag = self._getTag(index)
                             time[y,x] = tag['Time']
                                 
                             assert( np.abs(tag['PositionX'] - map_xdim[x]) < np.abs(tag['PositionX']*1e-8) )
@@ -806,7 +806,7 @@ class fileSER:
                     dims.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                     dims_time.append( (map_xdim, self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                     
-                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dim = self._createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                     dims.append( (dim, 'E', '[m_eV]') )
                         
                     # write dimensions
@@ -818,7 +818,7 @@ class fileSER:
                     
             else:
                     # simple series
-                    dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][0]), dtype=self.dictDataType[first_meta['DataType']])
+                    dset = grp.create_dataset( 'data', (self.head['ValidNumberElements'], first_meta['ArrayShape'][0]), dtype=self._dictDataType[first_meta['DataType']])
                     
                     # collect time
                     time = np.zeros(self.head['ValidNumberElements'], dtype='i4')
@@ -831,7 +831,7 @@ class fileSER:
                         dset[i,:] = data[:]
             
                         # get tag data per image
-                        tag = self.getTag(i)
+                        tag = self._getTag(i)
                         time[i] = tag['Time']
 
                     # create dimension datasets
@@ -839,10 +839,10 @@ class fileSER:
 
                     # first SER dimension is number
                     assert self.head['Dimensions'][0]['Description'] == 'Number'
-                    dim = self.createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
+                    dim = self._createDim(self.head['Dimensions'][0]['DimensionSize'], self.head['Dimensions'][0]['CalibrationOffset'], self.head['Dimensions'][0]['CalibrationDelta'], self.head['Dimensions'][0]['CalibrationElement'])
                     dims.append( (dim[0:self.head['ValidNumberElements']], self.head['Dimensions'][0]['Description'], '[{}]'.format(self.head['Dimensions'][0]['Units'])) )
                         
-                    dim = self.createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
+                    dim = self._createDim(first_meta['ArrayShape'][0], first_meta['Calibration'][0]['CalibrationOffset'], first_meta['Calibration'][0]['CalibrationDelta'], first_meta['Calibration'][0]['CalibrationElement'])
                     dims.append( (dim, 'E', '[m_eV]') )
                         
                     # write dimensions
@@ -860,13 +860,29 @@ class fileSER:
         #del dset_buf, dims
         
         
-        # put meta information from EMI to Microscope group, if available
-        if self.emi:
-            for key in self.emi:
-                if not self.emi[key] is None:
-                    f.microscope.attrs[key] = self.emi[key]
+        # put meta information from _emi to Microscope group, if available
+        if self._emi:
+            for key in self._emi:
+                if not self._emi[key] is None:
+                    f.microscope.attrs[key] = self._emi[key]
                 
         # write comment into Comment group
-        f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self.file_hdl.name))
+        f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self._file_hdl.name))
         
-            
+def serReader(fName):
+    '''Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
+    '''
+    f1 = fileSER(fName) #open the file and init the class
+    if f1.head['ValidNumberElements'] > 0:
+        im1 = f1.getDataset(0) #im1 will be used as the output dictionary to keep most of the meta data
+        im1[1]['filename'] = fName #save the file name in the output dictionary
+        temp = np.empty([f1.head['ValidNumberElements'], im1[0].shape[0],im1[0].shape[1]],dtype=im1[0].dtype)
+        temp[0,:,:] = im1[0]
+        for ii in range(1,f1.head['ValidNumberElements']):
+            temp[ii,:,:] = f1.getDataset(ii)[0] #get the next dataset
+        im1[1]['data'] = temp
+    else:
+        im1 = {}
+        print('No data set found') 
+    del f1 #delete the class and close the file
+    return im1[1] #return the dataset and metadata as a dictionary

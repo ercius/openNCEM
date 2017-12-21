@@ -45,9 +45,13 @@ class fileDM:
         self.dataType = []
         self.dataSize = []
         self.dataOffset = []
+        self.dataShape = [] #1,2,3, or 4. The total number of dimensions in a data set
         
         #The number of objects found in the DM3 file
         self.numObjects = 0
+        
+        #Indicator that a thumbnail exists (tested for later)
+        self.thumbnail = False
         
         self.curGroupLevel = 0 #track how deep we currently are in a group
         self.maxDepth = 64 #maximum number of group levels allowed
@@ -133,6 +137,12 @@ class fileDM:
             self.fid.seek(16,0)
         #Read the first root tag the same as any other group
         self._readTagGroup()
+        
+        #Check for thumbnail
+        if( (self.dataType[0] == 23) & (self.dataShape[0] == 2) ):
+            self.thumbnail = True
+        else:
+            self.thumbnail = False
         
     def _readTagGroup(self):
         '''Read a tag group in a DM file
@@ -345,8 +355,8 @@ class fileDM:
     
     def _readNativeData(self,encodedType):
         '''reads ordinary data types in tags
-            SHORT (in16)   = 2;
-            LONG (in32)    = 3;
+            SHORT (int16)   = 2;
+            LONG (int32)    = 3;
             USHORT (uint16)  = 4;
             ULONG (uint32)   = 5;
             FLOAT (float32)  = 6;
@@ -421,7 +431,7 @@ class fileDM:
         if self.v:
             print('_readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize,arrayTypes))
         
-        #Everything used to calcualte the bufSize is not needed anymore. THis can be removed after testing
+        #Everything used to calculate the bufSize is not needed anymore. THis can be removed after testing
         itemSize = 0
         for encodedType in arrayTypes:
             if self.v:
@@ -442,19 +452,19 @@ class fileDM:
             self._storeTag(self.curTagName + '.arrayType', encodedType)
             self.fid.seek(bufSize.astype('<u8'),1) #advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
-        elif bufSize < 1e3: #set an upper limit on the size of arrya that will be read in as a string
+        elif bufSize < 1e3: #set an upper limit on the size of array that will be read in as a string
             #treat as a string
             for encodedType in arrayTypes:
                 stringData = np.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
                 arrOut = self._bin2str(stringData)
             
-            #THis is the old way to read this in. Its not really correct though.
+            #This is the old way to read this in. Its not really correct though.
             #stringData = self.bin2str(np.fromfile(self.fid,count=bufSize,dtype='<u1'))
             #arrOut = stringData.replace('\x00','') #remove all spaces from the string data
             
             #Catch useful tags for images and spectra (nm, eV, etc.)
             fullTagName = self.curGroupNameAtLevelX + '.' + self.curTagName
-            if((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1) & (self.numObjects > 0)):
+            if((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1) ):# & (self.numObjects > 0)):
                 self.scale.append(self.scale_temp)
                 self.scaleUnit.append(arrOut)
                 self.origin.append(self.origin_temp)
@@ -486,8 +496,12 @@ class fileDM:
         '''Find interesting keys and keep their values for later. This is separate from _storeTag
         so that it is easy to find and modify.
         '''
+        
+        #Save that a useful object has been found
+        if totalTag.find('ImageData.Calibrations.Dimension.1.Scale')>-1:
+            self.numObjects += 1 #data is contained in this file
+        
         if curTagName.find('Data.arraySize')>-1:
-            self.numObjects += 1 #add this as an interesting object
             self.dataSize.append(curTagValue)
         elif curTagName.find('Data.arrayOffset') >-1:
             self.dataOffset.append(curTagValue)
@@ -498,10 +512,16 @@ class fileDM:
             self.ySize.append(1) 
             self.zSize.append(1)
             self.zSize2.append(1)
+            self.dataShape.append(1) # indicate as at least 1D data
         elif totalTag.find('Dimensions.2')>-1:
             self.ySize[-1] = curTagValue #OR self.ysize[self.numObjects] = self.curTagValue
+            self.dataShape[-1] = 2 # indicate as at least 2D data
         elif totalTag.find('Dimensions.3')>-1:
             self.zSize[-1] = curTagValue
+            self.dataShape[-1] = 3 # indicate as at least 3D data
+        elif totalTag.find('Dimensions.4')>-1:
+            self.zSize2[-1] = curTagValue
+            self.dataShape[-1] = 4 # indicate as at least 3D data
         elif (totalTag.find('Dimension.')>-1) & (totalTag.find('.Scale')>-1):
             self.scale_temp = curTagValue
         elif (totalTag.find('Dimension.')>-1) & (totalTag.find('.Origin')>-1):
@@ -572,17 +592,16 @@ class fileDM:
         elif dd == 13:
             return np.complex128
         elif dd == 23:
-            raise IOError('RGB data type is not supported yet.')
+            raise IOError('RGB data type is not generally supported yet. Try dmFile._readRGB')
             #return np.uint8
         else:
             raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
     
     def getDataset(self, index):
-        '''Retrieve a dataseet from the DM file.
-        Note: All DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data.
-        This function ignores that dataset if it exists (numObjects > 1). To retrieve the thumbnail use the getThumbnail() function
+        '''Retrieve a dataset from the DM file.
+        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function
         '''
-        #The first dataset is always a thumbnail. Test for this and skip the thumbnail automatically
+        #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         if self.numObjects == 1:
             ii = index
         else:
@@ -602,19 +621,27 @@ class fileDM:
         
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
-            outputDict['pixelUnit'] = self.scaleUnit[::-1] #need to reverse the order to match the C-ordering of the data
-            outputDict['pixelSize'] = self.scale[::-1]
-            outputDict['pixelOrigin'] = self.origin[::-1]
             pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
+            jj = 0 #counter to determine where the first scale value starts
+            for nn in self.dataShape[0:ii]:
+                    jj += nn #sum up all number of dimensions for previous datasets
             #if self.dataType == 23: #RGB image(s)
             #    temp = np.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
             if self.zSize[ii] == 1: #2D data
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
             elif self.zSize2[ii] > 1: #4D data
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
             else: #3D array
                 outputDict['data'] = np.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
-                #outputDict['cube'] = np.fromfile(self.fid,count=pixelCount,dtype=np.int16).reshape((self.zSize[ii],self.ySize[ii],self.xSize[ii]))
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj+self.dataShape[ii]][::-1] #need to reverse the order to match the C-ordering of the data
+                outputDict['pixelSize'] = self.scale[jj:jj+self.dataShape[ii]][::-1]
+                outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
         
         return outputDict
     
@@ -625,9 +652,10 @@ class fileDM:
         
     def getThumbnail(self):
         '''Read the thumbnail saved as the first dataset in the DM file as an RGB array
+        Unsure if this is correct.
         '''
         self.fid.seek(self.dataOffset[0],0)
-        return self._readRGB(self.xSize[0],self.ySize[0])
+        return self._readRGB(self.ySize[0],self.xSize[0])
         
 def dmReader(fName,dSetNum=0,verbose=False):
     '''Simple function to parse the file and read the requested dataset
