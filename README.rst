@@ -13,10 +13,18 @@ The openNCEM collection comes with different components, described below.
 
 **ncempy**
     openNCEM's python package to provide various algorithms and routines to process or simulate images.
-    
+
 
 **tools**
     The tools build leveraging the algorithms and routines provided in the libraries/packages. They are subordered by the different problems they address.
+
+Commands
+========
+
+**ncem2png**
+    Extracts a PNG file from the data in a SER, DM3, or DM4 file. For 3D and 4D
+    files, it tries to extract an image from the middle of the third and forth
+    dimension.
 
 License
 =======
