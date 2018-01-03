@@ -98,6 +98,7 @@ class fileDM:
         self.scale = []
         self.scaleUnit = []
         self.origin = []
+        self.dataType = []
 
         #Temporary variables to keep in case a tag entry shows useful information in an array
         self.scale_temp = 0
@@ -231,11 +232,14 @@ class fileDM:
             self.seek(self.fid, 16,0)
         #Read the first root tag the same as any other group
         self._readTagGroup()
-
+        
         #Check for thumbnail
-        if( (self.dataType[0] == 23) & (self.dataShape[0] == 2) ):
-            self.thumbnail = True
-        else:
+        if(len(self.dataType) > 0): #check that any data set was found
+            if( (self.dataType[0] == 23) & (self.dataShape[0] == 2) ):
+                self.thumbnail = True
+            else:
+                self.thumbnail = False
+        else: #this file only contains tags (such as a GTG file)
             self.thumbnail = False
 
     def _readTagGroup(self):
