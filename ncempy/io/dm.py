@@ -632,7 +632,7 @@ class fileDM:
         try:
             #open a text file to write out the tags
             with open(fnameOutPrefix+'_tags.txt','w') as fidOut:
-                for nn in self.allTags:
+                for nn in sorted(self.allTags):
                     try:
                         oo = '{} = {}'.format(nn,str(self.allTags[nn]))
                         fidOut.write(oo)
