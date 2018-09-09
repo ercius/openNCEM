@@ -1,5 +1,5 @@
-ncempy.algo.radial_profile module
-=================================
+ncempy.algo.radial\_profile module
+==================================
 
 .. automodule:: ncempy.algo.radial_profile
     :members:

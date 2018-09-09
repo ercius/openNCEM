@@ -5,4 +5,3 @@ ncempy.io.ser module
     :members:
     :undoc-members:
     :show-inheritance:
-

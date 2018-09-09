@@ -1,5 +1,5 @@
-ncempy.eval.ring_diff module
-============================
+ncempy.eval.ring\_diff module
+=============================
 
 .. automodule:: ncempy.eval.ring_diff
     :members:

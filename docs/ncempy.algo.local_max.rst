@@ -1,5 +1,5 @@
-ncempy.algo.local_max module
-============================
+ncempy.algo.local\_max module
+=============================
 
 .. automodule:: ncempy.algo.local_max
     :members:
