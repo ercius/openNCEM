@@ -306,9 +306,7 @@ def mrc2emd(fname):
     return 1
     
 def mrcWriter(filename,stack,pixelSize,forceWrite=False):
-    """
-    mrcWriter(filename,stack)
-    Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
+    """ Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
       input:
         filename - The name of the EMD file 
         stack - The binary data to write to disk
@@ -399,12 +397,11 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     return 1
     
 def emd2mrc(filename,dsetPath):
-    """
-    Convert EMD data set into MRC data set
-    The final data type is float32 for convenience
-      inputs:
-        filename - The name of the EMD file
-        dsetPath - the HDF5 path to the top group holding the data ex. '/data/raw/'
+    """Convert EMD data set into MRC data set. The final data type is float32 for convenience.
+    
+        inputs:
+            filename - The name of the EMD file
+            dsetPath - the HDF5 path to the top group holding the data ex. '/data/raw/'
     """
     
     with h5py.File(filename,'r') as f1:
