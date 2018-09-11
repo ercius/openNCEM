@@ -379,7 +379,6 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     fid.write(np.int32([1,2,3]))
     
     #Minimum and maximum density
-    np.int32(stack)
     fid.write(np.float32(np.min(stack)))
     fid.write(np.float32(np.max(stack)))
     fid.write(np.float32(np.mean(stack)))
