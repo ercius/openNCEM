@@ -186,6 +186,27 @@ class fileMRC:
             print("Not enough memory to read in the full data set")        
         return self.dataOut
     
+    def getSlice(self,num):
+        '''Read in a slice of an MRC file. Useful for parsing through a large file without reading
+        the entire data set into memory.
+        
+        Paremeters:
+            num (int): Get the requested image.
+        
+        Returns:
+            (ndarray): A 2D slice or a 3D set of slices
+        
+        '''
+
+        self.fid.seek(self.dataOffset,0) #move to the start of the data by skipping the header
+        imSize = self.dataSize[1]*self.dataSize[2] #size of each image in pixels
+        self.fid.seek(num*imSize,1) #skip to the slice requested from the start of the data
+        
+        data1 = np.fromfile(self.fid,dtype=self.dataType,count=imSize) #read in the requested image
+        data1 = data1.reshape((self.Shape[1],self.Shape[2])) #reshape the image
+            
+        return data1
+    
     def _applyAxisOrientations(self,arrayIn):
         ''' This is untested and unused.
         
