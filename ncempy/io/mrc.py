@@ -10,8 +10,7 @@ import numpy as np
 class fileMRC:
     
     def __init__(self, filename, verbose = False):
-        '''
-        Init opening the file and reading in the header.
+        '''Init opening the file and reading in the header.
         Read in the data in MRC format and other useful information.
         Output is a dictionary with the following values:
 
@@ -29,7 +28,6 @@ class fileMRC:
 
         # necessary declarations, if something fails
         self.fid = None
-#        self.fidOut = None
         
         self.dataOut = {} #will hold the data and metadata to output to the user after getDataset() call
         
@@ -48,20 +46,17 @@ class fileMRC:
         return None
     
     def __del__(self):
-        #close the file
+        '''Close the file.
+        
+        '''
         if(not self.fid):
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
-#        if(self.fidOut):
-#            if self.v:
-#                print('Closing tags output file')
-#            self.fidOut.close()
         return None
     
     def parseHeader(self):
-        '''
-        Read the header information which includes data type, data size, data
+        '''Read the header information which includes data type, data size, data
         shape, and metadata
         
         - Note: This header uses Fortran-style ordering. Numpy uses C-style ordering. The header is read in and then reversed [::-1] at the end for output to the user
@@ -145,8 +140,7 @@ class fileMRC:
                 print('Position before reading extra header: ' + str(pos1))
                 print('Extra header size = ' +str(self.extra[1]))
             
-            '''
-            Read the extra FEI header described as follows:
+            '''Read the extra FEI header described as follows:
              1 a_tilt  first Alpha tilt (deg)
              2 b_tilt  first Beta tilt (deg)
              3 x_stage  Stage x position (Unit=m. But if value>1, unit=???m)
@@ -186,7 +180,7 @@ class fileMRC:
         '''
         self.fid.seek(self.dataOffset,0) #move to the start of the data from the start of the file
         try:
-            data1 = np.fromfile(self.fid,dtype=self.dataType,count=np.prod(self.dataSize))#the dataSize needs to be reordered for numpy (c-style ordering). The fastest changing subscript is the last subscript.
+            data1 = np.fromfile(self.fid,dtype=self.dataType,count=np.prod(self.dataSize))
             self.dataOut['data'] = data1.reshape(self.Shape)
         except MemoryError:
             print("Not enough memory to read in the full data set")        
@@ -221,6 +215,16 @@ class fileMRC:
         return Type
 #end class fileMRC
 
+def mrcReader(fname,verbose=False):
+    '''A simple function to read open a MRC, parse the header, and read the data.
+    
+    '''
+    f1 = fileMRC(fname,verbose) #open the file and init the class
+    f1.parseHeader() #parse the header
+    im1 = f1.getDataset() #read in the dataset
+    del f1 #delete the class and close the file
+    return im1 #return the data and metadata as a dictionary
+
 def mrc2raw(fname):
     """Writes the image data in an MRC file as binary file with the same file
     name and .raw ending. Data type and size are written in the file name.
@@ -228,18 +232,16 @@ def mrc2raw(fname):
     
     """
     tomo = mrcReader(fname)
-    #stackSize = tomo['stack'].shape
-    #stackType = tomo['stack'].dtype
     rawName = tomo['filename'].rsplit('.',1)[0] + '_' + str(tomo['stack'].dtype) + '_' + str(tomo['stack'].shape) + '.raw'
     fid = open(rawName,'wb')
     fid.write(tomo['stack']) #write out as C ordered data
     fid.close()
     
-#Convert an MRC data set to an EMD data set (HDF5 file type)
 def mrc2emd(fname):
-    """
-    mrc2emd(fname)
-    Writes the MRC file as an HDF5 file in EMD format with same file name and .emd ending. Header information is retained as attributes. See also emdXMF() to write out an XMF file for Tomviz.
+    """Write an MRC file as an HDF5 file in EMD format with same file name and .emd ending.
+    Header information is retained as attributes.
+    
+    TODO: Update this to use ncempy.emd class
     """
     import h5py
     
@@ -302,20 +304,6 @@ def mrc2emd(fname):
     f1.close()
     
     return 1
-    
-    
-    
-    
-    
-def mrcReader(fname,verbose=False):
-    '''
-    A simple function to read open a MRC, parse the header, and read the data
-    '''
-    f1 = fileMRC(fname,verbose) #open the file and init the class
-    f1.parseHeader() #parse the header
-    im1 = f1.getDataset() #read in the dataset
-    del f1 #delete the class and close the file
-    return im1 #return the data and metadata as a dictionary
     
 def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     """
@@ -397,19 +385,19 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     fid.write(np.float32(np.mean(stack)))
     
     #Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
-    fid.seek(212,0);
+    fid.seek(212,0)
     fid.write(np.int8([68,65,0,0])) #use [17,17,0,0] for big endian
     
     #Write out the data
-    fid.seek(1024);
+    fid.seek(1024)
     if forceWrite:    
-        fid.write(np.ascontiguousarray(stack)); #Change to C ordering array for writing to disk
+        fid.write(np.ascontiguousarray(stack)) #Change to C ordering array for writing to disk
     else:
-        fid.write(stack); #msut be C-contiguous
+        fid.write(stack) #msut be C-contiguous
 
     #Close the file
-    fid.close();
-    return 1;
+    fid.close()
+    return 1
     
 def emd2mrc(filename,dsetPath):
     """
