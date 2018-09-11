@@ -395,7 +395,103 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     #Close the file
     fid.close()
     return 1
+
+def writeHeader(filename,shape,dtype,pixelSize):
+    """ Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
+    This is useful for initializing an MRC file and then writing to it manually or see writeData() function below.
     
+        Parameters:
+            filename (str): The name of the EMD file 
+            shape (tuple): The shape of the data to write
+            pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
+        Returns:
+            Returns 1 if successful.
+    """
+    
+    with open(filename,'wb') as fid:
+        if len(shape) > 3:
+            print("Too many dimensions")
+            return 0
+        
+        #if not stack.flags['C_CONTIGUOUS']:
+        #    print("Error: Array must be C-style ordering: [numImages,Y,X]. Use np.ascontiguousarray(numpy.transpose(stack,[])) to change data ordering in memory\nExiting")
+        #    return 0
+        
+        #Initialize the header with 256 zeros with size 4 bytes
+        header = np.zeros(256,dtype=np.int32)
+        fid.write(header)
+        fid.seek(0,0) #return to the beginning of the file
+        
+        #Initialize the int32 part of the header with zeros
+        header1 = np.zeros(10,dtype=np.int32)
+        
+        #Write the number of columns, rows and sections (images)
+        header1[0] = np.int32(shape[2]) #num columns, the last index in C-style ordering
+        header1[1] = np.int32(shape[1]) #num rows
+        header1[2] = np.int32(shape[0]) #num sections (images)
+        
+        if dtype == np.float32:
+            header1[3] = np.int32(2)
+        elif dtype == np.uint16:
+            header1[3] = np.int32(6)
+        elif dtype == np.int16:
+            header1[3] = np.int32(1)
+        elif dtype == np.int8:
+            header1[3] = np.int32(0)
+        else:
+            print("Data type " + str(dtype) + " is unsupported. Only int8, int16, uint16, and float32 are supported")
+            return 0;
+        
+        #Starting point of sub image (not used in IMOD) 
+        header1[4:7] = np.zeros(3,dtype=np.int32)
+        
+        #Grid size in X,Y,Z
+        header1[7] = np.int32(shape[2]) #mx
+        header1[8] = np.int32(shape[1]) #my
+        header1[9] = np.int32(shape[0]) #mz
+        
+        #Write out the first part of the header information
+        fid.write(header1)
+        
+        #Cell dimensions (in Angstroms)
+        #pixel spacing = xlen/mx, ylen/my, zlen/mz
+        fid.write(np.float32(pixelSize[2]*shape[2])) #xlen
+        fid.write(np.float32(pixelSize[1]*shape[1])) #ylen
+        fid.write(np.float32(pixelSize[0]*shape[0])) #zlen
+        
+        #Cell angles (in degrees)
+        fid.write(np.float32([90.0,90.0,90.0]))
+        
+        #Description of array directions with respect to: Columns, Rows, Images
+        fid.write(np.int32([1,2,3]))
+        
+        #Minimum and maximum density
+        #fid.write(np.float32(np.min(stack)))
+        #fid.write(np.float32(np.max(stack)))
+        #fid.write(np.float32(np.mean(stack)))
+        fid.write(np.zeros(3,dtype=np.float32))
+        
+        #Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
+        fid.seek(212,0)
+        fid.write(np.int8([68,65,0,0])) #use [17,17,0,0] for big endian
+        
+    return 1
+    #fid.close()
+
+def appendData(filename,stack):
+    '''Append a binary set of data to the end of a MRC file. This should only be used in conjunction with
+    writeHeader() above. 
+    
+    Parameters:
+        filename (str):    Name of the MRC file with pre-initiated header and some data already written.
+        stack (ndarray):   Data to append to the file.
+    
+    '''
+    with open(filename,'ab') as fid:
+        #Write out the data
+        fid.seek(0,2) #seek to the end of the file
+        fid.write(stack) #Change to C ordering array for writing to disk
+        
 def emd2mrc(filename,dsetPath):
     """Convert EMD data set into MRC data set. The final data type is float32 for convenience.
     
