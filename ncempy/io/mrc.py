@@ -237,8 +237,14 @@ class fileMRC:
 #end class fileMRC
 
 def mrcReader(fname,verbose=False):
-    '''A simple function to read open a MRC, parse the header, and read the data.
+    '''A simple function to read open a MRC, parse the header, and read the full
+    data set.
     
+    Parameters:
+        fname (str): The name of the file to load
+        
+    Returns:
+        (dict): A dictionary containing the data and interesting metadata.
     '''
     f1 = fileMRC(fname,verbose) #open the file and init the class
     f1.parseHeader() #parse the header
@@ -251,6 +257,8 @@ def mrc2raw(fname):
     name and .raw ending. Data type and size are written in the file name.
     No other header information is retained.
     
+    Parameters:
+        fname (str): The name of the file to convert
     """
     tomo = mrcReader(fname)
     rawName = tomo['filename'].rsplit('.',1)[0] + '_' + str(tomo['stack'].dtype) + '_' + str(tomo['stack'].shape) + '.raw'
