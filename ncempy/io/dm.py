@@ -778,16 +778,12 @@ class fileDM:
         # Check sliceZ and sliceZ2 are within the data arrray size bounds
         if sliceZ > (self.zSize[ii]-1):
             raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ, self.zSize))
-            return None
         if sliceZ2 > (self.zSize[ii]-1):
-            # Check sliceZ2
             raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ2, self.zSize2))
-            return None
         
         self.seek(self.fid, self.dataOffset[ii],0) #Seek to start of dataset from beginning of the file
         
         outputDict = {}
-        
         outputDict['filename'] = osBasename(self.filename)
         
         #Parse the dataset to see what type it is (image, 3D image series, spectra, 4D, etc.)
