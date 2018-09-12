@@ -750,6 +750,9 @@ class fileDM:
         
         Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
         
+        Warning: DM4 files with 4D data sets are written as [X,Y,Z1,Z2]. This code currently gets the [X,Y] slice. 
+        Getting the [Z1,Z2] slice is not yet implemented.
+        
             Parameters:
                 index (int): The number of the dataset in the DM file.
                 sliceZ (int): The slice to get along the first dimension (C-ordering) for 3D datasets or the 2nd dimensions for 
