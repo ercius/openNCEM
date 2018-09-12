@@ -200,7 +200,8 @@ class fileMRC:
 
         self.fid.seek(self.dataOffset,0) #move to the start of the data by skipping the header
         imSize = self.dataSize[1]*self.dataSize[2] #size of each image in pixels
-        self.fid.seek(num*imSize,1) #skip to the slice requested from the start of the data
+        byteSize = np.dtype(self.dataType).itemsize
+        self.fid.seek(num*byteSize,1) #skip to the slice requested from the start of the data
         
         data1 = np.fromfile(self.fid,dtype=self.dataType,count=imSize) #read in the requested image
         data1 = data1.reshape((self.Shape[1],self.Shape[2])) #reshape the image
@@ -335,14 +336,15 @@ def mrc2emd(fname):
     return 1
     
 def mrcWriter(filename,stack,pixelSize,forceWrite=False):
-    """ Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
-      input:
-        filename - The name of the EMD file 
-        stack - The binary data to write to disk
-        pixelSize - The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
-      output:
-        Returns 1 if successful and 0 if unsuccessful
-    """
+    '''Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
+    
+    Parameters:
+        filename (str): The name of the MRC file.
+        stack (ndarray): The array data to write to disk.
+        pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
+    Returns:
+        (int): 1 if successful and 0 if unsuccessful
+    '''
     
     fid = open(filename,'wb')
     
@@ -427,14 +429,14 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
 
 def writeHeader(filename,shape,dtype,pixelSize):
     """ Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
-    This is useful for initializing an MRC file and then writing to it manually or see writeData() function below.
+    This is useful for initializing an MRC file and then writing to it manually or see appendData() function below.
     
         Parameters:
             filename (str): The name of the EMD file 
             shape (tuple): The shape of the data to write
             pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
         Returns:
-            Returns 1 if successful.
+            1 if successful.
     """
     
     with open(filename,'wb') as fid:
@@ -505,7 +507,6 @@ def writeHeader(filename,shape,dtype,pixelSize):
         fid.write(np.int8([68,65,0,0])) #use [17,17,0,0] for big endian
         
     return 1
-    #fid.close()
 
 def appendData(filename,stack):
     '''Append a binary set of data to the end of a MRC file. This should only be used in conjunction with
@@ -522,12 +523,12 @@ def appendData(filename,stack):
         fid.write(stack) #Change to C ordering array for writing to disk
         
 def emd2mrc(filename,dsetPath):
-    """Convert EMD data set into MRC data set. The final data type is float32 for convenience.
+    '''Convert EMD data set into MRC data set. The final data type is float32 for convenience.
     
-        inputs:
+        Parameters:
             filename - The name of the EMD file
             dsetPath - the HDF5 path to the top group holding the data ex. '/data/raw/'
-    """
+    '''
     
     with h5py.File(filename,'r') as f1:
         #Get the pixel sizes and convert to Ang
