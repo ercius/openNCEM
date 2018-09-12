@@ -743,7 +743,74 @@ class fileDM:
                 outputDict['pixelOrigin'] = self.origin[jj:jj+self.dataShape[ii]][::-1]
 
         return outputDict
+    
+    def getSlice(self,index,sliceZ,sliceZ2=0):
+        '''Retrieve a slice of a dataset from the DM file. The data set will have a shape according to
+        3D = [sliceZ,Y,X] or 4D: [sliceZ2,sliceZ,Y,X]
+        
+        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
+        
+            Parameters:
+                index (int): The number of the dataset in the DM file.
+                sliceZ (int): The slice to get along the first dimension (C-ordering) for 3D datasets or the 2nd dimensions for 
+            
+            Keywords:
+                sliceZ2 (int): For 4D dataset
+        
+            Returns:
+                (dict): a dictionary containing meta data and the data.
+        '''
+        #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
+        if self.numObjects == 1:
+            ii = index
+        else:
+            ii = index + 1
 
+        #Check that the dataset exists.
+        try:
+            self._checkIndex(ii)
+        except:
+            raise
+        
+        # Check sliceZ and sliceZ2 are within the data arrray size bounds
+        if sliceZ > (self.zSize[ii]-1):
+            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ, self.zSize))
+            return None
+        if sliceZ2 > (self.zSize[ii]-1):
+            # Check sliceZ2
+            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ2, self.zSize2))
+            return None
+        
+        self.seek(self.fid, self.dataOffset[ii],0) #Seek to start of dataset from beginning of the file
+        
+        outputDict = {}
+        
+        outputDict['filename'] = osBasename(self.filename)
+        
+        #Parse the dataset to see what type it is (image, 3D image series, spectra, 4D, etc.)
+        if self.xSize[ii] > 0:
+            #determine the number of bytes to skip
+            pixelCount = self.xSize[ii]*self.ySize[ii]
+            byteCount = pixelCount * np.dtype(self._DM2NPDataType(self.dataType[ii])).itemsize
+            jj = 0 #counter to determine where the first scale value starts
+            for nn in self.dataShape[0:ii]:
+                    jj += nn #sum up all number of dimensions for previous datasets
+            if self.zSize[ii] == 1: #2D data
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+            elif self.zSize2[ii] > 1: #4D data
+                self.fid.seek(sliceZ*sliceZ2*byteCount,1) #skip ahead from current position
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+            else: #3D array
+                self.fid.seek(sliceZ*byteCount,1) #skip ahead from current position
+                outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
+            
+            #Return the proper meta data for this one image
+            outputDict['pixelUnit'] = self.scaleUnit[jj:jj+2][::-1] #need to reverse the order to match the C-ordering of the data
+            outputDict['pixelSize'] = self.scale[jj:jj+2][::-1]
+            outputDict['pixelOrigin'] = self.origin[jj:jj+2][::-1]
+            
+        return outputDict
+    
     def _readRGB(self,xSizeRGB,ySizeRGB):
         '''Read in a uint8 type array with [Red,green,blue,alpha] channels.
         '''
