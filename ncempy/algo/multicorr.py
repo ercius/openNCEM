@@ -1,15 +1,16 @@
 '''
 Module to correlate two images, functionally written.
+
 '''
 
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import cv2
+#import cv2
 
 def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
-    '''
-    Align a template to an image, possibly with multiple alignment peaks.
+    '''Align a template to an image, possibly with multiple alignment peaks.
+    
     Inputs:
         G1 - Fourier transform of image we are aligning to. Image reference
         G2 - Fourier transform of image that is being aligned. Image being registered
@@ -73,8 +74,7 @@ def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
     return method, upsampleFactor
 
 def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
-    '''
-    Generate correlation image at initial resolution using the method specified.
+    '''Generate correlation image at initial resolution using the method specified.
 
     Inputs:
         G1 - Fourier transform of image we are aligning to. Image reference
@@ -98,8 +98,7 @@ def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
     return imageCorr
 
 def upsampled_correlation(imageCorr, upsampleFactor):
-    '''
-    Upsamples the correlation image by a set integer factor upsampleFactor. If upsampleFactor == 2, then it is naively Fourier upsampled. If the upsampleFactoris higher than 2, then it uses dftUpsample, which is a more efficient way to Fourier upsample the image.
+    '''Upsamples the correlation image by a set integer factor upsampleFactor. If upsampleFactor == 2, then it is naively Fourier upsampled. If the upsampleFactoris higher than 2, then it uses dftUpsample, which is a more efficient way to Fourier upsample the image.
 
     Inputs:
         imageCorr - Fourier transformed correlation image returned by initial_correlation_image. Is an ndarray.
@@ -162,8 +161,7 @@ def upsampled_correlation(imageCorr, upsampleFactor):
     return xyShift
 
 def upsampleFFT(imageInit, upsampleFactor):
-    '''
-    This does a Fourier upsample of the imageInit. imageInit is the Fourier transform of the correlation image. upsampleFactor is self-descriptive. The function returns the real space correlation image that has been Fourier upsampled by 2. It is written generally such that upsampleFactor can be greater than 2, but that should never happend/it has not been tested.
+    '''This does a Fourier upsample of the imageInit. imageInit is the Fourier transform of the correlation image. upsampleFactor is self-descriptive. The function returns the real space correlation image that has been Fourier upsampled by 2. It is written generally such that upsampleFactor can be greater than 2, but that should never happend/it has not been tested.
 
     The way it works is that it embeds imageInit in a larger array of zeros, then does the inverse Fourier transform to return the Fourier upsampled image in real space.
 
@@ -199,8 +197,10 @@ def dftUpsample(imageCorr, upsampleFactor, xyShift):
         imageCorr - correlation image between two images in Fourier space. ndarray.
         upsampleFactor - scalar integer of how much to upsample.
         xyShift - single pixel shift between images previously computed. Used to center the matrix multiplication on the correlation peak. Is a two element list.
+        
     Returns:
         imageUpsample - upsampled image from region around correlation peak. Is a ndarray (and I think the conjugate of the upsampled peak. Has to do wtih order of operations?)
+        
     '''
     imageSize = imageCorr.shape
     pixelRadius = 1.5
