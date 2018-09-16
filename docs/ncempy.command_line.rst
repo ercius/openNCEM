@@ -4,9 +4,14 @@ ncempy.command\_line package
 Submodules
 ----------
 
-.. toctree::
+ncempy.command\_line.ncem2png module
+------------------------------------
 
-   ncempy.command_line.ncem2png
+.. automodule:: ncempy.command_line.ncem2png
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

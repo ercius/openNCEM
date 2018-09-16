@@ -4,11 +4,30 @@ ncempy.io package
 Submodules
 ----------
 
-.. toctree::
+ncempy.io.dm module
+-------------------
 
-   ncempy.io.dm
-   ncempy.io.emd
-   ncempy.io.ser
+.. automodule:: ncempy.io.dm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.io.emd module
+--------------------
+
+.. automodule:: ncempy.io.emd
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.io.ser module
+--------------------
+
+.. automodule:: ncempy.io.ser
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

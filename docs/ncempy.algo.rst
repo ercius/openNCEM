@@ -4,13 +4,46 @@ ncempy.algo package
 Submodules
 ----------
 
-.. toctree::
+ncempy.algo.distortion module
+-----------------------------
 
-   ncempy.algo.distortion
-   ncempy.algo.local_max
-   ncempy.algo.math
-   ncempy.algo.multicorr
-   ncempy.algo.radial_profile
+.. automodule:: ncempy.algo.distortion
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.algo.local\_max module
+-----------------------------
+
+.. automodule:: ncempy.algo.local_max
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.algo.math module
+-----------------------
+
+.. automodule:: ncempy.algo.math
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.algo.multicorr module
+----------------------------
+
+.. automodule:: ncempy.algo.multicorr
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ncempy.algo.radial\_profile module
+----------------------------------
+
+.. automodule:: ncempy.algo.radial_profile
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

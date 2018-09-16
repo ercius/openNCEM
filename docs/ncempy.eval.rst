@@ -4,9 +4,14 @@ ncempy.eval package
 Submodules
 ----------
 
-.. toctree::
+ncempy.eval.ring\_diff module
+-----------------------------
 
-   ncempy.eval.ring_diff
+.. automodule:: ncempy.eval.ring_diff
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------
