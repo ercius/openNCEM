@@ -12,13 +12,17 @@ class fileMRC:
     def __init__(self, filename, verbose = False):
         '''Init opening the file and reading in the header.
         Read in the data in MRC format and other useful information.
-        Output is a dictionary with the following values:
-
-        Returns a dictionary with
-          stack, voxelSize, filename, axisOrientations, {FEIinfo}
-        Args:
-            filename: string pointing to the filesystem location of the file.
-            verbose: if True, debug information is printed.
+                
+        Parameters:
+            filename (str): string pointing to the filesystem location of the file.
+            verbose (bool): if True, debug information is printed.
+        Returns:
+            (dict): A dictionary with keys stack, voxelSize, filename, axisOrientations, {FEIinfo}
+        
+        Note:
+            Most users will prefer to use the mrc.mrcReader() function to simply read
+            the entire data set into memory with a single command.
+        
         '''
         # check for string
         if not isinstance(filename, str):
@@ -57,9 +61,13 @@ class fileMRC:
     
     def parseHeader(self):
         '''Read the header information which includes data type, data size, data
-        shape, and metadata
+        shape, and metadata.
         
-        - Note: This header uses Fortran-style ordering. Numpy uses C-style ordering. The header is read in and then reversed [::-1] at the end for output to the user
+        Note:
+            This header uses Fortran-style ordering. Numpy uses C-style ordering.
+            The header is read in and then reversed [::-1] at the end for output
+            to the user.
+        
         '''
         #Read in the initial header values
         head1 = np.fromfile(self.fid,dtype=np.int32,count=10)
@@ -194,7 +202,7 @@ class fileMRC:
             num (int): Get the requested image.
         
         Returns:
-            (ndarray): A 2D slice or a 3D set of slices
+            (ndarray): A 2D slice or a 3D set of slices along the first index
         
         Raises:
             IndexError: If num > the number of slices.
@@ -221,15 +229,21 @@ class fileMRC:
         return [arrayIn[x-1] for x in self.axisOrientations]
     
     def _getMRCType(self, dataType):
-        """Return the correct data type according to the official MRC type list:
+        '''Return the correct data type according to the official MRC type list:
+        0 image : signed 8-bit bytes range -128 to 127
+        1 image : 16-bit halfwords
+        2 image : 32-bit reals
+        3 transform : complex 16-bit integers
+        4 transform : complex 32-bit reals
+        6 image : unsigned 16-bit range 0 to 65535
         
-         0 image : signed 8-bit bytes range -128 to 127
-         1 image : 16-bit halfwords
-         2 image : 32-bit reals
-         3 transform : complex 16-bit integers
-         4 transform : complex 32-bit reals
-         6 image : unsigned 16-bit range 0 to 65535
-        """
+        Parameters:
+            dataType (int): The data type value encoded in an MRC header
+            
+        Returns:
+            {numpy dtype}: The corresponding numpy data type.
+        
+        '''
         if dataType == 0:
             Type = np.int8
         elif dataType == 1:
@@ -250,8 +264,12 @@ def mrcReader(fname,verbose=False):
     Parameters:
         fname (str): The name of the file to load
         
+    Keywords:
+        verbose (bool): Enable printing debug messages as the header is parsed.
+        
     Returns:
-        (dict): A dictionary containing the data and interesting metadata.
+        (dict): A dictionary containing the data and interesting metadata. The data
+        is attached to the 'data' key.
     '''
     f1 = fileMRC(fname,verbose) #open the file and init the class
     f1.parseHeader() #parse the header
@@ -260,13 +278,14 @@ def mrcReader(fname,verbose=False):
     return im1 #return the data and metadata as a dictionary
 
 def mrc2raw(fname):
-    """Writes the image data in an MRC file as binary file with the same file
+    '''Writes the image data in an MRC file as binary file with the same file
     name and .raw ending. Data type and size are written in the file name.
     No other header information is retained.
     
     Parameters:
         fname (str): The name of the file to convert
-    """
+    
+    '''
     tomo = mrcReader(fname)
     rawName = tomo['filename'].rsplit('.',1)[0] + '_' + str(tomo['stack'].dtype) + '_' + str(tomo['stack'].shape) + '.raw'
     fid = open(rawName,'wb')
@@ -274,11 +293,11 @@ def mrc2raw(fname):
     fid.close()
     
 def mrc2emd(fname):
-    """Write an MRC file as an HDF5 file in EMD format with same file name and .emd ending.
+    '''Write an MRC file as an HDF5 file in EMD format with same file name and .emd ending.
     Header information is retained as attributes.
     
     TODO: Update this to use ncempy.emd class
-    """
+    '''
     import h5py
     
     #Read in the MRC data and reshape to C-style ordering
@@ -306,7 +325,6 @@ def mrc2emd(fname):
     tiltseriesGroup.attrs['emd_group_type'] = np.int8(1)
     
     #Save the data to the EMD file and reshape it to a C-style array
-    #tiltDset = tiltseriesGroup.create_dataset('data',data=tomo['stack'][1:100,1:100,1:100],compression='gzip',shuffle=True)
     try:
         tiltDset = tiltseriesGroup.create_dataset('data',data=tomo['stack'],compression='gzip',shuffle=True)
     except MemoryError:
@@ -434,16 +452,16 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     return 1
 
 def writeHeader(filename,shape,dtype,pixelSize):
-    """ Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
+    '''Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
     This is useful for initializing an MRC file and then writing to it manually or see appendData() function below.
     
-        Parameters:
-            filename (str): The name of the EMD file 
-            shape (tuple): The shape of the data to write
-            pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
-        Returns:
-            1 if successful.
-    """
+    Parameters:
+        filename (str): The name of the EMD file 
+        shape (tuple): The shape of the data to write
+        pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
+    Returns:
+        (int): 1 if successful.
+    '''
     
     with open(filename,'wb') as fid:
         if len(shape) > 3:
@@ -531,9 +549,9 @@ def appendData(filename,stack):
 def emd2mrc(filename,dsetPath):
     '''Convert EMD data set into MRC data set. The final data type is float32 for convenience.
     
-        Parameters:
-            filename - The name of the EMD file
-            dsetPath - the HDF5 path to the top group holding the data ex. '/data/raw/'
+    Parameters:
+        filename (str): The name of the EMD file
+        dsetPath (str): The HDF5 path to the top group holding the data. ex. '/data/raw/'
     '''
     
     with h5py.File(filename,'r') as f1:
@@ -554,14 +572,15 @@ def emd2mrc(filename,dsetPath):
         print('Finished writing to: {}'.format(filenameOut))
         
 def h5XMF(filename,dataSetName):
-    """
-    h5XMF(fname,dataSetName)
-    Write out an XMF file for an existing h5 file. XMF is a companion file to tell
+    '''Write out an XMF file for an existing h5 file. XMF is a companion file to tell
     other programs the structure of an HDF5 file.
-      input:
-        filename - The name of the h5 file 
-        dataSetName - The full path and name of the data set that holds the dataset
-    """
+    
+    Parameters:
+        filename (str): The name of the h5 file 
+        dataSetName (str): The full path and name of the data set that holds the dataset
+    
+    '''
+    
     import h5py
     with h5py.File(filename,'r') as f1:
         #Get the shape of the data
@@ -614,13 +633,13 @@ def h5XMF(filename,dataSetName):
     return 1
     
 def emdXMF(filename,dataSetName):
-    """
-    emdXMF(fname,dataSetName)
-    Write out an XMF file which tells programs the structure of the HDF5 file.
-      input:
-        filename - The name of the EMD file 
-        dataSetName - The name of the data group that holds the dataset in the EMD top level data folder. Not the full path to the dataset.
-    """
+    '''Write out an XMF file which tells programs the structure of the HDF5 file.
+    
+    Parameters:
+        filename (str): The name of the EMD file 
+        dataSetName (str): The name of the data group that holds the dataset in the EMD top level data folder. Not the full path to the dataset.
+    '''
+    
     import h5py
     with h5py.File(filename,'r') as f1:
         #Get the shape of the data
