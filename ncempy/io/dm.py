@@ -20,12 +20,13 @@ class fileDM:
     def __init__(self, filename, verbose = False, on_memory=False):
         '''Init opening the file and reading in the header.
 
-        Args:
-            filename: string pointing to the filesystem location of the file.
-            verbose: if True, debug information is printed.
-            on_memory: if True, file data is pre-loaded in memory and all data
+        Parameters:
+            filename (str): string pointing to the filesystem location of the file.
+            verbose (bool): if True, debug information is printed.
+            on_memory (bool): if True, file data is pre-loaded in memory and all data
               parsing is performed against memory. Use this mode if the file
               is in a network based or paralle file system.
+              
         '''
 
         self.filename = filename
@@ -108,7 +109,9 @@ class fileDM:
         self.allTags = {}
 
     def __del__(self):
-        #close the file
+        '''Destructor which also closes the file
+        
+        '''
         if(not self._on_memory and self.fid):
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
@@ -119,22 +122,28 @@ class fileDM:
             self.fidOut.close()
 
     def tell(self):
+        '''Return the current position in the file. Switches mode based 
+        on on_memory mode.
+        
+        '''
         if self._on_memory:
             return self._buffer_offset
         else:
             return self.fid.tell()
 
     def fromfile(self, *args, **kwargs):
-        """ Reads data from a file or momery map.
-        Calls np.fromfile and np.frombuffer depending on the on_memory mode of
-        the fileDM.
+        ''' Reads data from a file or memory map. Calls np.fromfile and 
+        np.frombuffer depending on the on_memory mode of the fileDM.
 
-        Args, it supports whatever frombuffer, fromfile support but it requires:
-            dtype: np.dtype (object or string) to be read.
-            count: number of dtype items to be read.
+        Parameters: it supports whatever frombuffer, fromfile support but it requires:
+            dtype (numpy.dtype): Data type (object or string) to be read.
+            count (int): Number of dtype items to be read.
 
-        Returns: A list of count dtype elements.
-        """
+        Returns:
+            (list): A list of count dtype elements.
+        
+        '''
+        
         if self._on_memory:
             if "dtype" not in kwargs:
                 raise ValueError("In on_memory mode, reads require always a"
@@ -152,17 +161,20 @@ class fileDM:
             return np.fromfile(*args, **kwargs)
 
     def seek(self, fid, offset, from_what=0):
-        """Positions the reading head for fid. fid can be a file or memory map.
+        '''Positions the reading head for fid. fid can be a file or memory map.
         Follows the same convention as file.seek
 
-        Args:
-            fid: file or memory map.
-            offset: number of bytes to move the head forward (positive value)
-              or backwards (negative value).
-            from_what: reference point to use in the head movement. 0:
-              for beginning of the file (default behavior), 1: from the
-              current head position, and 2: from the end of the file.
-        """
+        Parameters:
+            fid (file id): file or memory map.
+            offset (int): number of bytes to move the head forward (positive value)
+            or backwards (negative value).
+            from_what (int): reference point to use in the head movement. 0:
+            for beginning of the file (default behavior), 1: from the current
+            head position, and 2: from the end of the file.
+        
+        Returns:
+            None
+        '''
         if self._on_memory:
             offset=int(offset)
             if from_what==0:
@@ -180,7 +192,9 @@ class fileDM:
 
 
     def _validDM(self):
-        '''Test whether a file is a valid DM3 or DM4 file and written in Little Endian format
+        '''Test whether a file is a valid DM3 or DM4 file and written
+        in little endian format.
+        
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
 
@@ -223,7 +237,9 @@ class fileDM:
         return output
 
     def parseHeader(self):
-        '''Parse the header by simply reading the root tag group. This ensures the file pointer is in the correct place.
+        '''Parse the header by reading the root tag group.
+        This ensures the file pointer is in the correct place.
+        
         '''
         #skip the bytes read by dmType
         if self.dmType == 3:
@@ -243,7 +259,8 @@ class fileDM:
             self.thumbnail = False
 
     def _readTagGroup(self):
-        '''Read a tag group in a DM file
+        '''Read a tag group in a DM file.
+        
         '''
         self.curGroupLevel += 1
         #Check to see if the maximum group level is reached.
@@ -268,7 +285,8 @@ class fileDM:
         self.curGroupNameAtLevelX = oldTotalTag
 
     def _readTagEntry(self):
-        '''Read one entry in a tag group
+        '''Read one entry in a tag group.
+        
         '''
         dataType = self.fromfile(self.fid,dtype=np.dtype('>u1'),count=1)[0]
 
@@ -309,6 +327,9 @@ class fileDM:
         self.curGroupNameAtLevelX = oldGroupName
 
     def _readTagType(self):
+        '''Determine the type of tag: Regular data, string, struct, or array.
+        
+        '''
         #Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
         if self.dmType == 4:
             temp1 = self.fromfile(self.fid,dtype=self.specialType,count=1)[0]
@@ -355,13 +376,14 @@ class fileDM:
             self._storeTag(self.curTagName,arrInfo)
 
     def _bin2str(self,bin):
-        '''Utility function to convert a numpy array of binary values to a python string
+        '''Utility function to convert a numpy array of binary values to a python string.
+        
         '''
         return ''.join([chr(item) for item in bin])
 
     def _encodedTypeSize(self, encodedType):
-        '''Return the number of bytes in a data type for the encodings used by DM
-        Constants for the different encoded data types used in DM3 files
+        '''Return the number of bytes in a data type for the encodings used by DM.
+        Constants for the different encoded data types used in DM files as as follows:
             SHORT   = 2
             LONG    = 3
             USHORT  = 4
@@ -373,6 +395,12 @@ class fileDM:
             OCTET   = 10
             uint64  = 12
             -1 will signal an unlisted type
+            
+        Parameters:
+            encodedType (int): The type value read from the header
+            
+        Returns:
+            (int): Number of bytes this type uses.
         '''
         if encodedType == 0:
             return 0
@@ -400,6 +428,13 @@ class fileDM:
             OCTET   = 10
             uint64  = 12
             -1 will signal an unlisted type
+            
+        Parameters:
+            encodedType (int): The type value read from the header
+            
+        Returns:
+            (numpy dtype): The Numpy dtype corresponding to the DM encoded value.
+        
         '''
         if encodedType == 2:
             return np.dtype('<i2')
@@ -425,7 +460,8 @@ class fileDM:
             return -1
 
     def _readStructTypes(self):
-        '''Analyze the types of data in a struct
+        '''Analyze the types of data in a struct.
+        
         '''
         structNameLength = self.fromfile(self.fid,count=1,dtype=self.specialType)[0] #this is not needed
         nFields = self.fromfile(self.fid,count=1,dtype=self.specialType)[0]
@@ -443,7 +479,13 @@ class fileDM:
         return fieldTypes
 
     def _readStructData(self,structTypes):
-        '''Read the data in a struct
+        '''Read the data in a struct.
+        
+        Parameters:
+            structTypes (ndarray): 1D array containing fieldTypes
+        
+        Returns:
+            (ndarray): 1D array of data
         '''
         struct = np.zeros(structTypes.shape[0])
         for ii, encodedType in enumerate(structTypes):
@@ -452,17 +494,23 @@ class fileDM:
         return struct
 
     def _readNativeData(self,encodedType):
-        '''reads ordinary data types in tags
-            SHORT (int16)   = 2;
-            LONG (int32)    = 3;
-            USHORT (uint16)  = 4;
-            ULONG (uint32)   = 5;
-            FLOAT (float32)  = 6;
-            DOUBLE (float64)  = 7;
-            BOOLEAN (bool) = 8;
-            CHAR (uint8 character)    = 9;
-            OCTET (??)  = 10;
-            UINT64 (uint64) = 11;
+        '''Reads ordinary data types in tags according to:
+            SHORT (int16)   = 2
+            LONG (int32)    = 3
+            USHORT (uint16)  = 4
+            ULONG (uint32)   = 5
+            FLOAT (float32)  = 6
+            DOUBLE (float64)  = 7
+            BOOLEAN (bool) = 8
+            CHAR (uint8 character) = 9
+            OCTET (??)  = 10
+            UINT64 (uint64) = 11
+            
+        Parameters:
+            encodedType (int): Encoded type value from DM header
+        
+        Returns:
+            (int or ndarray): The value(s) read in.
         '''
         if encodedType == 2:
             val = self.fromfile(self.fid,count=1,dtype='<i2')[0]
@@ -501,7 +549,8 @@ class fileDM:
 
         return val
     def _readArrayTypes(self):
-        '''Analyze the types of data in an array
+        '''Analyze the types of data in an array.
+        
         '''
         arrayType = self.fromfile(self.fid,dtype=self.specialType,count=1)[0]
 
@@ -520,7 +569,17 @@ class fileDM:
         return itemTypes
 
     def _readArrayData(self,arrayTypes):
-        '''Read information in an array based on the types provided. Binary data is not read at this point.
+        '''Read information in an array based on the types provided.
+        Binary data (i.e. image/spectra data) is skipped in order to 
+        save memory. These are read later using getDataset() or
+        getSlice as needed.
+        
+        Parameters:
+            arrayTypes (ndarray or tuple): The type of array data to read
+            
+        Returns:
+            (str): A string containing the key value pair of this tag
+        
         '''
 
         #The number of elements in the array
@@ -578,6 +637,12 @@ class fileDM:
     def _storeTag(self,curTagName,curTagValue):
         '''Builds the full tag name and key/value pair as text. Also calls another
         function to catch useful tags and values. Also saves all tags in a dictionary.
+        
+        Parameters:
+            curTagName (str): The Tag name; a key
+            curTagValue (): This can be many different type of objets
+            like ints, floats, stings.
+        
         '''
         #Build the full tag name (key) and add the tag value
         if self.v:
@@ -593,6 +658,12 @@ class fileDM:
     def _catchUsefulTags(self,totalTag,curTagName,curTagValue):
         '''Find interesting keys and keep their values for later. This is separate from _storeTag
         so that it is easy to find and modify.
+        
+        Parameters:
+            totalTag (str): The complete tag as a string
+            curTagName (str): The tag name; the tag key
+            curTagValue (): can be many different types of objects
+        
         '''
 
         #Save that a useful object has been found
@@ -628,6 +699,10 @@ class fileDM:
             pass
 
     def writeTags(self):
+        '''Write  out all tags as human readable text to a text file
+        in the same directory and with a the same name as the DM file.
+        
+        '''
         fnameOutPrefix = self.filename.split('.dm3')[0]
         try:
             #open a text file to write out the tags
@@ -651,7 +726,9 @@ class fileDM:
 
         Parameters:
             i (int):    Index.
-
+        
+        Raises:
+            IndexError
         '''
 
         # check type
@@ -665,7 +742,13 @@ class fileDM:
         return
 
     def _DM2NPDataType(self, dd):
-        '''Convert the DM data type value into a numpy dtype
+        '''Convert the DM data type value into a numpy dtype.
+        
+        Parameters:
+            dd (int): The value encoded in the DM file header.
+            
+        Returns:
+            (numpy dtype)
         '''
         if dd == 6:
             return np.uint8
@@ -698,7 +781,23 @@ class fileDM:
 
     def getDataset(self, index):
         '''Retrieve a dataset from the DM file.
-        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function
+        
+        Note:
+            Most DM3 and DM4 files contain a small "thumbnail"
+            as the first dataset written as RGB data. This
+            function ignores that dataset if it exists. To
+            retrieve the thumbnail use the getThumbnail()
+            function
+            
+        Parameters:
+            index (int): The number of the data set to retrieve ignoring the thumbnail.
+            If a thumbnail exists then inedx = 0 corresponds to second data
+            set in a DM file. 
+            
+        Returns:
+            (dict): A dictionary of the data and meta data. The data is associated
+            with the 'data' key in the dictionary.
+            
         '''
         #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         if self.numObjects == 1:
@@ -753,15 +852,15 @@ class fileDM:
         Warning: DM4 files with 4D data sets are written as [X,Y,Z1,Z2]. This code currently gets the [X,Y] slice. 
         Getting the [Z1,Z2] slice is not yet implemented.
         
-            Parameters:
-                index (int): The number of the dataset in the DM file.
-                sliceZ (int): The slice to get along the first dimension (C-ordering) for 3D datasets or the 2nd dimensions for 
-            
-            Keywords:
-                sliceZ2 (int): For 4D dataset
+        Parameters:
+            index (int): The number of the dataset in the DM file.
+            sliceZ (int): The slice to get along the first dimension (C-ordering) for 3D datasets or the 2nd dimensions for 
         
-            Returns:
-                (dict): a dictionary containing meta data and the data.
+        Keywords:
+            sliceZ2 (int): For 4D dataset
+    
+        Returns:
+            (dict): a dictionary containing meta data and the data.
         '''
         #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         if self.numObjects == 1:
@@ -812,18 +911,25 @@ class fileDM:
     
     def _readRGB(self,xSizeRGB,ySizeRGB):
         '''Read in a uint8 type array with [Red,green,blue,alpha] channels.
+        
         '''
         return self.fromfile(self.fid,count=xSizeRGB*ySizeRGB*4,dtype='<u1').reshape(xSizeRGB,ySizeRGB,4)
 
     def getThumbnail(self):
-        '''Read the thumbnail saved as the first dataset in the DM file as an RGB array
-        Unsure if this is correct.
+        '''Read the thumbnail saved as the first dataset in the DM file as an RGB array.
+        This is not fully tested. Be careful using this.
+        
+        Returns:
+            {ndarrya}: numpy array of size [3,Y,X] which is an RGB thumbnail.
         '''
         self.seek(self.fid, self.dataOffset[0],0)
         return self._readRGB(self.ySize[0],self.xSize[0])
 
 def dmReader(fName,dSetNum=0,verbose=False):
-    '''Simple function to parse the file and read the requested dataset
+    '''A simple function to parse the file and read the requested dataset.
+    Most users will want to use this function to simplify reading data
+    directly into memory.
+    
     '''
     f1 = fileDM(fName,verbose) #open the file and init the class
     f1.parseHeader() #parse the header
