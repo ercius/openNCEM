@@ -171,7 +171,12 @@ class fileMRC:
             self.voxelSize[0] = 1. #set this to 1 but it should be the tilt angles. These can be non-uniform though.
             self.voxelSize[1] = self.FEIinfo['pixel_size']*1e10 #convert [m] to Angstroms as is the standard for MRCs
             self.voxelSize[2] = self.FEIinfo['pixel_size']*1e10
-        
+            
+            if self.v:
+                print('Extended header data')
+                for aa,bb in self.FEIinfo.items():
+                    print('{} = {}'.format(aa,bb))
+            
         self.dataOffset = 1024+self.extra[1] #offset of the data from the start of the file
         
         #Add relevant information (metadata) to the output dictionary
