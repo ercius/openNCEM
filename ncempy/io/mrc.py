@@ -177,7 +177,7 @@ class fileMRC:
         #Add relevant information (metadata) to the output dictionary
         self.dataOut = {'voxelSize':self.voxelSize,'axisOrientations':self.axisOrientations,'cellAngles':self.cellAngles,'axisOrientations':self.axisOrientations}
         if self.extra[1] != 0:
-            self.dataOut['FEIinfo'] = FEIinfo
+            self.dataOut['FEIinfo'] = self.FEIinfo
         
         return 1
     
