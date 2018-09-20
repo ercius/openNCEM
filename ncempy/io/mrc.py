@@ -166,11 +166,11 @@ class fileMRC:
              15 ??
             '''
             FEIinfoValues = np.fromfile(self.fid,dtype=np.float32,count=15)
-            FEIinfo = {'a_tilt':FEIinfoValues[0],'b_tilt':FEIinfoValues[1],'x_stage':FEIinfoValues[2],'y_stage':FEIinfoValues[3],'z_stage':FEIinfoValues[4],'x_shift':FEIinfoValues[5],'y_shift':FEIinfoValues[6],'defocus':FEIinfoValues[7],'exposure_time':FEIinfoValues[8],'mean':FEIinfoValues[9],'tilt_axis':FEIinfoValues[10],'pixel_size':FEIinfoValues[11],'magnification':FEIinfoValues[12],'voltage':FEIinfoValues[13],'unknown':FEIinfoValues[14]}
+            self.FEIinfo = {'a_tilt':FEIinfoValues[0],'b_tilt':FEIinfoValues[1],'x_stage':FEIinfoValues[2],'y_stage':FEIinfoValues[3],'z_stage':FEIinfoValues[4],'x_shift':FEIinfoValues[5],'y_shift':FEIinfoValues[6],'defocus':FEIinfoValues[7],'exposure_time':FEIinfoValues[8],'mean':FEIinfoValues[9],'tilt_axis':FEIinfoValues[10],'pixel_size':FEIinfoValues[11],'magnification':FEIinfoValues[12],'voltage':FEIinfoValues[13],'unknown':FEIinfoValues[14]}
             
             self.voxelSize[0] = 1. #set this to 1 but it should be the tilt angles. These can be non-uniform though.
-            self.voxelSize[1] = FEIinfo['pixel_size']*1e10 #convert [m] to Angstroms as is the standard for MRCs
-            self.voxelSize[2] = FEIinfo['pixel_size']*1e10
+            self.voxelSize[1] = self.FEIinfo['pixel_size']*1e10 #convert [m] to Angstroms as is the standard for MRCs
+            self.voxelSize[2] = self.FEIinfo['pixel_size']*1e10
         
         self.dataOffset = 1024+self.extra[1] #offset of the data from the start of the file
         
