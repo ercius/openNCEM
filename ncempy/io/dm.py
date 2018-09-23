@@ -257,7 +257,40 @@ class fileDM:
                 self.thumbnail = False
         else: #this file only contains tags (such as a GTG file)
             self.thumbnail = False
-
+        
+        ''' Determine useful meta data UNTESTED
+        self.metaData = {}
+        for kk,ii in self.allTags.items():
+            prefix1 = 'ImageList.{}.ImageTags.'.format(md.numObjects)
+            prefix2 = 'ImageList.{}.ImageData.'.format(md.numObjects)
+            pos1 = kk.find(prefix1)
+            pos2 = kk.find(prefix2)
+            if pos1 > -1:
+                sub = kk[pos1+len(prefix):]
+                self.metaData[sub] = ii
+            elif pos2 > -1:
+                sub = kk[pos2+len(prefix):]
+                self.metaData[sub] = ii
+            
+            #Remove some unneeded keys
+            for jj in list(self.metaData):
+                if jj.find('frame sequence')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Private')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Reference Images')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Frame.Intensity')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Area.Transform')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Parameters.Objects')>-1:
+                    del self.metaData[jj]
+                elif jj.find('Device.Parameters')>-1:
+                    del self.metaData[jj]
+        return metaData
+        '''
+        
     def _readTagGroup(self):
         '''Read a tag group in a DM file.
         
