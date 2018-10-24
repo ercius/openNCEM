@@ -55,7 +55,7 @@ class fileMRC:
         '''Close the file.
         
         '''
-        if(not self.fid):
+        if(not self.fid.closed):
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
