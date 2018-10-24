@@ -61,6 +61,20 @@ class fileMRC:
             self.fid.close()
         return None
     
+    def __enter__(self):
+        '''Implement python's with statement
+        
+        '''
+        return self
+        
+    def __exit__(self,type,value,traceback):
+        '''Implement python's with statement.
+        Close the file using __del__
+        
+        '''
+        self.__del__()
+        return None
+            
     def parseHeader(self):
         '''Read the header information which includes data type, data size, data
         shape, and metadata.
