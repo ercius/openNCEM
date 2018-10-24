@@ -72,7 +72,6 @@ class fileSER:
         if emifile:
             self._emi = self.read_emi(emifile)
 
-
     def __del__(self):
         '''Closing the file stream on del.
         
