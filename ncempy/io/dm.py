@@ -125,7 +125,6 @@ class fileDM:
         and close the file via __del__()
         '''
         self.__del__()
-        return None
     
     def tell(self):
         if self._on_memory:
