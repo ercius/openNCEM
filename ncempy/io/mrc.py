@@ -17,7 +17,7 @@ class fileMRC:
             filename (str): string pointing to the filesystem location of the file.
             verbose (bool): if True, debug information is printed.
         Returns:
-            (dict): A dictionary with keys stack, voxelSize, filename, axisOrientations, {FEIinfo}
+            (dict): A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
         
         Note:
             Most users will prefer to use the mrc.mrcReader() function to simply read
@@ -294,9 +294,9 @@ def mrc2raw(fname):
     
     '''
     tomo = mrcReader(fname)
-    rawName = tomo['filename'].rsplit('.',1)[0] + '_' + str(tomo['stack'].dtype) + '_' + str(tomo['stack'].shape) + '.raw'
+    rawName = tomo['filename'].rsplit('.',1)[0] + '_' + str(tomo['data'].dtype) + '_' + str(tomo['data'].shape) + '.raw'
     fid = open(rawName,'wb')
-    fid.write(tomo['stack']) #write out as C ordered data
+    fid.write(tomo['data']) #write out as C ordered data
     fid.close()
     
 def mrc2emd(fname):
@@ -320,20 +320,20 @@ def mrc2emd(fname):
         return 0
 
     #Create the axis vectors in nanometers. Standard MRC pixel size is in Angstroms
-    xFull = np.linspace(0,tomo['voxelSize'][0]*tomo['stack'].shape[0]-1,tomo['stack'].shape[0]) 
-    yFull = np.linspace(0,tomo['voxelSize'][1]*tomo['stack'].shape[1]-1,tomo['stack'].shape[1])
-    zFull = np.linspace(0,tomo['voxelSize'][2]*tomo['stack'].shape[2]-1,tomo['stack'].shape[2])
+    xFull = np.linspace(0,tomo['voxelSize'][0]*tomo['data'].shape[0]-1,tomo['data'].shape[0]) 
+    yFull = np.linspace(0,tomo['voxelSize'][1]*tomo['data'].shape[1]-1,tomo['data'].shape[1])
+    zFull = np.linspace(0,tomo['voxelSize'][2]*tomo['data'].shape[2]-1,tomo['data'].shape[2])
     
     #Root data group
     dataTop = f1.create_group('data')
 
     #Create tilt series group
-    tiltseriesGroup = dataTop.create_group('stack')
+    tiltseriesGroup = dataTop.create_group('data')
     tiltseriesGroup.attrs['emd_group_type'] = np.int8(1)
     
     #Save the data to the EMD file and reshape it to a C-style array
     try:
-        tiltDset = tiltseriesGroup.create_dataset('data',data=tomo['stack'],compression='gzip',shuffle=True)
+        tiltDset = tiltseriesGroup.create_dataset('data',data=tomo['data'],compression='gzip',shuffle=True)
     except MemoryError:
         print("Not enough memory to write out data to EMD file")
         del tomo
@@ -366,12 +366,12 @@ def mrc2emd(fname):
     
     return 1
     
-def mrcWriter(filename,stack,pixelSize,forceWrite=False):
+def mrcWriter(filename,data,pixelSize,forceWrite=False):
     '''Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
     
     Parameters:
         filename (str): The name of the MRC file.
-        stack (ndarray): The array data to write to disk.
+        data (ndarray): The array data to write to disk.
         pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
     Returns:
         (int): 1 if successful and 0 if unsuccessful
@@ -379,11 +379,11 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     
     fid = open(filename,'wb')
     
-    if len(stack.shape) > 3:
+    if len(data.shape) > 3:
         print("Too many dimensions")
         return 0;
     
-    if not stack.flags['C_CONTIGUOUS']:
+    if not data.flags['C_CONTIGUOUS']:
         print("Error: Array must be C-style ordering: [numImages,Y,X]. Use numpy.tranpspose and np.ascontiguousarray to change data ordering in memory")
         print('Exiting')
         return 0;
@@ -397,40 +397,40 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     header1 = np.zeros(10,dtype=np.int32)
     
     #Write the number of columns, rows and sections (images)
-    #header1[0:3] = np.int32(dims) #stack size in pixels
-    header1[0] = np.int32(stack.shape[2]) #num columns, the last index in C-style ordering
-    header1[1] = np.int32(stack.shape[1]) #num rows
-    header1[2] = np.int32(stack.shape[0]) #num sections (images)
+    #header1[0:3] = np.int32(dims) #data size in pixels
+    header1[0] = np.int32(data.shape[2]) #num columns, the last index in C-style ordering
+    header1[1] = np.int32(data.shape[1]) #num rows
+    header1[2] = np.int32(data.shape[0]) #num sections (images)
     
-    if stack.dtype == np.float32:
+    if data.dtype == np.float32:
         header1[3] = np.int32(2)
-    elif stack.dtype == np.uint16:
+    elif data.dtype == np.uint16:
         header1[3] = np.int32(6)
-    elif stack.dtype == np.int16:
+    elif data.dtype == np.int16:
         header1[3] = np.int32(1)
-    elif stack.dtype == np.int8:
+    elif data.dtype == np.int8:
         header1[3] = np.int32(0)
     else:
-        print("Data type " + str(stack.dtype) + " is unsupported. Only int8, int16, uint16, and float32 are supported")
+        print("Data type " + str(data.dtype) + " is unsupported. Only int8, int16, uint16, and float32 are supported")
         return 0;
     
     #Starting point of sub image (not used in IMOD) 
     header1[4:7] = np.zeros(3,dtype=np.int32)
     
     #Grid size in X,Y,Z
-    #header1[7:10] = np.int32(dims); #stack size in pixels
-    header1[7] = np.int32(stack.shape[2]) #mx
-    header1[8] = np.int32(stack.shape[1]) #my
-    header1[9] = np.int32(stack.shape[0]) #mz
+    #header1[7:10] = np.int32(dims); #data size in pixels
+    header1[7] = np.int32(data.shape[2]) #mx
+    header1[8] = np.int32(data.shape[1]) #my
+    header1[9] = np.int32(data.shape[0]) #mz
     
     #Write out the first part of the header information
     fid.write(header1)
     
     #Cell dimensions (in Angstroms)
     #pixel spacing = xlen/mx, ylen/my, zlen/mz
-    fid.write(np.float32(pixelSize[2]*stack.shape[2])) #xlen
-    fid.write(np.float32(pixelSize[1]*stack.shape[1])) #ylen
-    fid.write(np.float32(pixelSize[0]*stack.shape[0])) #zlen
+    fid.write(np.float32(pixelSize[2]*data.shape[2])) #xlen
+    fid.write(np.float32(pixelSize[1]*data.shape[1])) #ylen
+    fid.write(np.float32(pixelSize[0]*data.shape[0])) #zlen
     
     #Cell angles (in degrees)
     fid.write(np.float32([90.0,90.0,90.0]))
@@ -439,9 +439,9 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     fid.write(np.int32([1,2,3]))
     
     #Minimum and maximum density
-    fid.write(np.float32(np.min(stack)))
-    fid.write(np.float32(np.max(stack)))
-    fid.write(np.float32(np.mean(stack)))
+    fid.write(np.float32(np.min(data)))
+    fid.write(np.float32(np.max(data)))
+    fid.write(np.float32(np.mean(data)))
     
     #Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
     fid.seek(212,0)
@@ -450,9 +450,9 @@ def mrcWriter(filename,stack,pixelSize,forceWrite=False):
     #Write out the data
     fid.seek(1024)
     if forceWrite:    
-        fid.write(np.ascontiguousarray(stack)) #Change to C ordering array for writing to disk
+        fid.write(np.ascontiguousarray(data)) #Change to C ordering array for writing to disk
     else:
-        fid.write(stack) #msut be C-contiguous
+        fid.write(data) #msut be C-contiguous
 
     #Close the file
     fid.close()
@@ -475,8 +475,8 @@ def writeHeader(filename,shape,dtype,pixelSize):
             print("Too many dimensions")
             return 0
         
-        #if not stack.flags['C_CONTIGUOUS']:
-        #    print("Error: Array must be C-style ordering: [numImages,Y,X]. Use np.ascontiguousarray(numpy.transpose(stack,[])) to change data ordering in memory\nExiting")
+        #if not data.flags['C_CONTIGUOUS']:
+        #    print("Error: Array must be C-style ordering: [numImages,Y,X]. Use np.ascontiguousarray(numpy.transpose(data,[])) to change data ordering in memory\nExiting")
         #    return 0
         
         #Initialize the header with 256 zeros with size 4 bytes
@@ -528,9 +528,9 @@ def writeHeader(filename,shape,dtype,pixelSize):
         fid.write(np.int32([1,2,3]))
         
         #Minimum and maximum density
-        #fid.write(np.float32(np.min(stack)))
-        #fid.write(np.float32(np.max(stack)))
-        #fid.write(np.float32(np.mean(stack)))
+        #fid.write(np.float32(np.min(data)))
+        #fid.write(np.float32(np.max(data)))
+        #fid.write(np.float32(np.mean(data)))
         fid.write(np.zeros(3,dtype=np.float32))
         
         #Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
@@ -539,19 +539,19 @@ def writeHeader(filename,shape,dtype,pixelSize):
         
     return 1
 
-def appendData(filename,stack):
+def appendData(filename,data):
     '''Append a binary set of data to the end of a MRC file. This should only be used in conjunction with
     writeHeader() above. 
     
     Parameters:
         filename (str):    Name of the MRC file with pre-initiated header and some data already written.
-        stack (ndarray):   Data to append to the file.
+        data (ndarray):   Data to append to the file.
     
     '''
     with open(filename,'ab') as fid:
         #Write out the data
         fid.seek(0,2) #seek to the end of the file
-        fid.write(stack) #Change to C ordering array for writing to disk
+        fid.write(data) #Change to C ordering array for writing to disk
         
 def emd2mrc(filename,dsetPath):
     '''Convert EMD data set into MRC data set. The final data type is float32 for convenience.
