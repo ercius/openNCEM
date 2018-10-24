@@ -23,6 +23,13 @@ class fileMRC:
             Most users will prefer to use the mrc.mrcReader() function to simply read
             the entire data set into memory with a single command.
         
+        Example:
+            Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
+            >>> from ncempy.io import mrc
+            >>> import matplotlib.pyplot as plt
+            >>> mrc1 = mrc.fileMRC('filename.mrc')
+            >>> data = mrc.getDataset() #load the full data set and meta data
+            >>> singleImage = mrc.getSlice(0) #get only 1 image from disk
         '''
         # check for string
         if not isinstance(filename, str):
@@ -295,10 +302,16 @@ def mrcReader(fname,verbose=False):
     Returns:
         (dict): A dictionary containing the data and interesting metadata. The data
         is attached to the 'data' key.
+        
+    Example:
+        Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
+        >>> from ncempy.io import mrc
+        >>> import matplotlib.pyplot as plt
+        >>> mrc1 = mrc.mrcReader('filename.mrc')
+        >>> plt.imshow(mrc1['data'][0,:,:]) #show the first image in the data set
     '''
-    f1 = fileMRC(fname,verbose) #open the file and init the class
-    im1 = f1.getDataset() #read in the dataset
-    del f1 #delete the class and close the file
+    with fileMRC(fname,verbose) as f1: #open the file and init the class
+        im1 = f1.getDataset() #read in the dataset
     return im1 #return the data and metadata as a dictionary
 
 def mrc2raw(fname):
