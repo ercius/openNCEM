@@ -67,8 +67,8 @@ class fileMRC:
         
         Note:
             This header uses Fortran-style ordering. Numpy uses C-style ordering.
-            The header is read in and then reversed [::-1] at the end for output
-            to the user.
+            The header is read in and then some attributes are reversed [::-1] at
+            the end for output to the user to match C-ordering in numpy.
         
         '''
         #Read in the initial header values
