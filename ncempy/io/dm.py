@@ -26,7 +26,14 @@ class fileDM:
             on_memory (bool): if True, file data is pre-loaded in memory and all data
               parsing is performed against memory. Use this mode if the file
               is in a network based or paralle file system.
-              
+        
+        Example:
+            Simple example for reading all data into memory:
+            >>> import matplotlib.pyplot as plt
+            >>> from ncempy.io import dm
+            >>> with dm.fileDM('filename.dm') as dmFile1:
+                dataSet = dmFile1.getDataset(0)
+            >>> plt.imshow(dataSet['data'][0,:,:])
         '''
 
         self.filename = filename
@@ -107,7 +114,9 @@ class fileDM:
 
         self.outputDic = {}
         self.allTags = {}
-
+        
+        self.parseHeader()
+        
     def __del__(self):
         '''Destructor which also closes the file
         
