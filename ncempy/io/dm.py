@@ -110,15 +110,28 @@ class fileDM:
 
     def __del__(self):
         #close the file
-        if(not self._on_memory and self.fid):
+        if(not self._on_memory and not self.fid.closed):
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
-        if(self.fidOut):
+        if(not self.fidOut.closed):
             if self.v:
                 print('Closing tags output file')
             self.fidOut.close()
-
+    
+    def __enter__(self):
+        '''Implement python's with staement
+        
+        '''
+        return self
+        
+    def __exit__(self,type,value,traceback):
+        '''Implement python's with statment
+        and close the file via __del__()
+        '''
+        self.__del__()
+        return None
+    
     def tell(self):
         if self._on_memory:
             return self._buffer_offset

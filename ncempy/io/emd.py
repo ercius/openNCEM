@@ -117,12 +117,23 @@ class fileEMD:
         '''Destructor for EMD file object.
         
         '''
-        
         # close the file
-        if(self.file_hdl):
+        if(not self.file_hdl.closed):
             self.file_hdl.close()
 
-
+    def __enter__(self):
+        '''Implement python's with staement
+        
+        '''
+        return self
+        
+    def __exit__(self,type,value,traceback):
+        '''Implement python's with statment
+        and close the file via __del__()
+        '''
+        self.__del__()
+        return None
+        
     def find_emdgroups(self, parent):
         '''Find all emd_data_type groups within the group parent and return a list of references to their HDF5 groups.
         

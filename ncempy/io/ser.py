@@ -79,10 +79,22 @@ class fileSER:
         '''
         
         # close the file
-        if(self._file_hdl):
+        if(not self._file_hdl.closed):
             self._file_hdl.close()
 
-
+    def __enter__(self):
+        '''Implement python's with staement
+        
+        '''
+        return self
+        
+    def __exit__(self,type,value,traceback):
+        '''Implement python's with statment
+        and close the file via __del__()
+        '''
+        self.__del__()
+        return None
+        
     def readHeader(self, verbose=False):
         '''Read and return the SER files header.
         
