@@ -882,15 +882,18 @@ class fileSER:
         # write comment into Comment group
         f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self._file_hdl.name))
         
-def serReader(fName):
+def serReader(filename):
     '''Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
+    
+    Parameters:
+        
     '''
-    f1 = fileSER(fName) #open the file and init the class
+    f1 = fileSER(filename) #open the file and init the class
         
     if f1.head['ValidNumberElements'] > 0:
         data, metaData = f1.getDataset(0) #get the first data set to setup the arrays
         
-        metaData['filename'] = fName #save the file name in the output dictionary
+        metaData['filename'] = filename #save the file name in the output dictionary
         
         npType = f1._dictDataType[metaData['DataType']]
         
