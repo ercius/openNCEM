@@ -901,21 +901,11 @@ def serReader(filename):
     '''Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
     
     Parameters:
+        filename (str) : The filename containing the data
         
-    '''
-    f1 = fileSER(filename) #open the file and init the class
+    Returns:
+        (dict) : A dictionary containing the data and meta data. The data is in the key 'data'
         
-    if f1.head['ValidNumberElements'] > 0:
-        data, metaData = f1.getDataset(0) #get the first data set to setup the arrays
-        
-        metaData['filename'] = filename #save the file name in the output dictionary
-        
-        npType = f1._dictDataType[metaData['DataType']]
-        
-        if f1.head['DataTypeID'] == 0x4120:
-            #spectra as 1D single spectra, 2D line scan or 3D spectrum image
-            numSpectra = f1.head['ValidNumberElements']
-            spectraSize = data.shape[0]
     Examples:
         Load a single image data set and show the image:
         >>> from ncempy.io import ser
@@ -924,37 +914,68 @@ def serReader(filename):
     '''
     with fileSER(filename) as f1: #open the file and init the class
             
-            #Read in all spectra
-            temp = np.zeros((numSpectra,spectraSize),dtype=npType) #C-style ordering
-            for ii in range(0,numSpectra):
-                dataValues,meta1 = f1.getDataset(ii)
-                temp[ii,:] = dataValues
+        if f1.head['ValidNumberElements'] > 0:
+            data, metaData = f1.getDataset(0) #get the first data set to setup the arrays
             
-            if f1.head['NumberDimensions'] > 1:
-                #Spectrum map
-                scanI = f1.head['Dimensions'][0]['DimensionSize']
-                scanJ = f1.head['Dimensions'][1]['DimensionSize']
-                temp = temp.reshape((scanJ,scanI,spectraSize)) #operations on spectra are fastest
-            else:
-                temp = np.squeeze(temp)
+            metaData['filename'] = filename #save the file name in the output dictionary
+            
+            npType = f1._dictDataType[metaData['DataType']]
+            
+            if f1.head['DataTypeID'] == 0x4120:
+                #spectra as 1D single spectra, 2D line scan or 3D spectrum image
+                numSpectra = f1.head['ValidNumberElements']
+                spectraSize = data.shape[0]
                 
-            #Setup the energy loss axis for convenience
-            eDelta = metaData['Calibration'][0]['CalibrationDelta']
-            eOffset = metaData['Calibration'][0]['CalibrationOffset']
-            eLoss = np.linspace(0,(spectraSize-1)*eDelta,spectraSize) + eOffset
-            
-            dataOut = {'data':temp,'eLoss':eLoss,'eOffset':eOffset,'eDelta':eDelta,'scanCalibration':f1.head['Dimensions']}
-        elif f1.head['DataTypeID'] == 0x4122:
-            #images as 2D or 3D image series
-            temp = np.empty([f1.head['ValidNumberElements'],data.shape[0],data.shape[1]],dtype=npType)
-            for ii in range(0,f1.head['ValidNumberElements']):
-                temp[ii,:,:] = f1.getDataset(ii)[0] #get the next dataset
-            
-            temp = np.squeeze(temp) #remove singular dimensions
-            
-            dataOut = {'data':temp,'scanCalibration':f1.head['Dimensions']}
-    else:
-        dataOut = {}
-        print('No data set found') 
-    del f1 #delete the class and close the file
+                #Read in all spectra
+                temp = np.zeros((numSpectra,spectraSize),dtype=npType) #C-style ordering
+                for ii in range(0,numSpectra):
+                    dataValues,meta1 = f1.getDataset(ii)
+                    temp[ii,:] = dataValues
+                
+                if f1.head['NumberDimensions'] > 1:
+                    #Spectrum map
+                    scanI = f1.head['Dimensions'][0]['DimensionSize']
+                    scanJ = f1.head['Dimensions'][1]['DimensionSize']
+                    temp = temp.reshape((scanJ,scanI,spectraSize)) #operations on spectra are fastest
+                else:
+                    temp = np.squeeze(temp)
+                    
+                #Setup the energy loss axis for convenience
+                eDelta = metaData['Calibration'][0]['CalibrationDelta']
+                eOffset = metaData['Calibration'][0]['CalibrationOffset']
+                eLoss = np.linspace(0,(spectraSize-1)*eDelta,spectraSize) + eOffset
+                
+                dataOut = {'data':temp,'eLoss':eLoss,'eOffset':eOffset,'eDelta':eDelta,'scanCalibration':f1.head['Dimensions']}
+            elif f1.head['DataTypeID'] == 0x4122:
+                #images as 2D or 3D image series
+                temp = np.empty([f1.head['ValidNumberElements'],data.shape[0],data.shape[1]],dtype=npType)
+                for ii in range(0,f1.head['ValidNumberElements']):
+                    data0,metadata0 = f1.getDataset(ii)
+                    temp[ii,:,:] = data #get the next dataset
+                    
+                    if ii ==1:
+                        metadata = metadata0
+                temp = np.squeeze(temp) #remove singular dimensions
+                
+                #Get the metadata from the first image
+                data,metadata = f1.getDataset(0)
+                
+                dataOut = {}
+                dataOut['data'] = temp #output the full data set
+                
+                #Setup some simple meta data
+                dataOut['pixelSize'] = []
+                dataOut['pixelUnit'] = []
+                dataOut['pixelOrigin'] = []
+                
+                for cal in metadata['Calibration']:
+                    dataOut['pixelSize'].append(cal['CalibrationDelta'])
+                    dataOut['pixelOrigin'].append(cal['CalibrationOffset'])
+                    dataOut['pixelUnit'].append('m')
+                dataOut['filename'] = filename #save the file name
+                
+        else:
+            dataOut = {}
+            print('No data set found') 
+        #del f1 #delete the class and close the file
     return dataOut #return the dataset and metadata as a dictionary
