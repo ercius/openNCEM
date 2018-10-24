@@ -114,7 +114,7 @@ class fileEMD:
             
 
     def __del__(self):
-        '''Destructor for EMD file object.
+        '''Destructor for EMD file object. 
         
         '''
         # close the file
