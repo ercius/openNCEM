@@ -47,6 +47,8 @@ class fileMRC:
         #Store the original filename
         self.dataOut['filename'] = self.filename
         
+        self.parseHeader()
+        
         return None
     
     def __del__(self):
