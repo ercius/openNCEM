@@ -118,8 +118,8 @@ class fileEMD:
         
         '''
         # close the file
-        if(not self.file_hdl.closed):
-            self.file_hdl.close()
+        #if(not self.file_hdl.closed):
+        self.file_hdl.close()
 
     def __enter__(self):
         '''Implement python's with staement
