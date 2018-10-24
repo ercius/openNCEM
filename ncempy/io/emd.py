@@ -361,3 +361,22 @@ class fileEMD:
             self.comments.attrs[timestamp] = np.string_(msg)
         
 
+def defaultDims(data):
+    ''' A helper function that can generate properly setup dim tuple
+    with default values to allow quick writing of EMD files without
+    the need to create these dim vectors.
+    
+    Parameters:
+        data (ndarray) : The data that will be written to the EMD file. This is used to get the number of dims and their shape
+        
+    Returns:
+        (tuple) : a properly formatter tuple of dim vectors as input to emd.put_emdgroup()
+    '''
+    num = data.ndim
+    
+    dims = []
+    for ii in range(num):
+        curDim = (np.linspace(0,data.shape[ii]-1,data.shape[ii]),'dim{}'.format(ii),'unit{}'.format(ii))
+        dims.append(curDim)
+    
+    return dims
