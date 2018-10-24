@@ -33,7 +33,6 @@ class fileDM:
 
         # necessary declarations, if something fails
         self.fid = None
-        self.fidOut = None
 
         self._on_memory = on_memory
 
@@ -114,10 +113,6 @@ class fileDM:
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
-        if(not self.fidOut.closed):
-            if self.v:
-                print('Closing tags output file')
-            self.fidOut.close()
     
     def __enter__(self):
         '''Implement python's with staement
@@ -653,7 +648,6 @@ class fileDM:
                     except:
                         fidOut.write('{} = dm.py error'.format(nn))
                     fidOut.write('\n')
-            fidOut.close() #this might not be necessary
         except NameError:
             print("Issue opening tags output file.")
             raise
