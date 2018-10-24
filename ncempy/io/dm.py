@@ -28,12 +28,17 @@ class fileDM:
               is in a network based or paralle file system.
         
         Example:
-            Simple example for reading all data into memory:
+            Simple example for reading data from a single image into memory:
             >>> import matplotlib.pyplot as plt
             >>> from ncempy.io import dm
-            >>> with dm.fileDM('filename.dm') as dmFile1:
+            >>> with dm.fileDM('filename.dm4') as dmFile1:
                 dataSet = dmFile1.getDataset(0)
-            >>> plt.imshow(dataSet['data'][0,:,:])
+            >>> plt.imshow(dataSet['data'])
+            
+            Example of multi-image dm3 file:
+            >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
+                series = dmFile2.getDataset(0)
+            >>> plt.imshow(series['data'][0,:,:]) #show the first image in the series
         '''
 
         self.filename = filename
@@ -974,14 +979,21 @@ class fileDM:
         self.seek(self.fid, self.dataOffset[0],0)
         return self._readRGB(self.ySize[0],self.xSize[0])
 
-def dmReader(fName,dSetNum=0,verbose=False):
+def dmReader(filename,dSetNum=0,verbose=False):
     '''A simple function to parse the file and read the requested dataset.
     Most users will want to use this function to simplify reading data
     directly into memory.
     
+    Parameters:
+        Fname (str) : The filename to open and read into memory
+        dSetNum (int) : The number of the data set to read. Almost always should be = 0. Default = 0
+        verbose (bool) : Allow extra printing to see file internals. Default = False
+        
+    Returns:
+        (dict) : A dictionary of keys where the data is in the 'data' key. Other metadata is 
+                 contained in other named keys such as 'pixelSize'
     '''
-    f1 = fileDM(fName,verbose) #open the file and init the class
-    f1.parseHeader() #parse the header
-    im1 = f1.getDataset(dSetNum) #get the requested dataset (first by default)
-    del f1 #delete the class and close the file
+    with fileDM(filename,verbose) as f1: #open the file and init the class
+        im1 = f1.getDataset(dSetNum) #get the requested dataset (first by default)
+    
     return im1 #return the dataset and metadata as a dictionary
