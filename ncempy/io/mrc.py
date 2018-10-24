@@ -283,7 +283,6 @@ def mrcReader(fname,verbose=False):
         is attached to the 'data' key.
     '''
     f1 = fileMRC(fname,verbose) #open the file and init the class
-    f1.parseHeader() #parse the header
     im1 = f1.getDataset() #read in the dataset
     del f1 #delete the class and close the file
     return im1 #return the data and metadata as a dictionary
