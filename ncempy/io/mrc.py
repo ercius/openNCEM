@@ -182,7 +182,7 @@ class fileMRC:
         self.dataOffset = 1024+self.extra[1] #offset of the data from the start of the file
         
         #Add relevant information (metadata) to the output dictionary
-        self.dataOut = {'voxelSize':self.voxelSize,'axisOrientations':self.axisOrientations,'cellAngles':self.cellAngles,'axisOrientations':self.axisOrientations}
+        self.dataOut = {'voxelSize':self.voxelSize,'axisOrientations':self.axisOrientations,'cellAngles':self.cellAngles,'axisOrientations':self.axisOrientations,'filename':self.filename}
         if self.extra[1] != 0:
             self.dataOut['FEIinfo'] = self.FEIinfo
         
