@@ -71,6 +71,10 @@ class fileMRC:
             the end for output to the user to match C-ordering in numpy.
         
         '''
+        
+        #Always start at the beginnging of the file.
+        self.fid.seek(0)
+        
         #Read in the initial header values
         head1 = np.fromfile(self.fid,dtype=np.int32,count=10)
         if self.v:
