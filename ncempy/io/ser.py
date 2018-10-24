@@ -25,7 +25,22 @@ class fileSER:
         filename (str):    Name of the SER file.
         emifile (str):    Name of an optional _emi file to read metadata.
         verbose (bool):    True to get extensive output while reading the file.
-        
+    
+    Examples:
+        Simple example for reading data from a single image into memory:
+        >>> import matplotlib.pyplot as plt
+        >>> from ncempy.io import dm
+        >>> with dm.fileDM('filename.dm4') as dmFile1:
+            dataSet = dmFile1.getDataset(0)
+        >>> plt.imshow(dataSet['data'])
+
+        SER files are structures such that each image in a series is a different dataset.
+        Thus, time series data should be read as the following:
+        >>> with ser.fileSER('filename_1.ser') as ser1:
+            image0,metadata0 = ser1.getDataset(0)
+            image1,metadata1 = ser1.getDataset(1)
+        >>> plt.imshow(image)
+        >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     '''
 
     _dictByteOrder = {0x4949 : 'little endian'}
@@ -901,6 +916,13 @@ def serReader(filename):
             #spectra as 1D single spectra, 2D line scan or 3D spectrum image
             numSpectra = f1.head['ValidNumberElements']
             spectraSize = data.shape[0]
+    Examples:
+        Load a single image data set and show the image:
+        >>> from ncempy.io import ser
+        >>> im0 = ser.serReader('filename_1.ser')
+        >>> plt.imshow(im0['data']) #show the single image from the data file
+    '''
+    with fileSER(filename) as f1: #open the file and init the class
             
             #Read in all spectra
             temp = np.zeros((numSpectra,spectraSize),dtype=npType) #C-style ordering
