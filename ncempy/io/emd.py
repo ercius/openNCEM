@@ -19,7 +19,22 @@ class fileEMD:
     Parameters:
         filename (str):    Name of the EMD file.
         readonly (bool):    Set to open in read only mode.
-            
+    
+    Note:
+        The EMD module does not currently have a simplified "emdReader" like MRC, SER and DM. This will be offered in a future update.
+    
+    Example:
+        Open an Berkeley EMD file. List the available data sets. Load a 3D data set and plot the first image. 
+        
+            >>> from ncempy.io import emd
+            >>> import matplotlib.pyplot as plt
+            >>> emd1 = emd.fileEMD('filename.emd')
+            >>> [print(dataGroup.name) for dataGroup in emd1.list_emds]; #Use the builtin list_emds variable to print all available EMD datasets
+            >>> data1,dims1 = emd1.get_emdgroup(emd1.list_emds[0]) #load the first full data array and dimension information
+            >>> fg1,ax1 = plt.subplots(1,1)
+            >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) #the extent uses the first and last array values of hte dimension vectors
+            >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) #label the axes with the name and units of each dimension vector
+            >>> plt.show()
     '''
     
     def __init__(self, filename, readonly=False):
