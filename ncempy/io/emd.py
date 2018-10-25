@@ -35,6 +35,7 @@ class fileEMD:
             >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) #the extent uses the first and last array values of hte dimension vectors
             >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) #label the axes with the name and units of each dimension vector
             >>> plt.show()
+            >>> del emd1 #close the emd file
     '''
     
     def __init__(self, filename, readonly=False):
