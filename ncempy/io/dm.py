@@ -18,29 +18,34 @@ import numpy as np
 
 
 class fileDM:
-    def __init__(self, filename, verbose = False, on_memory=False):
-        '''Init opening the file and reading in the header.
-
-        Parameters:
-            filename (str): string pointing to the filesystem location of the file.
-            verbose (bool): if True, debug information is printed.
-            on_memory (bool): if True, file data is pre-loaded in memory and all data
-              parsing is performed against memory. Use this mode if the file
-              is in a network based or paralle file system.
+    '''Init opening the file and reading in the header.
         
-        Example:
-            Simple example for reading data from a single image into memory:
+    Parameters:
+        filename (str): string pointing to the filesystem location of the file.
+        
+        verbose (bool): if True, debug information is printed.
+        
+        on_memory (bool): if True, file data is pre-loaded in memory and all data
+        parsing is performed against memory. Use this mode if the file
+        is in a network based or paralle file system.
+    
+    Example:
+        Simple example for reading data from a single image into memory:
+            
             >>> import matplotlib.pyplot as plt
             >>> from ncempy.io import dm
             >>> with dm.fileDM('filename.dm4') as dmFile1:
                 dataSet = dmFile1.getDataset(0)
             >>> plt.imshow(dataSet['data'])
+        
+        Example of multi-image dm3 file:
             
-            Example of multi-image dm3 file:
             >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
                 series = dmFile2.getDataset(0)
             >>> plt.imshow(series['data'][0,:,:]) #show the first image in the series
-        '''
+    '''
+    def __init__(self, filename, verbose = False, on_memory=False):
+
 
         self.filename = filename
 
@@ -986,13 +991,18 @@ def dmReader(filename,dSetNum=0,verbose=False):
     directly into memory.
     
     Parameters:
-        Fname (str) : The filename to open and read into memory
+        filename (str) : The filename to open and read into memory
         dSetNum (int) : The number of the data set to read. Almost always should be = 0. Default = 0
         verbose (bool) : Allow extra printing to see file internals. Default = False
-        
+
     Returns:
-        (dict) : A dictionary of keys where the data is in the 'data' key. Other metadata is 
-                 contained in other named keys such as 'pixelSize'
+        (dict) : A dictionary of keys where the data is in the 'data' key. Other metadata is contained in other named keys such as 'pixelSize'
+    
+     Example:
+        Load all data from a single image dm3 file and display it:
+            >>> from ncempy.io import dm
+            >>> im0 = dm.dmReader('filename.dm3')
+            >>> plt.imshow(im0['data']) #show the single image from the data file
     '''
     with fileDM(filename,verbose) as f1: #open the file and init the class
         im1 = f1.getDataset(dSetNum) #get the requested dataset (first by default)

@@ -23,11 +23,14 @@ class fileSER:
     
     Parameters:
         filename (str):    Name of the SER file.
+        
         emifile (str):    Name of an optional _emi file to read metadata.
+        
         verbose (bool):    True to get extensive output while reading the file.
     
     Examples:
         Simple example for reading data from a single image into memory:
+        
         >>> import matplotlib.pyplot as plt
         >>> from ncempy.io import dm
         >>> with dm.fileDM('filename.dm4') as dmFile1:
@@ -36,6 +39,7 @@ class fileSER:
 
         SER files are structures such that each image in a series is a different dataset.
         Thus, time series data should be read as the following:
+        
         >>> with ser.fileSER('filename_1.ser') as ser1:
             image0,metadata0 = ser1.getDataset(0)
             image1,metadata1 = ser1.getDataset(1)
@@ -908,9 +912,10 @@ def serReader(filename):
         
     Examples:
         Load a single image data set and show the image:
-        >>> from ncempy.io import ser
-        >>> im0 = ser.serReader('filename_1.ser')
-        >>> plt.imshow(im0['data']) #show the single image from the data file
+            
+            >>> from ncempy.io import ser
+            >>> im0 = ser.serReader('filename_1.ser')
+            >>> plt.imshow(im0['data']) #show the single image from the data file
     '''
     with fileSER(filename) as f1: #open the file and init the class
             

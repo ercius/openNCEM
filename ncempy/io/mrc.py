@@ -8,29 +8,30 @@ written by: Peter Ercius, percius@lbl.gov
 import numpy as np
 
 class fileMRC:
+    '''Init opening the file and reading in the header.
+    Read in the data in MRC format and other useful information.
+            
+    Parameters:
+        filename (str): string pointing to the filesystem location of the file.
+        verbose (bool): if True, debug information is printed.
+    Returns:
+        (dict): A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
     
-    def __init__(self, filename, verbose = False):
-        '''Init opening the file and reading in the header.
-        Read in the data in MRC format and other useful information.
-                
-        Parameters:
-            filename (str): string pointing to the filesystem location of the file.
-            verbose (bool): if True, debug information is printed.
-        Returns:
-            (dict): A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
+    Note:
+        Most users will prefer to use the mrc.mrcReader() function to simply read
+        the entire data set into memory with a single command.
+    
+    Example:
+        Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
         
-        Note:
-            Most users will prefer to use the mrc.mrcReader() function to simply read
-            the entire data set into memory with a single command.
-        
-        Example:
-            Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
             >>> from ncempy.io import mrc
             >>> import matplotlib.pyplot as plt
             >>> mrc1 = mrc.fileMRC('filename.mrc')
             >>> data = mrc.getDataset() #load the full data set and meta data
             >>> singleImage = mrc.getSlice(0) #get only 1 image from disk
-        '''
+    '''    
+    def __init__(self, filename, verbose = False):
+
         # check for string
         if not isinstance(filename, str):
             raise TypeError('Filename is supposed to be a string')
@@ -305,10 +306,11 @@ def mrcReader(fname,verbose=False):
         
     Example:
         Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
-        >>> from ncempy.io import mrc
-        >>> import matplotlib.pyplot as plt
-        >>> mrc1 = mrc.mrcReader('filename.mrc')
-        >>> plt.imshow(mrc1['data'][0,:,:]) #show the first image in the data set
+            
+            >>> from ncempy.io import mrc
+            >>> import matplotlib.pyplot as plt
+            >>> mrc1 = mrc.mrcReader('filename.mrc')
+            >>> plt.imshow(mrc1['data'][0,:,:]) #show the first image in the data set
     '''
     with fileMRC(fname,verbose) as f1: #open the file and init the class
         im1 = f1.getDataset() #read in the dataset
