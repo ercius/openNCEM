@@ -1,5 +1,6 @@
 """
-A module to load data and meta data from DM3 and DM4 files into python.
+A module to load data and meta data from DM3 and DM4 files into python 
+as written by Gatan's Digital Micrograph program.
 
 On Memory mode:
   The fileDM support and "on memory" mode that preoliads the file data in memory

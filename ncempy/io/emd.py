@@ -1,5 +1,5 @@
 '''
-This module provides an interface to the EMD file format.
+This module provides an interface to the Berkeley EMD file format.
 
 See https://emdatasets.com/ for more details.
 '''
