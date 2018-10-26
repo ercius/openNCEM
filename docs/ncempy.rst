@@ -6,10 +6,10 @@ Subpackages
 
 .. toctree::
 
-    ncempy.algo
-    ncempy.command_line
-    ncempy.eval
     ncempy.io
+    ncempy.algo
+    ncempy.eval
+    ncempy.tools
 
 Module contents
 ---------------

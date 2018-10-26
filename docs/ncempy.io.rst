@@ -20,6 +20,14 @@ ncempy.io.emd module
     :undoc-members:
     :show-inheritance:
 
+ncempy.io.mrc module
+--------------------
+
+.. automodule:: ncempy.io.mrc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ncempy.io.ser module
 --------------------
 

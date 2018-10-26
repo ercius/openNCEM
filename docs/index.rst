@@ -9,7 +9,7 @@ Components
 The openNCEM collection comes with different components. The general functionality is condensed in libraries/packages, distinguished by programming language or framework. Tools are provided, addressing particular problems or tasks, leveraging the functionality provided in the libraries/packages.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
     ncempy - openNCEM's python package<ncempy>
     tools - wrapping the provided functionality into useful tools<tools>
@@ -39,9 +39,9 @@ Then you need to instantiate the class, parse the header and then access its con
 
 Again, here is a more thorough way to open a DM file
 .. code-block:: python
+
    >>> from ncempy.io import dm; import matplotlib.pyplot as plt 
    >>> dm1 = dm.fileDM('/path/to/file/data.dm3')
-   >>> dm1.parseHeader()
    >>> dmData = dm1.getDataset(0) #the full first data set
    >>> dmSlice = dm1.getSlice(0,1) #the second image of the first data set; equal to dmData[1,:,:] from the line above
    >>> print(dm1.metaData) #all of the interesting metadata for this data set (pixel size, accelerating voltage, etc.)
