@@ -240,14 +240,13 @@ class fileMRC:
         Raises:
             IndexError: If num > the number of slices.
         '''
-
         # Check num is within the data array size bounds
         if num > (self.dataSize[0]-1):
             raise IndexError('Index {} is out of bounds for array with size {}'.format(num, self.dataSize[0]))
         
         self.fid.seek(self.dataOffset,0) #move to the start of the data by skipping the header
         imSize = self.dataSize[1]*self.dataSize[2] #size of each image in pixels
-        byteSize = np.dtype(self.dataType).itemsize*imSize
+        byteSize = int(np.dtype(self.dataType).itemsize*imSize) #make sure this is an int32
         self.fid.seek(num*byteSize,1) #skip to the slice requested from the start of the data
         
         data1 = np.fromfile(self.fid,dtype=self.dataType,count=imSize) #read in the requested image
