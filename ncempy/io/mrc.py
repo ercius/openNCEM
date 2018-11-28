@@ -92,6 +92,16 @@ class fileMRC:
             The header is read in and then some attributes are reversed [::-1] at
             the end for output to the user to match C-ordering in numpy.
         
+        TODO: 
+            Implement special dtype to read the entire header at once.
+        '''
+        
+        ''' Read everything at once using special dtype. ~5x faster than multiple np.fromfile() reads:
+        
+        Untested but works in theory
+        headerDtype = np.dtype([('head1','10int32'),('head2','6float32'),('axisOrientations','3int32'),('minMaxMean','3int32'),('extra','32int32')])
+        head = np.fromfile(self.fid,dtype=headerDtype,count=1)
+        
         '''
         
         #Always start at the beginnging of the file.
