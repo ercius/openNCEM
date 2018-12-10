@@ -5,28 +5,39 @@ The reader for EMD Berkeley and Velox files will be combined in the near
 future once they are fully tested separately.
 
 Currently limited to only images. 
+
+TODO: Implement h5py_cache to open files with many images
+TODO: Test for list_data out of range
 '''
+
+import datetime
+import json
 
 import numpy as np
 import h5py
-import datetime
-import json
+
+#import h5py_cache
 
 class fileEMDVelox:
     '''Class to represent Velox EMD files
     
     Parameters:
         filename (str):    Name of the EMD file.
-        readonly (bool):    Set to open in read only mode.
     
+    Example
     '''
     
-    def __init__(self, filename, readonly=False):
-        '''Init opening/creating the file.
+    def __init__(self, filename):
+        '''Init opening the file and finding all data groups.
+        
+        Parameters:
+            filename (str): 
+        
+        Currently only searches the Images group.
         
         '''
         
-        ## necessary declarations in case something goes bad
+        ## necessary declaration in case something goes bad
         self.file_hdl = None
         
         # check for string
@@ -41,24 +52,6 @@ class fileEMDVelox:
             raise
             
         self._find_groups()
-        
-        '''
-        #Plot the images
-        if len(dsetGroups) > 1:
-            fg1, ax1 = plt.subplots(nrows=round(len(dsetGroups)/2+0.1),ncols=2,figsize=(8,12)) #two columns
-            for ii,image in enumerate(dsetGroups):
-                fovX = pixelSizeX[ii]*image['Data'].shape[0]
-                fovY = pixelSizeY[ii]*image['Data'].shape[1]
-                ax1.ravel()[ii].imshow(image['Data'][:,:,0],extent=[0,fovX,0,fovY],origin='lower')
-                ax1.ravel()[ii].set(xlabel='X (nm)',ylabel='Y (nm)',title=detectorName[ii])
-        else:
-            fg1, ax1 = plt.subplots(nrows=1,ncols=1,figsize=(8,12)) #two columns
-            fovX = pixelSizeX[ii]*image['Data'].shape[0]
-            fovY = pixelSizeY[ii]*image['Data'].shape[1]
-            ax1.imshow(image['Data'][:,:,0],extent=[0,fovX,0,fovY],origin='lower')
-            ax1.set(xlabel='X (nm)',ylabel='Y (nm)',title=detectorName[ii])
-        fg1.tight_layout()
-        '''
         
     def __del__(self):
         '''Destructor for EMD file object.
@@ -113,6 +106,10 @@ class fileEMDVelox:
         '''Get the data from a group and the associated metadata.
         
         '''
+        # check input
+        if not isinstance(group, h5py._hl.group.Group):
+            raise TypeError('group needs to refer to a valid HDF5 group!')
+
         data = group['Data'] #the full data set
         metaData = self.parseMetaData(group)
         return (data,metaData)
