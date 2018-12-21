@@ -154,9 +154,9 @@ class fileMRC:
         if self.v:
             print('axisOrientations = {}'.format(self.axisOrientations))
         
-        self.Shape = [self.dataSize[x-1] for x in self.axisOrientations]
-        if self.v:
-            print('data shape = {}'.format(self.Shape))
+        #self.Shape = [self.dataSize[x-1] for x in self.axisOrientations]
+        #if self.v:
+        #    print('data shape = {}'.format(self.Shape))
         
         #Min, max,mean
         self.minMaxMean = np.fromfile(self.fid,dtype=np.int32,count=3)
@@ -173,7 +173,7 @@ class fileMRC:
         self.voxelSize = self.voxelSize[::-1]
         self.cellAngles = self.cellAngles[::-1]
         self.axisOrientations = self.axisOrientations[::-1]
-        self.Shape = self.Shape[::-1]
+        #self.Shape = self.Shape[::-1]
         
         #Move to the end of the normal header
         self.fid.seek(1024)
@@ -232,7 +232,7 @@ class fileMRC:
         self.fid.seek(self.dataOffset,0) #move to the start of the data from the start of the file
         try:
             data1 = np.fromfile(self.fid,dtype=self.dataType,count=np.prod(self.dataSize))
-            self.dataOut['data'] = data1.reshape(self.Shape)
+            self.dataOut['data'] = data1.reshape(self.dataSize)
         except MemoryError:
             print("Not enough memory to read in the full data set")        
         return self.dataOut
@@ -260,7 +260,7 @@ class fileMRC:
         self.fid.seek(num*byteSize,1) #skip to the slice requested from the start of the data
         
         data1 = np.fromfile(self.fid,dtype=self.dataType,count=imSize) #read in the requested image
-        data1 = data1.reshape((self.Shape[1],self.Shape[2])) #reshape the image
+        data1 = data1.reshape((self.dataSize[1],self.dataSize[2])) #reshape the image
             
         return data1
     
