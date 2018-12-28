@@ -246,22 +246,7 @@ class fileDM:
             #print('File is not written Little Endian (PC) format and can not be read by this program.')
             raise IOError('File is not written Little Endian (PC) format and can not be read by this program.')
             output = False
-
-        #Test file size for corruption. Note that DM3/DM4 file size is always off by 20/24 bytes from what is written in the header
-        osSize = fileStats(self.filename).st_size
-        if self.dmType == 3:
-            if self.fileSize != osSize-20:
-                pass
-                #raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
-                #output = False
-                #print('Warning: file size on disk ({}) does not match expected file size in header ({}).'.format(osSize, self.fileSize))
-        elif self.dmType == 4:
-            if self.fileSize != osSize-24:
-                pass
-                #raise IOError('File size on disk ({}) does not match expected file size in header ({}). Invalid file.'.format(osSize, self.fileSize))
-                #output = False
-                #print('Warning: file size on disk ({}) does not match expected file size in header ({}).'.format(osSize, self.fileSize))
-
+        
         return output
 
     def parseHeader(self):
