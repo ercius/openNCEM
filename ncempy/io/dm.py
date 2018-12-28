@@ -52,10 +52,15 @@ class fileDM:
                  'curTagAtLevelX','curTagName','scale','scaleUnit',
                  'scaleOrigin','scale_temp','origin_temp','outputDic',
                  'allTags','dmType','specialType','fileSize',
-                 'endianType','origin')
+                 'endianType','origin','encodedTypeSize')
     
     def __init__(self, filename, verbose = False, on_memory=False):
         print('optimize1')
+        
+        self.encodedTypeSize = {'0':0,'8':1,'9':1,'10':1,
+                           '2':2,'4':2,
+                           '3':4,'5':4,'6':4,
+                           '7':8,'12':8}
         
         self.filename = filename
 
@@ -456,6 +461,19 @@ class fileDM:
             
         Returns:
             (int): Number of bytes this type uses.
+            
+        self.encodedTypeSize = {'0':0,'8':1,'9':1,'10':1,
+                           '2':2,'4':2,
+                           '3':4,'5':4,'6':4,
+                           '7':8,'12':8}
+        '''
+        #print(encodedType)
+        try:
+            return self.encodedTypeSize[str(int(encodedType))]
+        except KeyError:
+            return -1
+        except:
+            raise
         '''
         if encodedType == 0:
             return 0
@@ -469,6 +487,7 @@ class fileDM:
             return 8 #8 bytes
         else:
             return -1
+        '''
 
     def _encodedTypeDtype(self,encodedType):
         '''Translate the encodings used by DM to numpy dtypes according to:
