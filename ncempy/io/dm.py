@@ -44,9 +44,19 @@ class fileDM:
                 series = dmFile2.getDataset(0)
             >>> plt.imshow(series['data'][0,:,:]) #show the first image in the series
     '''
+    
+    __slots__ = ('filename','fid','_on_memory','v','xSize','ySize',
+                 'zSize','zSize2','dataType','dataSize','dataOffset',
+                 'dataShape','numObjects','thumbnail','curGroupLevel',
+                 'maxDepth','curGroupAtLevelX','curGroupNameAtLevelX',
+                 'curTagAtLevelX','curTagName','scale','scaleUnit',
+                 'scaleOrigin','scale_temp','origin_temp','outputDic',
+                 'allTags','dmType','specialType','fileSize',
+                 'endianType','origin')
+    
     def __init__(self, filename, verbose = False, on_memory=False):
-
-
+        print('optimize1')
+        
         self.filename = filename
 
         # necessary declarations, if something fails
@@ -116,7 +126,6 @@ class fileDM:
         self.scale = []
         self.scaleUnit = []
         self.origin = []
-        self.dataType = []
 
         #Temporary variables to keep in case a tag entry shows useful information in an array
         self.scale_temp = 0
