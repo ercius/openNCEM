@@ -52,15 +52,10 @@ class fileDM:
                  'curTagAtLevelX','curTagName','scale','scaleUnit',
                  'scaleOrigin','scale_temp','origin_temp','outputDic',
                  'allTags','dmType','specialType','fileSize',
-                 'endianType','origin','encodedTypeSize')
+                 'endianType','origin','_encodedTypeSizes')
     
     def __init__(self, filename, verbose = False, on_memory=False):
         print('optimize1')
-        
-        self.encodedTypeSize = {'0':0,'8':1,'9':1,'10':1,
-                           '2':2,'4':2,
-                           '3':4,'5':4,'6':4,
-                           '7':8,'12':8}
         
         self.filename = filename
 
@@ -138,6 +133,11 @@ class fileDM:
 
         self.outputDic = {}
         self.allTags = {}
+        
+        self._encodedTypeSizes = {'0':0,'8':1,'9':1,'10':1,
+                           '2':2,'4':2,
+                           '3':4,'5':4,'6':4,
+                           '7':8,'12':8}
         
         self.parseHeader()
         
@@ -464,7 +464,7 @@ class fileDM:
         '''
         #print(encodedType)
         try:
-            return self.encodedTypeSize[str(int(encodedType))]
+            return self._encodedTypeSizes[str(int(encodedType))]
         except KeyError:
             return -1
         except:
