@@ -253,7 +253,7 @@ class fileDM:
             raise IOError('File is not a valid DM3 or DM4')
             output = False
         
-        aa = self.fromfile(self.fid,dtype=np.dtype([('fileSize','>u4'),
+        aa = self.fromfile(self.fid,dtype=np.dtype([('fileSize',self.specialType),
                                                     ('endianType','>u4')]),count=1) #file type: == 3 for DM3 or == 4 for DM4
         
         self.fileSize = aa['fileSize']
