@@ -134,10 +134,10 @@ class fileDM:
         self.outputDic = {}
         self.allTags = {}
         
-        self._encodedTypeSizes = {'0':0,'8':1,'9':1,'10':1,
-                           '2':2,'4':2,
-                           '3':4,'5':4,'6':4,
-                           '7':8,'12':8}
+        self._encodedTypeSizes = {0:0,8:1,9:1,10:1,
+                           2:2,4:2,
+                           3:4,5:4,6:4,
+                           7:8,12:8}
         
         self.parseHeader()
         
@@ -239,7 +239,7 @@ class fileDM:
         
         '''
         output = True #output will stay == 1 if the file is a true DM4 file
-
+        
         self.dmType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #file type: == 3 for DM3 or == 4 for DM4
 
         if self.v:
@@ -252,9 +252,14 @@ class fileDM:
         else:
             raise IOError('File is not a valid DM3 or DM4')
             output = False
-
-        self.fileSize = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
-        self.endianType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
+        
+        aa = self.fromfile(self.fid,dtype=np.dtype([('fileSize','>u4'),
+                                                    ('endianType','>u4')]),count=1) #file type: == 3 for DM3 or == 4 for DM4
+        
+        self.fileSize = aa['fileSize']
+        self.endianType = aa['endianType']
+        #self.fileSize = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
+        #self.endianType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
 
         if self.endianType != 1:
             #print('File is not written Little Endian (PC) format and can not be read by this program.')
@@ -464,7 +469,7 @@ class fileDM:
         '''
         #print(encodedType)
         try:
-            return self._encodedTypeSizes[str(int(encodedType))]
+            return self._encodedTypeSizes[encodedType]
         except KeyError:
             return -1
         except:
