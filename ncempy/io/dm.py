@@ -52,7 +52,8 @@ class fileDM:
                  'curTagAtLevelX','curTagName','scale','scaleUnit',
                  'scaleOrigin','scale_temp','origin_temp','outputDic',
                  'allTags','dmType','specialType','fileSize',
-                 'endianType','origin','_encodedTypeSizes')
+                 'endianType','origin','_encodedTypeSizes',
+                 '_buffer_offset','_buffer_size','_DM2NPDataTypes')
     
     def __init__(self, filename, verbose = False, on_memory=False):
         print('optimize1')
@@ -135,9 +136,14 @@ class fileDM:
         self.allTags = {}
         
         self._encodedTypeSizes = {0:0,8:1,9:1,10:1,
-                           2:2,4:2,
-                           3:4,5:4,6:4,
-                           7:8,12:8}
+                                  2:2,4:2,
+                                  3:4,5:4,6:4,
+                                  7:8,12:8}
+        self._DM2NPDataTypes = {6:np.uint8, 10:np.uint16,
+                                11:np.uint32, 9:np.int8,
+                                1:np.int16, 7:np.int32,
+                                2:np.float32, 12:np.float64,
+                                3:np.complex64, 13:np.complex128}
         
         self.parseHeader()
         
@@ -611,6 +617,7 @@ class fileDM:
             print('_readNativeData: encodedType == {} and val = {}'.format(encodedType, val))
 
         return val
+    
     def _readArrayTypes(self):
         '''Analyze the types of data in an array.
         
@@ -812,6 +819,18 @@ class fileDM:
         Returns:
             (numpy dtype)
         '''
+        
+        try:
+            Type = self._DM2NPDataTypes[dd]
+        except KeyError:
+            Type = None
+            raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
+        except:
+            Type = None
+            raise
+        return Type
+        
+        '''
         if dd == 6:
             return np.uint8
         elif dd == 10:
@@ -838,9 +857,9 @@ class fileDM:
             raise IOError('RGB data type is not supported yet.')
             #return np.uint8
         else:
-            print("4321")
             raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
-
+        '''
+        
     def getDataset(self, index):
         '''Retrieve a dataset from the DM file.
         
