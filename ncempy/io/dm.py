@@ -53,7 +53,9 @@ class fileDM:
                  'scaleOrigin','scale_temp','origin_temp','outputDic',
                  'allTags','dmType','specialType','fileSize',
                  'endianType','origin','_encodedTypeSizes',
-                 '_buffer_offset','_buffer_size','_DM2NPDataTypes')
+                 '_buffer_offset','_buffer_size','_DM2NPDataTypes',
+                 '_TagType2NPDataTypes','on_memory','verbose',
+                 '_EncodedTypeDTypes')
     
     def __init__(self, filename, verbose = False, on_memory=False):
         print('optimize1')
@@ -139,12 +141,25 @@ class fileDM:
                                   2:2,4:2,
                                   3:4,5:4,6:4,
                                   7:8,12:8}
-        self._DM2NPDataTypes = {6:np.uint8, 10:np.uint16,
-                                11:np.uint32, 9:np.int8,
-                                1:np.int16, 7:np.int32,
-                                2:np.float32, 12:np.float64,
-                                3:np.complex64, 13:np.complex128}
         
+        self._DM2NPDataTypes = {1:np.int16, 2:np.float32,
+                                3:np.complex64, 6:np.uint8,
+                                7:np.int32,9:np.int8,
+                                10:np.uint16,11:np.uint32, 
+                                12:np.float64,13:np.complex128}
+        
+        self._TagType2NPDataTypes = {2:np.int16,3:np.int32,
+                                     4:np.uint16,5:np.uint32,
+                                     6:np.float32,7:np.float64,
+                                     8:np.uint8,9:np.int8,
+                                     10:np.int8,11:np.uint64,
+                                     12:np.uint64}
+        
+        self._EncodedTypeDTypes = {2:np.int16,3:np.int32,
+                                     4:np.uint16,5:np.uint32,
+                                     6:np.float32,7:np.float64,
+                                     8:np.uint8,9:np.uint8,
+                                     10:np.uint8,12:np.uint64}
         self.parseHeader()
         
     def __del__(self):
@@ -505,29 +520,16 @@ class fileDM:
             (numpy dtype): The Numpy dtype corresponding to the DM encoded value.
         
         '''
-        if encodedType == 2:
-            return np.dtype('<i2')
-        elif encodedType == 3:
-            return np.dtype('<i4')
-        elif encodedType == 4:
-            return np.dtype('<u2')
-        elif encodedType == 5:
-            return np.dtype('<u4')
-        elif encodedType == 6:
-            return np.dtype('<f4')
-        elif encodedType == 7:
-            return np.dtype('<f8')
-        elif encodedType == 8:
-            return np.dtype('<u1')
-        elif encodedType == 9:
-            return np.dtype('<u1')
-        elif encodedType == 10:
-            return np.dtype('<u1')
-        elif encodedType == 12:
-            return np.dtype('<u8')
-        else:
-            return -1
-
+        
+        try:
+            Type = self._EncodedTypeDTypes[encodedType]
+        except KeyError:
+            Type = -1
+        except:
+            raise
+        
+        return Type
+        
     def _readStructTypes(self):
         '''Analyze the types of data in a struct.
         
@@ -543,7 +545,7 @@ class fileDM:
         fieldTypes = np.zeros(nFields)
         for ii in range(0,nFields):
             aa = self.fromfile(self.fid,dtype=self.specialType,count=2) #nameLength, fieldType
-            nameLength = aa[0] #not used currently
+            #nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
 
@@ -581,38 +583,9 @@ class fileDM:
         Returns:
             (int or ndarray): The value(s) read in.
         '''
-        if encodedType == 2:
-            val = self.fromfile(self.fid,count=1,dtype='<i2')[0]
-        elif encodedType == 3:
-            val = self.fromfile(self.fid,count=1,dtype='<i4')[0]
-        elif encodedType == 4:
-            val = self.fromfile(self.fid,count=1,dtype='<u2')[0]
-        elif encodedType == 5:
-            val = self.fromfile(self.fid,count=1,dtype='<u4')[0]
-        elif encodedType == 6:
-            val = self.fromfile(self.fid,count=1,dtype='<f4')[0]
-        elif encodedType == 7:
-            val = self.fromfile(self.fid,count=1,dtype='<f8')[0]
-        elif encodedType == 8: #matlab uchar
-            val = self.fromfile(self.fid,count=1,dtype='<u1')[0] #return character or number?
-            if self.v:
-                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
-        elif encodedType == 9: #matlab *char
-            val = self.fromfile(self.fid,count=1,dtype='<i1')[0] #return character or number?
-            if self.v:
-                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
-        elif encodedType == 10: #matlab *char
-            val = self.fromfile(self.fid,count=1,dtype='<i1')[0]
-            if self.v:
-                print('_readNativeData untested type, val: {}, {}'.format(encodedType,val))
-        elif encodedType == 11:
-            val = self.fromfile(self.fid,count=1,dtype='<u8')[0]
-        elif encodedType == 12:
-            val = self.fromfile(self.fid,count=1,dtype='<u8')[0] #unknown type, but this works
-        else:
-            print('_readNativeData unknown data type: {}'.format(encodedType))
-            raise
-
+        Type = self._TagType2NPDataTypes[encodedType]
+        val = self.fromfile(self.fid,count=1,dtype=Type)[0]
+        
         if self.v:
             print('_readNativeData: encodedType == {} and val = {}'.format(encodedType, val))
 
@@ -631,7 +604,7 @@ class fileDM:
             itemTypes = self._readStructTypes()
         elif arrayType == 20:
             #Nested array
-            itemTypes = _readArrayTypes()
+            itemTypes = self._readArrayTypes()
         else:
             itemTypes.append(arrayType)
         if self.v:
@@ -682,7 +655,9 @@ class fileDM:
         elif bufSize < 1e3: #set an upper limit on the size of array that will be read in as a string
             #treat as a string
             for encodedType in arrayTypes:
-                stringData = self.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
+                Type0 = self._encodedTypeDtype(encodedType)
+                stringData = self.fromfile(self.fid,count=arraySize,dtype=Type0)
+                #stringData = self.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
                 arrOut = self._bin2str(stringData)
 
             #This is the old way to read this in. Its not really correct though.
@@ -829,36 +804,6 @@ class fileDM:
             Type = None
             raise
         return Type
-        
-        '''
-        if dd == 6:
-            return np.uint8
-        elif dd == 10:
-            return np.uint16
-        elif dd == 11:
-            return np.uint32
-        elif dd == 9:
-            return np.int8
-        elif dd == 1:
-            return np.int16
-        elif dd == 7:
-            return np.int32
-        elif dd == 2:
-            return np.float32
-        elif dd == 12:
-            return np.float64
-        #elif dd == 14: #this is supposed to be bit1 in matlab, but Im not sure what that translates to in numpy
-        #    return np.uint8 #bit1 ??
-        elif dd == 3:
-            return np.complex64
-        elif dd == 13:
-            return np.complex128
-        elif dd == 23:
-            raise IOError('RGB data type is not supported yet.')
-            #return np.uint8
-        else:
-            raise IOError('Unsupported binary data type during conversion to numpy dtype. DM dataType == {}'.format(dd))
-        '''
         
     def getDataset(self, index):
         '''Retrieve a dataset from the DM file.
