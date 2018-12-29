@@ -334,9 +334,12 @@ class fileDM:
 
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
-        self.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
-        nTags = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
-
+        
+        #self.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
+        #nTags = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
+        aa = self.fromfile(self.fid,dtype=[('IsOpenSorted','2<i1'),('nTags',self.specialType)],count=1)
+        nTags = aa['nTags'][0]
+        
         if self.v:
             print('Total number of root tags = {}'.format(nTags))
 
