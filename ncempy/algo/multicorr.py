@@ -4,47 +4,57 @@ Module to correlate two images, functionally written.
 '''
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-#import cv2
 
 def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     '''Align a template to an image, possibly with multiple alignment peaks.
     
-    Inputs:
-        G1 - Fourier transform of image we are aligning to. Image reference
-        G2 - Fourier transform of image that is being aligned. Image being registered
-    Optional Inputs:
-        'phase' or 'cross' or 'hybrid' - string that specifies correlation method used. (default = 'cross')
-        upsampleFactor - scalar integer specifying 1/subpixel_precision of fit. (default = 1)
+    Parameters:    
+        G1 (complex ndarray) : Fourier transform of reference image.
+        
+        G2 (complex ndarray) : Fourier transform of the image to register (the kernel).
+    
+    Keywords:
+        method (str) : (optional) The correlation method to use. 'phase' or 'cross' or 'hybrid' (default = 'cross')
+        
+        upsampleFactor (int) : Integer specifying 1/subpixel_precision of fit. (default = 1)
 
     Returns:
-        xyShift - the shift between G1 and G2 in pixels
-
-    Defaults -
-        method = 'phase';
-        peakSearchMode = false;  By default, we return only global best shift value.
-        upsampleFactor = 1;
+        (list) - The shift between G1 and G2 in pixels.
+    
+    Example:
+        Cross correlate two images already stored as ndarrays.
+        
+        >>> import ncempy.multicorr as mc
+        >>> import numpy as np
+        >>> im0FFT = np.fft.fft2(im0)
+        >>> im1FFT = np.fft.fft2(im1)
+        >>> shifts = mc.multicorr(im0FFT,im1FFT)
+    
     '''
+    
     method, upsampleFactor = parse_input(G1, G2, method, upsampleFactor)
     imageCorr = initial_correlation_image(G1, G2, method, upsampleFactor)
     xyShift = upsampled_correlation(imageCorr, upsampleFactor)
-    print(method)
-    print('------------')
+    
     return xyShift
 
 def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
     '''This function parses the inputs to make sure they're correct. Will raise errors if G1 or G2 are not ndarrays.
 
-    Inputs:
-        G1 - Fourier transform of image we are aligning to. Image reference
-        G2 - Fourier transform of image that is being aligned. Image being registered
-        method - correlation method ('phase', 'cross', 'hybrid'). Default 'cross'
-        upsampleFactor - scalar integer specifying 1/subpixel_precision of fit. Default = 1.
+    Parameters:
+        G1 (complex ndarray) : Fourier transform of reference image.
+        
+        G2 (complex ndarray) : Fourier transform of the image to register (the kernel).
+    
+    Keywords:
+        method (str) : (optional) The correlation method to use. 'phase' or 'cross' or 'hybrid' (default = 'cross')
+        
+        upsampleFactor (int) : Integer specifying 1/subpixel_precision of fit. (default = 1)
 
     Returns:
-        method - string ('phase', 'cross', 'hybrid')
-        upsampleFactor - scalar integer
+        (string) : Method to use. ('phase', 'cross', 'hybrid')
+        
+        (int) : Upsample factor
     '''
     # Check to make sure both G1 and G2 are arrays
     if type(G1) is not np.ndarray:
@@ -69,21 +79,24 @@ def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
 
     # Verify images are the same size.
     if G1.shape != G2.shape:
-        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(str(G1.shape), str(G2.shape)))
+        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(G1.shape, G2.shape))
 
     return method, upsampleFactor
 
 def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
     '''Generate correlation image at initial resolution using the method specified.
 
-    Inputs:
+    Parameters:
         G1 - Fourier transform of image we are aligning to. Image reference
+        
         G2 - Fourier transform of image that is being aligned. Image being registered
+        
         method - correlation method ('phase', 'cross', 'hybrid'). Default 'cross'
+        
         upsampleFactor - scalar integer specifying 1/subpixel_precision of fit. Default = 1.
 
     Returns:
-        imageCorr - an ndarray correlation image that has not yet been inverse Fourier transformed.
+        (ndarray) : correlation image that has not yet been inverse Fourier transformed.
     '''
     G12 = np.multiply(G2, np.conj(G1)) # is this the correct order that we want?
     if method == 'phase':
@@ -100,12 +113,13 @@ def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
 def upsampled_correlation(imageCorr, upsampleFactor):
     '''Upsamples the correlation image by a set integer factor upsampleFactor. If upsampleFactor == 2, then it is naively Fourier upsampled. If the upsampleFactoris higher than 2, then it uses dftUpsample, which is a more efficient way to Fourier upsample the image.
 
-    Inputs:
-        imageCorr - Fourier transformed correlation image returned by initial_correlation_image. Is an ndarray.
-        upsampleFactor - scalar integer of how much upsampling should be performed.
+    Parameters:
+        imageCorr : Fourier transformed correlation image returned by initial_correlation_image. Is an ndarray.
+        
+        upsampleFactor : scalar integer of how much upsampling should be performed.
 
     Returns:
-        xyShift - two element list with shift in x and y of G2 with respect to G1.
+        (list) : shift in x and y of G2 with respect to G1.
     '''
 
     imageCorrIFT = np.real(np.fft.ifft2(imageCorr))
@@ -165,12 +179,13 @@ def upsampleFFT(imageInit, upsampleFactor):
 
     The way it works is that it embeds imageInit in a larger array of zeros, then does the inverse Fourier transform to return the Fourier upsampled image in real space.
 
-    Inputs:
-        imageInit - ndarray of the image to be Fourier upsampled. This should be in the Fourier domain.
-        upsampleFactor - integer scalar, almost always 2.
+    Parameters:
+        imageInit : ndarray of the image to be Fourier upsampled. This should be in the Fourier domain.
+        
+        upsampleFactor : integer scalar, almost always 2.
 
     Returns:
-        imageUpsampleReal - the inverse Fourier transform of imageInit upsampled by the upsampleFactor. Is an ndarray.
+        (complex ndarray) : the inverse Fourier transform of imageInit upsampled by the upsampleFactor. Is an ndarray.
     '''
     imageSize = imageInit.shape
     imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize))) + 0j
@@ -193,13 +208,15 @@ def dftUpsample(imageCorr, upsampleFactor, xyShift):
 
     The matrix multiplication DFT is from Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, "Efficient subpixel image registration algorithms," Opt. Lett. 33, 156-158 (2008). http://www.sciencedirect.com/science/article/pii/S0045790612000778
 
-    Inputs:
-        imageCorr - correlation image between two images in Fourier space. ndarray.
-        upsampleFactor - scalar integer of how much to upsample.
-        xyShift - single pixel shift between images previously computed. Used to center the matrix multiplication on the correlation peak. Is a two element list.
+    Parameters:
+        imageCorr : correlation image between two images in Fourier space. ndarray.
+        
+        upsampleFactor : scalar integer of how much to upsample.
+        
+        xyShift : single pixel shift between images previously computed. Used to center the matrix multiplication on the correlation peak. Is a two element list.
         
     Returns:
-        imageUpsample - upsampled image from region around correlation peak. Is a ndarray (and I think the conjugate of the upsampled peak. Has to do wtih order of operations?)
+        (ndarray) : upsampled image from region around correlation peak. Is a ndarray (and I think the conjugate of the upsampled peak. Has to do wtih order of operations?)
         
     '''
     imageSize = imageCorr.shape
@@ -229,12 +246,13 @@ def imageShifter(G2, xyShift):
     '''
     This function multiplies G2 by a plane wave that has the real space effect of shifting ifft2(G2) by [x, y] pixels.
 
-    Inputs:
-        G2 - the Fourier transform of an image. ndarray.
-        xyShift - a two element list
+    Parameters:
+        G2 (complex ndarray): the Fourier transform of an image. ndarray.
+        
+        xyShift (list): a two element list
 
     Returns:
-        G2shift - Fourier shifted G2. ndarray.
+        (complex ndarray) : Fourier shifted image
     '''
     imageSize = G2.shape
     qx = makeFourierCoords(imageSize[0], 1) # does this need to be a column vector
@@ -251,12 +269,12 @@ def makeFourierCoords(N, pSize):
     '''
     This function creates Fourier coordinates such that (0,0) is in the center of the array.
 
-    Inputs:
-        N - the maximum coordinate in the original frame.
-        pSize - the pixel size
+    Parameters:
+        N (int): The maximum coordinate in the original frame.
+        pSize (float): The pixel size
 
     Returns:
-        q - a single row array that has transformed 0:N to -N/2:N/2, such that the array sizes are the same.
+        (ndarray) - a single row array that has transformed 0:N to -N/2:N/2, such that the array sizes are the same.
     '''
 
     N = float(N)
