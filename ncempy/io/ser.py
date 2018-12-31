@@ -918,7 +918,6 @@ def serReader(filename):
             >>> plt.imshow(im0['data']) #show the single image from the data file
     '''
     with fileSER(filename) as f1: #open the file and init the class
-            
         if f1.head['ValidNumberElements'] > 0:
             data, metaData = f1.getDataset(0) #get the first data set to setup the arrays
             
