@@ -934,8 +934,8 @@ def serReader(filename):
                 #Read in all spectra
                 temp = np.zeros((numSpectra,spectraSize),dtype=npType) #C-style ordering
                 for ii in range(0,numSpectra):
-                    dataValues,meta1 = f1.getDataset(ii)
-                    temp[ii,:] = dataValues
+                    data0,meta1 = f1.getDataset(ii)
+                    temp[ii,:] = data0
                 
                 if f1.head['NumberDimensions'] > 1:
                     #Spectrum map
@@ -955,15 +955,10 @@ def serReader(filename):
                 #images as 2D or 3D image series
                 temp = np.empty([f1.head['ValidNumberElements'],data.shape[0],data.shape[1]],dtype=npType)
                 for ii in range(0,f1.head['ValidNumberElements']):
-                    data0,metadata0 = f1.getDataset(ii)
-                    temp[ii,:,:] = data #get the next dataset
-                    
-                    if ii ==1:
-                        metadata = metadata0
+                    data0, metadata0 = f1.getDataset(ii)
+                    temp[ii,:,:] = data0 #get the next dataset
+
                 temp = np.squeeze(temp) #remove singular dimensions
-                
-                #Get the metadata from the first image
-                data,metadata = f1.getDataset(0)
                 
                 dataOut = {}
                 dataOut['data'] = temp #output the full data set
@@ -973,7 +968,7 @@ def serReader(filename):
                 dataOut['pixelUnit'] = []
                 dataOut['pixelOrigin'] = []
                 
-                for cal in metadata['Calibration']:
+                for cal in metaData['Calibration']:
                     dataOut['pixelSize'].append(cal['CalibrationDelta'])
                     dataOut['pixelOrigin'].append(cal['CalibrationOffset'])
                     dataOut['pixelUnit'].append('m')
