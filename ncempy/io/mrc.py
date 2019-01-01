@@ -1,7 +1,7 @@
 '''
 A module to read MRC files in python and numpy.
 Written according to MRC specification at http://bio3d.colorado.edu/imod/betaDoc/mrc_format.txt
-ALso works with FEI MRC files which include a special header block with experimental information.
+Also works with FEI MRC files which include a special header block with experimental information.
 written by: Peter Ercius, percius@lbl.gov
 '''
 
@@ -11,17 +11,24 @@ class fileMRC:
     '''Init opening the file and reading in the header.
     Read in the data in MRC format and other useful information.
             
-    Parameters:
-        filename (str): string pointing to the filesystem location of the file.
-        verbose (bool): if True, debug information is printed.
-    Returns:
-        (dict): A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
+    Parameters
+    -----------
+        filename : str
+            String pointing to the filesystem location of the file.
+        verbose : bool 
+            If True, debug information is printed.
+    Returns
+    --------
+       out : dict
+            A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
     
-    Note:
+    Note
+    ----
         Most users will prefer to use the mrc.mrcReader() function to simply read
         the entire data set into memory with a single command.
     
-    Example:
+    Example
+    -------
         Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
         
             >>> from ncempy.io import mrc
@@ -87,12 +94,14 @@ class fileMRC:
         '''Read the header information which includes data type, data size, data
         shape, and metadata.
         
-        Note:
+        Note
+        -----
             This header uses Fortran-style ordering. Numpy uses C-style ordering.
             The header is read in and then some attributes are reversed [::-1] at
             the end for output to the user to match C-ordering in numpy.
         
-        TODO: 
+        TODO
+        ----
             Implement special dtype to read the entire header at once.
         '''
         
@@ -241,14 +250,20 @@ class fileMRC:
         '''Read in a slice of an MRC file. Useful for parsing through a large file without reading
         the entire data set into memory.
         
-        Paremeters:
-            num (int): Get the requested image.
+        Paremeters
+        ----------
+            num : int
+                Get the requested image.
         
-        Returns:
-            (ndarray): A 2D slice or a 3D set of slices along the first index
+        Returns
+        -------
+            out: ndarray
+                A 2D slice or a 3D set of slices along the first index
         
-        Raises:
-            IndexError: If num > the number of slices.
+        Raises
+        ------
+            IndexError
+                If num > the number of slices.
         '''
         # Check num is within the data array size bounds
         if num > (self.dataSize[0]-1):
@@ -279,11 +294,15 @@ class fileMRC:
         4 transform : complex 32-bit reals
         6 image : unsigned 16-bit range 0 to 65535
         
-        Parameters:
-            dataType (int): The data type value encoded in an MRC header
+        Parameters
+        ----------
+            dataType : int
+                The data type value encoded in an MRC header
             
-        Returns:
-            {numpy dtype}: The corresponding numpy data type.
+        Returns
+        --------
+            out: numpy dtype
+                The corresponding numpy data type.
         
         '''
         if dataType == 0:
@@ -303,17 +322,20 @@ def mrcReader(fname,verbose=False):
     '''A simple function to read open a MRC, parse the header, and read the full
     data set.
     
-    Parameters:
-        fname (str): The name of the file to load
+    Parameters
+    ----------
+        fname : str
+            The name of the file to load
+        verbose : bool, optional
+            Enable printing debug messages as the header is parsed.
         
-    Keywords:
-        verbose (bool): Enable printing debug messages as the header is parsed.
+    Returns
+    -------
+        out : dict
+            A dictionary containing the data and interesting metadata. The data is attached to the 'data' key.
         
-    Returns:
-        (dict): A dictionary containing the data and interesting metadata. The data
-        is attached to the 'data' key.
-        
-    Example:
+    Example
+    -------
         Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
             
             >>> from ncempy.io import mrc
@@ -330,8 +352,10 @@ def mrc2raw(fname):
     name and .raw ending. Data type and size are written in the file name.
     No other header information is retained.
     
-    Parameters:
-        fname (str): The name of the file to convert
+    Parameters
+    ----------
+        fname : str
+            The name of the file to convert.
     
     '''
     tomo = mrcReader(fname)
@@ -344,7 +368,19 @@ def mrc2emd(fname):
     '''Write an MRC file as an HDF5 file in EMD format with same file name and .emd ending.
     Header information is retained as attributes.
     
-    TODO: Update this to use ncempy.emd class
+    Parameters
+    ----------
+        fname : str
+            The name of the file to convert from MRC to EMD format.
+    
+    Returns
+    -------
+        out : int
+            1 if successful.
+    
+    TODO
+    -----
+        Update this to use ncempy.emd class
     '''
     import h5py
     
@@ -410,12 +446,19 @@ def mrc2emd(fname):
 def mrcWriter(filename,data,pixelSize,forceWrite=False):
     '''Write out a MRC type file according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt
     
-    Parameters:
-        filename (str): The name of the MRC file.
-        data (ndarray): The array data to write to disk.
-        pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
-    Returns:
-        (int): 1 if successful and 0 if unsuccessful
+    Parameters
+    ----------
+        filename : str
+            The name of the MRC file.
+        data : ndarray
+            The array data to write to disk.
+        pixelSize : tuple
+            The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
+    Returns
+    -------
+        out: int
+            1 if successful and 0 if unsuccessful
+    
     '''
     
     fid = open(filename,'wb')
@@ -503,12 +546,20 @@ def writeHeader(filename,shape,dtype,pixelSize):
     '''Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
     This is useful for initializing an MRC file and then writing to it manually or see appendData() function below.
     
-    Parameters:
-        filename (str): The name of the EMD file 
-        shape (tuple): The shape of the data to write
-        pixelSize (tuple): The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
-    Returns:
-        (int): 1 if successful.
+    Parameters
+    ----------
+        filename : str
+            The name of the EMD file 
+        shape : tuple
+            The shape of the data to write
+        pixelSize : tuple
+            The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
+    
+    Returns
+    -------
+        out : int
+            1 if successful.
+
     '''
     
     with open(filename,'wb') as fid:
@@ -584,9 +635,12 @@ def appendData(filename,data):
     '''Append a binary set of data to the end of a MRC file. This should only be used in conjunction with
     writeHeader() above. 
     
-    Parameters:
-        filename (str):    Name of the MRC file with pre-initiated header and some data already written.
-        data (ndarray):   Data to append to the file.
+    Parameters
+    ----------
+        filename : str
+            Name of the MRC file with pre-initiated header and some data already written.
+        data : ndarray
+            Data to append to the file.
     
     '''
     with open(filename,'ab') as fid:
@@ -597,9 +651,12 @@ def appendData(filename,data):
 def emd2mrc(filename,dsetPath):
     '''Convert EMD data set into MRC data set. The final data type is float32 for convenience.
     
-    Parameters:
-        filename (str): The name of the EMD file
-        dsetPath (str): The HDF5 path to the top group holding the data. ex. '/data/raw/'
+    Parameters
+    ----------
+        filename : str
+            The name of the EMD file
+        dsetPath : str
+            The HDF5 path to the top group holding the data. ex. '/data/raw/'
     '''
     
     with h5py.File(filename,'r') as f1:
