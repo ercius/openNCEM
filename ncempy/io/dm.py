@@ -8,7 +8,7 @@ Note
         Use the simplified dm.dmReader() function to load the data and meta 
         data as a python dictionary. 
         
-    Developers:
+    Advanced users and developers:
         Access the file internals through the dm.fileDM() class.
 
     On Memory mode:
@@ -20,8 +20,8 @@ Note
 """
 
 import mmap
-from os import stat as fileStats
 import os
+from os import stat as fileStats
 from os.path import basename as osBasename
 
 import numpy as np
@@ -72,7 +72,6 @@ class fileDM:
                  '_EncodedTypeDTypes')
     
     def __init__(self, filename, verbose = False, on_memory=False):
-        print('optimize1')
         
         self.filename = filename
 
