@@ -2,6 +2,16 @@
 This module provides an interface to the SER file format written by TIA.
 
 Following the information provided by Dr Chris Boothroyd (http://www.er-c.org/cbb/info/TIAformat/).
+
+Note
+----
+    General users:
+        Use the simplified dm.dmReader() function to load the data and meta 
+        data as a python dictionary. 
+        
+    Advanced users and developers:
+        Access the file internals through the dm.fileDM() class.
+        
 '''
 import numpy as np
 import h5py
@@ -18,17 +28,19 @@ class NotSERError(Exception):
 
 
 class fileSER:
-    '''
-    Class to represent SER files (read only).
+    ''' Class to represent SER files (read only).
     
-    Parameters:
-        filename (str):    Name of the SER file.
-        
-        emifile (str):    Name of an optional _emi file to read metadata.
-        
-        verbose (bool):    True to get extensive output while reading the file.
+    Parameters
+    ----------
+        filename : str
+            Name of the SER file.
+        emifile : str, optional
+            Name of an optional _emi file to read metadata.
+        verbose : bool, topional
+            True to get extensive output while reading the file.
     
-    Examples:
+    Examples
+    --------
         Simple example for reading data from a single image into memory:
         
         >>> import matplotlib.pyplot as plt
@@ -37,13 +49,14 @@ class fileSER:
             dataSet = dmFile1.getDataset(0)
         >>> plt.imshow(dataSet['data'])
 
-        SER files are structures such that each image in a series is a different dataset.
-        Thus, time series data should be read as the following:
+        SER files are structured such that each image in a series is a
+        different dataset. Thus, time series data should be read as the
+        following:
         
         >>> with ser.fileSER('filename_1.ser') as ser1:
-            image0,metadata0 = ser1.getDataset(0)
-            image1,metadata1 = ser1.getDataset(1)
-        >>> plt.imshow(image)
+            image0, metadata0 = ser1.getDataset(0)
+            image1, metadata1 = ser1.getDataset(1)
+        >>> plt.imshow(image0)
         >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     '''
 
@@ -109,6 +122,7 @@ class fileSER:
     def __exit__(self,type,value,traceback):
         '''Implement python's with statment
         and close the file via __del__()
+        
         '''
         self.__del__()
         return None
@@ -116,11 +130,15 @@ class fileSER:
     def readHeader(self, verbose=False):
         '''Read and return the SER files header.
         
-        Parameters:
-            verbose (bool):    True to get extensive output while reading the file.
+        Parameters
+        ----------
+            verbose : bool
+                True to get extensive output while reading the file.
 
-        Returns:
-            (dict):    The header of the SER file as dict.
+        Returns
+        -------
+            dict
+             The header of the SER file as dict.
             
         '''
         
@@ -286,8 +304,10 @@ class fileSER:
     def _checkIndex(self, i):
         '''Check index i for sanity, otherwise raise Exception.
         
-        Parameters:
-            i (int):    Index.
+        Parameters
+        ----------
+            i : int
+                Index.
             
         '''
         
@@ -303,19 +323,25 @@ class fileSER:
         
 
     def getDataset(self, index, verbose=False):
-        '''Retrieve dataset from data file.
+        '''Retrieve data and meta data for one image or spectra 
+        from the file.
 
-        Parameters:
-            index (int):    Index of dataset.
-            verbose (bool):    True to get extensive output while reading the file.
+        Parameters
+        ----------
+            index : int
+                Index of dataset.
+            verbose : bool, optional
+                True to get extensive output while reading the file.
         
-        Returns:
-            (tuple):    Tuple containing:
-            
-                np.ndarray:    Dataset as array.
-                
-                dict:    Metadata as dict.
-                
+        Returns
+        -------
+            tuple :
+                Tuple containing:            
+                data : np.ndarray
+                    Dataset as array.
+                metadata: dict
+                    Metadata as dict.
+        
         '''
 
         # check index, will raise Exceptions if not
@@ -416,12 +442,17 @@ class fileSER:
     def _getTag(self, index, verbose=False):
         '''Retrieve tag from data file.
 
-        Parameters:
-            index (int):    Index of tag.
-            verbose (bool):    True to get extensive output while reading the file.
+        Parameters
+        ----------
+            index : int
+                Index of tag.
+            verbose : bool
+                True to get extensive output while reading the file.
 
-        Returns:
-            (dict):    Tag as dict.
+        Returns
+        -------
+            tag: dict
+                Tag as a python dictionary.
             
         '''
 
@@ -448,7 +479,7 @@ class fileSER:
             tag['TagTypeID'] = data[0]
             
             # only proceed if TagTypeID is the same like in the file header (bad TagOffsetArray issue)
-            if tag['TagTypeID'] == head['TagTypeID']:
+            if tag['TagTypeID'] == self.head['TagTypeID']:
                 if verbose:
                     print('TagTypeID:\t"{:#06x}",\t{}'.format(data[0], self._dictTagTypeID[data[0]]))
                     
@@ -485,21 +516,26 @@ class fileSER:
         
     
     def _createDim(self, size, offset, delta, element):
-        '''Create dimension labels from SER information.
+        '''Create dimension labels for conversion to EMD
+        from information in the SER file.
         
-        Parameters:
-            size (int):    Number of elements.
-            offset (float):    Value at indicated element.
-            delta (float):    Difference between elements.
-            element (int):    Indicates the element of value offset.
+        Parameters
+        ----------
+            size : int
+                Number of elements.
+            offset : float
+                Value at indicated element.
+            delta : float
+                Difference between elements.
+            element : int
+                Indicates the element of value offset.
         
-        Returns:
-            (np.ndarray):    Dimension vector as array.
+        Returns
+        -------
+            dim : np.ndarray
+                Dimension vector as array.
         
         '''
-        
-        #dim = np.zeros(size)
-        #dim[:] = np.nan
         
         # if element is out off range, map it back into defined
         if element >= size:
@@ -520,11 +556,15 @@ class fileSER:
     def _parseEntry_emi(self, value):
         '''Auxiliary function to parse string entry to int, float or np.string_().
         
-        Parameters:
-            value (str):    String containing an int, float or string.
+        Parameters
+        ----------
+            value : str
+                String containing an int, float or string.
         
-        Returns:
-            (int/float/str):    Value as int, float or string.
+        Returns
+        -------
+            p : int or float or str
+                Entry value as int, float or string.
             
         '''
         
@@ -545,11 +585,15 @@ class fileSER:
     def read_emi(self, filename):
         '''Read the meta data from an _emi file.
         
-        Parameters:
-            filename (str):    Name of the _emi file.
+        Parameters
+        ----------
+            filename : str
+                Name of the _emi file.
         
-        Returns:
-            (dict):    Dict of metadata.
+        Returns
+        -------
+            _emi : dict
+                Dictionary of experimental metadata stored in the EMI file.
         '''
         
         # check for string
@@ -631,11 +675,13 @@ class fileSER:
         
         
     def writeEMD(self, filename):
-        '''
-        Write SER data to an EMD file.
+        ''' Write SER data to an EMD file.
         
-        Parameters:
-            filename (str):    Name of the EMD file.
+        Parameters
+        ----------
+            filename : str
+                Name of the EMD file.
+                
         '''
         
         from ncempy.io import emd
@@ -904,54 +950,64 @@ class fileSER:
 def serReader(filename):
     '''Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
     
-    Parameters:
-        filename (str) : The filename containing the data
+    Parameters
+    ----------
+        filename : str
+            The filename of the SER file containing the data.
         
-    Returns:
-        (dict) : A dictionary containing the data and meta data. The data is in the key 'data'
+    Returns
+    -------
+        dataOut : dict
+            A dictionary containing the data and meta data. 
+            The data is accessed using the 'data' key and is a 1, 2, 3, or 4
+            dimensional numpy ndarray.
         
-    Examples:
+    Examples
+    --------
         Load a single image data set and show the image:
             
             >>> from ncempy.io import ser
             >>> im0 = ser.serReader('filename_1.ser')
             >>> plt.imshow(im0['data']) #show the single image from the data file
+        
     '''
-    with fileSER(filename) as f1: #open the file and init the class
+    # Open the file and init the class
+    with fileSER(filename) as f1: 
         if f1.head['ValidNumberElements'] > 0:
-            data, metaData = f1.getDataset(0) #get the first data set to setup the arrays
+            # Get the first data set to setup the arrays
+            data, metaData = f1.getDataset(0) 
             
             metaData['filename'] = filename #save the file name in the output dictionary
             
             npType = f1._dictDataType[metaData['DataType']]
             
             if f1.head['DataTypeID'] == 0x4120:
-                #spectra as 1D single spectra, 2D line scan or 3D spectrum image
+                # Spectra as 1D single spectra, 2D line scan or 3D spectrum image
                 numSpectra = f1.head['ValidNumberElements']
                 spectraSize = data.shape[0]
                 
-                #Read in all spectra
+                # Read in all spectra
                 temp = np.zeros((numSpectra,spectraSize),dtype=npType) #C-style ordering
                 for ii in range(0,numSpectra):
                     data0,meta1 = f1.getDataset(ii)
                     temp[ii,:] = data0
                 
                 if f1.head['NumberDimensions'] > 1:
-                    #Spectrum map
+                    # Spectrum map
                     scanI = f1.head['Dimensions'][0]['DimensionSize']
                     scanJ = f1.head['Dimensions'][1]['DimensionSize']
                     temp = temp.reshape((scanJ,scanI,spectraSize)) #operations on spectra are fastest
                 else:
                     temp = np.squeeze(temp)
                     
-                #Setup the energy loss axis for convenience
+                # Setup the energy loss axis for convenience
                 eDelta = metaData['Calibration'][0]['CalibrationDelta']
                 eOffset = metaData['Calibration'][0]['CalibrationOffset']
                 eLoss = np.linspace(0,(spectraSize-1)*eDelta,spectraSize) + eOffset
                 
                 dataOut = {'data':temp,'eLoss':eLoss,'eOffset':eOffset,'eDelta':eDelta,'scanCalibration':f1.head['Dimensions']}
             elif f1.head['DataTypeID'] == 0x4122:
-                #images as 2D or 3D image series
+                # Images as 2D or 3D image series
                 temp = np.empty([f1.head['ValidNumberElements'],data.shape[0],data.shape[1]],dtype=npType)
                 for ii in range(0,f1.head['ValidNumberElements']):
                     data0, metadata0 = f1.getDataset(ii)
@@ -962,7 +1018,7 @@ def serReader(filename):
                 dataOut = {}
                 dataOut['data'] = temp #output the full data set
                 
-                #Setup some simple meta data
+                # Setup some simple meta data
                 dataOut['pixelSize'] = []
                 dataOut['pixelUnit'] = []
                 dataOut['pixelOrigin'] = []
@@ -976,5 +1032,4 @@ def serReader(filename):
         else:
             dataOut = {}
             print('No data set found') 
-        #del f1 #delete the class and close the file
-    return dataOut #return the dataset and metadata as a dictionary
+    return dataOut
