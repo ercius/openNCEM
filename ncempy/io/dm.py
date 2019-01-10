@@ -2,11 +2,21 @@
 A module to load data and meta data from DM3 and DM4 files into python 
 as written by Gatan's Digital Micrograph program.
 
-On Memory mode:
-  The fileDM support and "on memory" mode that preoliads the file data in memory
-and data read operations during data parsing are performed against memory. This
-is critical to matain good performance when the file resides in a parallel file
-system (PFS) because latency of seek operations PFSs is very high.
+Note
+----
+    General users:
+        Use the simplified dm.dmReader() function to load the data and meta 
+        data as a python dictionary. 
+        
+    Developers:
+        Access the file internals through the dm.fileDM() class.
+
+    On Memory mode:
+      The fileDM support and "on memory" mode that pre-loads the file data in memory
+      and read operations during header parsing are performed against memory. This
+      can significantly improve performance when the file resides in a parallel file
+      system (PFS) because latency of seek operations PFSs is very high.
+  
 """
 
 import mmap
@@ -16,21 +26,25 @@ from os.path import basename as osBasename
 
 import numpy as np
 
-
 class fileDM:
     '''Init opening the file and reading in the header.
         
-    Parameters:
-        filename (str): string pointing to the filesystem location of the file.
+    Parameters
+    ----------
+        filename : str
+            String pointing to the filesystem location of the file.
         
-        verbose (bool): if True, debug information is printed.
+        verbose: bool, optional, default False
+            If True, debug information is printed.
         
-        on_memory (bool): if True, file data is pre-loaded in memory and all data
-        parsing is performed against memory. Use this mode if the file
-        is in a network based or paralle file system.
+        on_memory : bool, optional, default False
+            If True, file data is pre-loaded in memory and all data
+            parsing is performed against memory. Use this mode if the file
+            is in a network based or paralle file system.
     
-    Example:
-        Simple example for reading data from a single image into memory:
+    Example
+    -------
+        Read data from a single image into memory:
             
             >>> import matplotlib.pyplot as plt
             >>> from ncempy.io import dm
@@ -38,7 +52,7 @@ class fileDM:
                 dataSet = dmFile1.getDataset(0)
             >>> plt.imshow(dataSet['data'])
         
-        Example of multi-image dm3 file:
+        Example of reading a full multi-image DM3 file into memory:
             
             >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
                 series = dmFile2.getDataset(0)
@@ -188,6 +202,11 @@ class fileDM:
         '''Return the current position in the file. Switches mode based 
         on on_memory mode.
         
+        Returns
+        -------
+        pos: int
+            The current position in the file.
+        
         '''
         if self._on_memory:
             return self._buffer_offset
@@ -197,13 +216,22 @@ class fileDM:
     def fromfile(self, *args, **kwargs):
         ''' Reads data from a file or memory map. Calls np.fromfile and 
         np.frombuffer depending on the on_memory mode of the fileDM.
-
-        Parameters: it supports whatever frombuffer, fromfile support but it requires:
-            dtype (numpy.dtype): Data type (object or string) to be read.
-            count (int): Number of dtype items to be read.
-
-        Returns:
-            (list): A list of count dtype elements.
+        
+        Note
+        ----
+            This is essentially a passthrough function to Numpy's frombuffer
+            and fromfile depending on the class variable on_memory.
+        
+        Parameters
+        ----------
+             *args
+                 dtype and count are required
+             **kwargs
+        
+        Returns
+        -------
+            vals : list
+                A list of the requested dtype elements.
         
         '''
         
@@ -227,16 +255,18 @@ class fileDM:
         '''Positions the reading head for fid. fid can be a file or memory map.
         Follows the same convention as file.seek
 
-        Parameters:
-            fid (file id): file or memory map.
-            offset (int): number of bytes to move the head forward (positive value)
-            or backwards (negative value).
-            from_what (int): reference point to use in the head movement. 0:
-            for beginning of the file (default behavior), 1: from the current
-            head position, and 2: from the end of the file.
+        Parameters
+        ----------
+            fid : file id
+                File or memory map.
+            offset: int
+                Number of bytes to move the head forward (positive value)
+                or backwards (negative value).
+            from_what : int
+                Reference point to use in the head movement. 0:
+                for beginning of the file (default behavior), 1: from the current
+                head position, and 2: from the end of the file.
         
-        Returns:
-            None
         '''
         if self._on_memory:
             offset=int(offset)
@@ -485,11 +515,15 @@ class fileDM:
             uint64  = 12
             -1 will signal an unlisted type
             
-        Parameters:
-            encodedType (int): The type value read from the header
+        Parameters
+        ----------
+            encodedType : int
+                The type value read from the header.
             
-        Returns:
-            (int): Number of bytes this type uses.
+        Returns
+        -------
+            encodedTypeSize : int
+                Number of bytes this type uses.
         '''
         #print(encodedType)
         try:
