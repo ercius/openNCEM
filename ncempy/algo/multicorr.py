@@ -47,20 +47,22 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
 def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
     '''This function parses the inputs to make sure they're correct. Will raise errors if G1 or G2 are not ndarrays.
 
-    Parameters:
-        G1 (complex ndarray) : Fourier transform of reference image.
-        
-        G2 (complex ndarray) : Fourier transform of the image to register (the kernel).
-    
-    Keywords:
-        method (str) : (optional) The correlation method to use. 'phase' or 'cross' or 'hybrid' (default = 'cross')
-        
-        upsampleFactor (int) : Integer specifying 1/subpixel_precision of fit. (default = 1)
+    Parameters   
+    ----------
+        G1 : complex ndarray
+            Fourier transform of reference image.
+        G2 : complex ndarray
+            Fourier transform of the image to register (the kernel).
+        method : str, optional
+            The correlation method to use. Must be 'phase' or 'cross' or 'hybrid' (default = 'cross')
+        upsampleFactor : int
+            Upsample factor for subpixel precision of cross correlation. (default = 1)
 
-    Returns:
-        (string) : Method to use. ('phase', 'cross', 'hybrid')
-        
-        (int) : Upsample factor
+    Returns
+    -------
+        method, upsampleFactor : str, int
+            The method and upsample factor
+    
     '''
     # Check to make sure both G1 and G2 are arrays
     if type(G1) is not np.ndarray:
