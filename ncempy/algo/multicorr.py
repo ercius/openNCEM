@@ -38,7 +38,33 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     
     '''
     
-    method, upsampleFactor = parse_input(G1, G2, method, upsampleFactor)
+    #method, upsampleFactor = parse_input(G1, G2, method, upsampleFactor)
+    # Check to make sure both G1 and G2 are arrays
+    if type(G1) is not np.ndarray:
+        raise TypeError('G1 must be an ndarray')
+    elif type(G2) is not np.ndarray:
+        raise TypeError('G2 must be an ndarray')
+
+    # Check to make sure method and upsample factor are the correct values
+    if method not in ['phase', 'cross', 'hybrid']:
+        print('Unknown method used, setting to cross')
+        method = 'cross'
+
+    if type(upsampleFactor) is not int and type(upsampleFactor) is not float:
+        print('Upsample factor is not an integer or float, setting to 1')
+        upsampleFactor = 1
+    elif type(upsampleFactor) is not int:
+        print('Upsample factor is not an integer, rounding down')
+        upsampleFactor = int(upsampleFactor)
+        if upsampleFactor < 1:
+            print('Upsample factor is < 1, setting to 1')
+            upsampleFactor = 1
+
+    # Verify images are the same size.
+    if G1.shape != G2.shape:
+        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(G1.shape, G2.shape))
+
+    
     imageCorr = initial_correlation_image(G1, G2, method, upsampleFactor)
     xyShift = upsampled_correlation(imageCorr, upsampleFactor)
     
