@@ -6,23 +6,29 @@ Module to correlate two images, functionally written.
 import numpy as np
 
 def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
-    '''Align a template to an image, possibly with multiple alignment peaks.
+    '''Align a template to an image by cross correlation.
+    Handles having multiple alignment peaks.
     
-    Parameters:    
-        G1 (complex ndarray) : Fourier transform of reference image.
-        
-        G2 (complex ndarray) : Fourier transform of the image to register (the kernel).
-    
-    Keywords:
-        method (str) : (optional) The correlation method to use. 'phase' or 'cross' or 'hybrid' (default = 'cross')
-        
-        upsampleFactor (int) : Integer specifying 1/subpixel_precision of fit. (default = 1)
+    Parameters   
+    ----------
+        G1 : complex ndarray
+            Fourier transform of reference image.
+        G2 : complex ndarray
+            Fourier transform of the image to register (the kernel).
+        method : str, optional
+            The correlation method to use. Must be 'phase' or 'cross' or 'hybrid' (default = 'cross')
+        upsampleFactor : int
+            Upsample factor for subpixel precision of cross correlation. (default = 1)
 
-    Returns:
-        (list) - The shift between G1 and G2 in pixels.
+    Returns
+    -------
+        xyShift : list of floats
+            The shift between G1 and G2 in pixels.
     
-    Example:
-        Cross correlate two images already stored as ndarrays.
+    Example
+    -------
+        Cross correlate two images already stored as ndarrays. You must input the FFT
+        of the images.
         
         >>> import ncempy.multicorr as mc
         >>> import numpy as np
