@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import os
 import sys
 from io import StringIO
-import cv2
 
 import ncempy.algo.multicorr as mc
 
