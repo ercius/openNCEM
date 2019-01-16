@@ -35,6 +35,7 @@ It relies on the following packages:
 * scipy
 * matplotlib (for plotting)
 * h5py (for EMD files)
+* h5py_cache (for EMD Velox files)
 
 Installation
 ------------
@@ -43,3 +44,8 @@ For now we support pip installing the ``ncempy`` package from the gitHub reposit
 
 ``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy'``
 
+License
+-------
+
+``ncempy`` is dual licensed under GPLv3 and MIT. The io module is the only part
+released under MIT to improve interoperability with other packages.
