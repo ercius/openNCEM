@@ -29,6 +29,9 @@ Commands
 License
 =======
 
+    ``ncempy`` is dual licensed under GPLv3 and MIT. The io module is the only part
+    released under MIT to improve interoperability with other packages.
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
