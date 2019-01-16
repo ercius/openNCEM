@@ -36,7 +36,7 @@ setup(
     author_email='percius@lbl.gov',
 
     # Choose your license
-    license='GPLv3+','MIT'
+    license='GPLv3+, MIT',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
