@@ -1,1 +1,6 @@
 h5py
+numpy
+scipy
+h5py
+h5py_cache
+matplotlib
