@@ -17,5 +17,7 @@ Overview of contents with short description:
 +--------------------+--------------------------------------------------------------------+
 | dm                 | DM3 and DM4 file format used by Gatan DigitalMicrograph.           |
 +--------------------+--------------------------------------------------------------------+
-| ser                | SER file format used by TIA (FEI).                                 |
+| ser                | SER file format used by TIA (FEI/Thermo Fischer).                  |
++--------------------+--------------------------------------------------------------------+
+| emdVelox           | HDF5 file format used by Velox (FEI/Thermo Fischer).               |
 +--------------------+--------------------------------------------------------------------+
