@@ -325,7 +325,7 @@ class fileSER:
     def getDataset(self, index, verbose=False):
         '''Retrieve data and meta data for one image or spectra 
         from the file.
-
+        
         Parameters
         ----------
             index : int
@@ -335,15 +335,15 @@ class fileSER:
         
         Returns
         -------
-            tuple :
-                Tuple containing:            
-                data : np.ndarray
-                    Dataset as array.
-                metadata: dict
-                    Metadata as dict.
+            : tuple
+                Tuple containing          
+                    data : np.ndarray
+                        Dataset as array.
+                    metadata: dict
+                        Metadata as dict.
         
         '''
-
+        
         # check index, will raise Exceptions if not
         try:
             self._checkIndex(index)

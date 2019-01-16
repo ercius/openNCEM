@@ -250,7 +250,7 @@ class fileMRC:
         '''Read in a slice of an MRC file. Useful for parsing through a large file without reading
         the entire data set into memory.
         
-        Paremeters
+        Parameters
         ----------
             num : int
                 Get the requested image.
@@ -264,6 +264,7 @@ class fileMRC:
         ------
             IndexError
                 If num > the number of slices.
+        
         '''
         # Check num is within the data array size bounds
         if num > (self.dataSize[0]-1):
