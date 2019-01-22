@@ -22,6 +22,9 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     '''Align a template to an image by cross correlation. THe template
     and the image must have the same size.
     
+    The function takes in FFTs so that any FFT algorithm can be used to 
+    transform the image and template (fft2, mkl, scipack, etc.)
+    
     Parameters   
     ----------
         G1 : complex ndarray
@@ -57,10 +60,14 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
         raise TypeError('G1 must be an ndarray')
     elif type(G2) is not np.ndarray:
         raise TypeError('G2 must be an ndarray')
-
+    
+    #Check that the inputs are complex FFTs (common error)
+    if not np.iscomplexobj(G1) or not np.iscomplexobj(G2):
+        raise TypeError('G1 and G2 must be complex FFTs.')
+    
     # Check to make sure method and upsample factor are the correct values
     if method not in ['phase', 'cross', 'hybrid']:
-        print('Unknown method used, setting to cross')
+        print('Unknown method used, setting to cross.')
         method = 'cross'
 
     if type(upsampleFactor) is not int and type(upsampleFactor) is not float:
