@@ -176,11 +176,11 @@ def upsampled_correlation(imageCorr, upsampleFactor):
         imageCorrLarge = upsampleFFT(imageCorr, 2)
         imageSizeLarge = imageCorrLarge.shape
         xySubShift2 = list(np.unravel_index(imageCorrLarge.argmax(), imageSizeLarge, 'C'))
-        print('xySubShift2 = {}'.format(xySubShift2))
+        #print('xySubShift2 = {}'.format(xySubShift2))
         xySubShift2[0] = ((xySubShift2[0] + imageSizeLarge[0]/2) % imageSizeLarge[0]) - imageSizeLarge[0]/2
         xySubShift2[1] = ((xySubShift2[1] + imageSizeLarge[1]/2) % imageSizeLarge[1]) - imageSizeLarge[1]/2
         xyShift = [i/2 for i in xySubShift2] #signs have to flip, or mod wrong?
-        print('xyShiftln127 = {}.format(xyShift))
+        #print('xyShiftln127 = {}.format(xyShift))
 
         if upsampleFactor > 2:
             # here is where we use DFT registration to make things much faster
@@ -190,12 +190,12 @@ def upsampled_correlation(imageCorr, upsampleFactor):
             xyShift[1] = np.round(xyShift[1] * upsampleFactor) / upsampleFactor
 
             globalShift = np.fix(np.ceil(upsampleFactor * 1.5)/2)# this line might have an off by one error based. The associated matlab comment is "this will be used to center the output array at dftshift + 1"
-            print('globalShift', globalShift, 'upsampleFactor', upsampleFactor, 'xyShift', xyShift)
+            #print('globalShift', globalShift, 'upsampleFactor', upsampleFactor, 'xyShift', xyShift)
 
             imageCorrUpsample = np.conj(dftUpsample(np.conj(imageCorr), upsampleFactor, globalShift - np.multiply(xyShift, upsampleFactor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * upsampleFactor ** 2)
 
             xySubShift = np.unravel_index(imageCorrUpsample.argmax(), imageCorrUpsample.shape, 'C')
-            print('xySubShift = {}'.format(xySubShift))
+            #print('xySubShift = {}'.format(xySubShift))
 
             # add a subpixel shift via parabolic fitting
             try:
@@ -204,12 +204,12 @@ def upsampled_correlation(imageCorr, upsampleFactor):
                 dy = (icc[1,2] - icc[1,0]) / (4 * icc[1,1] - 2 * icc[1,2] - 2 * icc[1,0])
             except:
                 dx, dy = 0, 0 # this is the case when the peak is near the edge and one of the above values does not exist
-            print('dxdy = {}, {}'.format(dx, dy))
-            print('xyShift = {}'.format(xyShift))
+            #print('dxdy = {}, {}'.format(dx, dy))
+            #print('xyShift = {}'.format(xyShift))
             xySubShift = xySubShift - globalShift;
-            print('xysubShift2 = {}'.format(xySubShift))
+            #print('xysubShift2 = {}'.format(xySubShift))
             xyShift = xyShift + (xySubShift + np.array([dx, dy])) / upsampleFactor
-            print('xyShift2 = {}'.format(xyShift))
+            #print('xyShift2 = {}'.format(xyShift))
 
     return xyShift
 
