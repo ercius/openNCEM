@@ -6,13 +6,16 @@ TODO
     - Replace makeFourierCoords with np.fft.fftfreq
     - Add verbose output
     - Add testing for complex input for G1 and G2
-    - dftUpsample has ```if upSample > 2``` but
+    - upsampled_correlation has ```if upSample > 2``` but
       should it be if upSample >= 2?
+    - Cant use rfft2 currently. This gives one shift as 1/2 the value. How
+      can this be improved to improve speed?
     - Better to make this a class. Then you can set it
       up and change the inputs without having to run
       through all of the setup again
     - I think upSampleFFT can be replaced by np.fft.fft2
       with the s option.
+    - imageShifter and multicorr output have opposite sign.
 
 '''
 
@@ -122,7 +125,10 @@ def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
     return imageCorr
 
 def upsampled_correlation(imageCorr, upsampleFactor):
-    '''Upsamples the correlation image by a set integer factor upsampleFactor. If upsampleFactor == 2, then it is naively Fourier upsampled. If the upsampleFactoris higher than 2, then it uses dftUpsample, which is a more efficient way to Fourier upsample the image.
+    '''Upsamples the correlation image by a set integer factor upsampleFactor.
+    If upsampleFactor == 2, then it is naively Fourier upsampled.
+    If the upsampleFactoris higher than 2, then it uses dftUpsample, which is
+    a more efficient way to Fourier upsample the image.
 
     Parameters
     ----------
