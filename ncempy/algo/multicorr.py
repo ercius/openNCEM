@@ -90,53 +90,6 @@ def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
     
     return xyShift
 
-def parse_input(G1, G2, method = 'cross', upsampleFactor = 1):
-    '''This function parses the inputs to make sure they're correct. Will raise errors if G1 or G2 are not ndarrays.
-
-    Parameters   
-    ----------
-        G1 : complex ndarray
-            Fourier transform of reference image.
-        G2 : complex ndarray
-            Fourier transform of the image to register (the kernel).
-        method : str, optional
-            The correlation method to use. Must be 'phase' or 'cross' or 'hybrid' (default = 'cross')
-        upsampleFactor : int
-            Upsample factor for subpixel precision of cross correlation. (default = 1)
-
-    Returns
-    -------
-        method, upsampleFactor : str, int
-            The method and upsample factor
-    
-    '''
-    # Check to make sure both G1 and G2 are arrays
-    if type(G1) is not np.ndarray:
-        raise TypeError('G1 must be an ndarray')
-    elif type(G2) is not np.ndarray:
-        raise TypeError('G2 must be an ndarray')
-
-    # Check to make sure method and upsample factor are the correct values
-    if method not in ['phase', 'cross', 'hybrid']:
-        print('Unknown method used, setting to cross')
-        method = 'cross'
-
-    if type(upsampleFactor) is not int and type(upsampleFactor) is not float:
-        print('Upsample factor is not an integer or float, setting to 1')
-        upsampleFactor = 1
-    elif type(upsampleFactor) is not int:
-        print('Upsample factor is not an integer, rounding down')
-        upsampleFactor = int(upsampleFactor)
-        if upsampleFactor < 1:
-            print('Upsample factor is < 1, setting to 1')
-            upsampleFactor = 1
-
-    # Verify images are the same size.
-    if G1.shape != G2.shape:
-        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(G1.shape, G2.shape))
-
-    return method, upsampleFactor
-
 def initial_correlation_image(G1, G2, method = 'cross', upsampleFactor = 1):
     '''Generate correlation image at initial resolution using the method specified.
 
