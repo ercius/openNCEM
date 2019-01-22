@@ -1,13 +1,26 @@
 '''
 Module to correlate two images, functionally written.
 
+TODO
+----
+    - Replace makeFourierCoords with np.fft.fftfreq
+    - Add verbose output
+    - Add testing for complex input for G1 and G2
+    - dftUpsample has ```if upSample > 2``` but
+      should it be if upSample >= 2?
+    - Better to make this a class. Then you can set it
+      up and change the inputs without having to run
+      through all of the setup again
+    - I think upSampleFFT can be replaced by np.fft.fft2
+      with the s option.
+
 '''
 
 import numpy as np
 
 def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
-    '''Align a template to an image by cross correlation.
-    Handles having multiple alignment peaks.
+    '''Align a template to an image by cross correlation. THe template
+    and the image must have the same size.
     
     Parameters   
     ----------
@@ -316,6 +329,7 @@ def imageShifter(G2, xyShift):
     
         >>> shiftIm0 = np.real(np.fft.ifft2(multicorr.imageShifter(np.fft.fft2(im0),[11.1,22.2])))
         >>> plt.imshow(shiftIm0)
+        
     '''
     imageSize = G2.shape
     qx = makeFourierCoords(imageSize[0], 1) # does this need to be a column vector
