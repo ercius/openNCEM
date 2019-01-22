@@ -309,7 +309,13 @@ def imageShifter(G2, xyShift):
     Returns
     -------
         G2shift : complex ndarray
-            Fourier shifted image.
+            Fourier shifted image FFT
+            
+    Example
+    -------
+    
+        >>> shiftIm0 = np.real(np.fft.ifft2(multicorr.imageShifter(np.fft.fft2(im0),[11.1,22.2])))
+        >>> plt.imshow(shiftIm0)
     '''
     imageSize = G2.shape
     qx = makeFourierCoords(imageSize[0], 1) # does this need to be a column vector
