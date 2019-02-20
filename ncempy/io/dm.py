@@ -64,14 +64,14 @@ class fileDM:
                  'dataShape','numObjects','thumbnail','curGroupLevel',
                  'maxDepth','curGroupAtLevelX','curGroupNameAtLevelX',
                  'curTagAtLevelX','curTagName','scale','scaleUnit',
-                 'scaleOrigin','scale_temp','origin_temp','outputDic',
+                 'scaleOrigin','scale_temp','origin_temp',
                  'allTags','dmType','specialType','fileSize',
                  'endianType','origin','_encodedTypeSizes',
                  '_buffer_offset','_buffer_size','_DM2NPDataTypes',
                  '_TagType2NPDataTypes','on_memory','verbose',
                  '_EncodedTypeDTypes')
     
-    def __init__(self, filename, verbose = False, on_memory=False):
+    def __init__(self, filename, verbose = False, on_memory = False):
         
         self.filename = filename
 
@@ -147,7 +147,6 @@ class fileDM:
         self.scale_temp = 0
         self.origin_temp = 0
 
-        self.outputDic = {}
         self.allTags = {}
         
         self._encodedTypeSizes = {0:0,8:1,9:1,10:1,
