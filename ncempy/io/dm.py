@@ -954,17 +954,17 @@ class fileDM:
             if self.zSize[ii] == 1: #2D data
                 outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
             elif self.zSize2[ii] > 1: #4D data
-                self.fid.seek(sliceZ*sliceZ2*byteCount,1) #skip ahead from current position
+                self.seek(self.fid,sliceZ*sliceZ2*byteCount,1) #skip ahead from current position
                 outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
             else: #3D array
-                self.fid.seek(sliceZ*byteCount,1) #skip ahead from current position
+                self.seek(self.fid,sliceZ*byteCount,1) #skip ahead from current position
                 outputDict['data'] = self.fromfile(self.fid,count=pixelCount,dtype=self._DM2NPDataType(self.dataType[ii])).reshape((self.ySize[ii],self.xSize[ii]))
-            
+                
             #Return the proper meta data for this one image
             outputDict['pixelUnit'] = self.scaleUnit[jj:jj+2][::-1] #need to reverse the order to match the C-ordering of the data
             outputDict['pixelSize'] = self.scale[jj:jj+2][::-1]
             outputDict['pixelOrigin'] = self.origin[jj:jj+2][::-1]
-            
+        
         return outputDict
     
     def _readRGB(self,xSizeRGB,ySizeRGB):
