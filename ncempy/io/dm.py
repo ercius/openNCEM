@@ -877,7 +877,7 @@ class fileDM:
 
         #Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
-            pixelCount = self.xSize[ii]*self.ySize[ii]*self.zSize[ii]*self.zSize2[ii]
+            pixelCount = int(self.xSize[ii])*int(self.ySize[ii])*int(self.zSize[ii])*int(self.zSize2[ii])
             jj = 0 #counter to determine where the first scale value starts
             for nn in self.dataShape[0:ii]:
                     jj += nn #sum up all number of dimensions for previous datasets
@@ -946,7 +946,7 @@ class fileDM:
         #Parse the dataset to see what type it is (image, 3D image series, spectra, 4D, etc.)
         if self.xSize[ii] > 0:
             #determine the number of bytes to skip
-            pixelCount = self.xSize[ii]*self.ySize[ii]
+            pixelCount = int(self.xSize[ii])*int(self.ySize[ii])
             byteCount = pixelCount * np.dtype(self._DM2NPDataType(self.dataType[ii])).itemsize
             jj = 0 #counter to determine where the first scale value starts
             for nn in self.dataShape[0:ii]:
