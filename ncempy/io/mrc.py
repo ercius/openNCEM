@@ -240,7 +240,7 @@ class fileMRC:
         '''
         self.fid.seek(self.dataOffset,0) #move to the start of the data from the start of the file
         try:
-            data1 = np.fromfile(self.fid,dtype=self.dataType,count=np.prod(self.dataSize))
+            data1 = np.fromfile(self.fid,dtype=self.dataType,count=np.prod(self.dataSize,dtype=np.uint64))
             self.dataOut['data'] = data1.reshape(self.dataSize)
         except MemoryError:
             print("Not enough memory to read in the full data set")        
