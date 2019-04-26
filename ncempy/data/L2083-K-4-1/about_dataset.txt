@@ -1,0 +1,9 @@
+Sample name: L2083-K-4-1.
+
+This is an EDS tomographic dataset acquired on the TitanX TEM at the National Center for Electron Microscopy (NCEM) at the Lawrence Berkeley National Laboratory, Berkeley, CA, USA on the 29th of November 2018.
+
+The sample is an interplanetary dust particle (IDP) captured by a NASA ER2 stratospheric airplane.  It was FIBed using an FEI Helios focused ion beam at NCEM.  
+
+The FIB section is about 200 nm thick.
+
+Data was acquired at 200 keV with a count rate of 20-30 kcps.  Data was acquired from -50 to +50 degrees in 5 degree increments for 3 minutes per map.
