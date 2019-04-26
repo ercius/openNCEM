@@ -4,3 +4,4 @@ scipy
 h5py
 h5py_cache
 matplotlib
+hyperspy
