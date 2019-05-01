@@ -79,10 +79,9 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
-    #extras_require={
-    #    'dev': ['check-manifest'],
-    #    'test': ['coverage'],
-    #},
+    extras_require={
+        'edstomo': ['glob2', 'genfire', 'hyperspy', 'scikit-image', 'scipy', 'matplotlib', 'ipyvolume']
+    },
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these

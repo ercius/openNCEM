@@ -4,4 +4,10 @@ scipy
 h5py
 h5py_cache
 matplotlib
-hyperspy
+glob2[edstomo]
+genfire[edstomo]
+hyperspy[edstomo]
+scipy[edstomo]
+scikit-image[edstomo]
+matplotlib[edstomo]
+ipyvolume[edstomo]

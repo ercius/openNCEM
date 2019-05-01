@@ -1,10 +1,7 @@
 import sys, os, shutil
 from collections import OrderedDict
 import numpy as np
-import matplotlib.pyplot as plt
 import genfire
-import ipyvolume
-import os
 
 CropBounds = {'xmin': 0.10, 'xmax': 0.90,
               'ymin': 0.10, 'ymax': 0.90,
