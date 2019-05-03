@@ -40,9 +40,9 @@ It relies on the following packages:
 Installation
 ------------
 
-For now we support pip installing the ``ncempy`` package from the gitHub repository:
+We recommend installing the ``ncempy`` package from PyPi:
 
-``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy'``
+``pip install ncempy``
 
 License
 -------
