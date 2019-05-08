@@ -134,13 +134,13 @@ def NormalizeSignals(SignalDict, Tilts, NormalizationSignalName=None, Normalizat
         if NormalizationSignalName == 'Theory':
             print('Theoretical normalization curve not implemented yet.')
         elif NormalizationSignalName == 'Independent':
-            print(f'Producing normalization curve for each signal independently.')
+            print('Producing normalization curve for each signal independently.')
             for k, v in SignalDict.items():
                 NormCurve = GetNormalizationCurve(SignalDict[k], Tilts, NormalizationImageFraction)
                 v = v * NormCurve[:,None,None]
                 SignalDict[k] = v
         else:
-            print(f'Producing normalization curve for all signals based on {NormalizationSignalName}.')
+            print('Producing normalization curve for all signals based on '+NormalizationSignalName+'.')
             NormCurve = GetNormalizationCurve(SignalDict[NormalizationSignalName], Tilts, NormalizationImageFraction)
             for k, v in SignalDict.items():
                 v = v * NormCurve[:,None,None]
@@ -303,14 +303,11 @@ def ApplyTranslations(SignalDict, Translations, AlignSignalName):
         TranslationScale = np.ones(2)
         TranslationScale[0] = Sig.shape[1]/AlignSignalShape[1]
         TranslationScale[1] = Sig.shape[2]/AlignSignalShape[2]
-        print(f'TranslationScale: {TranslationScale}')
+        print('TranslationScale: '+str(TranslationScale))
 
         # Apply the shifts to every image in this signal stack.
         for i in range(len(Translations)):
-            # print(f'Translations: {Translations[i]}')
-            # print(f'TranslationScale: {TranslationScale}')
             ThisShift = np.round(Translations[i]*TranslationScale).astype(int)
-            # print(ThisShift)
             SigAlign.append(shift(Sig[i], ThisShift))
 
         # Turn the individual shifted images back into a 3D numpy array with dimension (tilts,x,y).
@@ -333,7 +330,7 @@ def WriteSignalsToTIFFs(OutputDirectory, SignalDict):
 
     # Ensure the output directory exists and is ready for us to write our output.
     if not os.path.exists(OutputDirectory):
-        print(f'Creating directory: {OutputDirectory}')
+        print('Creating directory: '+OutputDirectory)
         os.makedirs(OutputDirectory)
 
     # Write out all the stacks as tiff files.
@@ -350,7 +347,7 @@ def WriteSignalsToTIFFs(OutputDirectory, SignalDict):
         npStack = npStack.round().astype('uint16')
 
         # Finally we get to save the actual tif.
-        print(f'Writing {k}.tif')
+        print('Writing '+str(k)+'.tif')
         tifffile.imsave(os.path.join(OutputDirectory,k+'.tif'), npStack)
 
 def ReadSignalsFromTIFFs(InputDirectory, SignalNames=['HAADF', 'Mg_Ka', 'Fe_Ka']):
@@ -391,10 +388,10 @@ def WriteMetaDataFiles(OutputDirectory, Tilts, NormCurve=None, NormalizationSign
     with open(os.path.join(OutputDirectory,'tilts.txt'), 'w') as f:
         print('Writing tilts file.')
         for n in Tilts:
-            f.write(f'0.0 {n:0.1f} 0.0\n')
+            f.write('0.0 %0.1f 0.0\n'%(n))
     # Write out the normalization curve.
     if NormCurve is not None:
-        np.savetxt(os.path.join(OutputDirectory, f'Normalization_Curve.txt'), NormCurve.T, header=NormalizationSignalName)
+        np.savetxt(os.path.join(OutputDirectory, 'Normalization_Curve.txt'), NormCurve.T, header=NormalizationSignalName)
 
 def ReadMetaDataFiles(InputDirectory):
     ''' Writes out meta data obtained while processing the inputs which may be useful.
@@ -413,7 +410,7 @@ def ReadMetaDataFiles(InputDirectory):
 
     # Read the normalization curve.
     print('Reading normalization curve.')
-    NormCurve = np.genfromtxt(os.path.join(InputDirectory, f'Normalization_Curve.txt'), names=True)
+    NormCurve = np.genfromtxt(os.path.join(InputDirectory, 'Normalization_Curve.txt'), names=True)
     NormalizationSignalName = NormCurve.dtype.names[0]
 
     return Tilts, NormCurve, NormalizationSignalName
@@ -456,7 +453,7 @@ def WriteSignalsToGENFIRE(OutputDirectory, SignalDict, Tilts, GENFIRETemplateDir
         Sig = np.swapaxes(np.swapaxes(Sig, 0,1), 1,2)
         if(RotationAxisVertical==True):
             Sig = np.swapaxes(Sig, 0,1)
-        print(f'Writing {SigName}_aligned.npy, ', end='')
+        print('Writing '+str(SigName)'_aligned.npy, ', end='')
         np.save(os.path.join(OutputDirectory,SigName+'_aligned.npy'), np.array(Sig))
 
         # Write out a script file which will run GENFIRE for this MRC.
@@ -466,15 +463,15 @@ def WriteSignalsToGENFIRE(OutputDirectory, SignalDict, Tilts, GENFIRETemplateDir
         else:
             osetting = ''
 
-        slurmscript = slurmscripttemplate.replace('$JOBNAME', f'GENFIRE_{SigName}')
-        slurmscript = slurmscript.replace('$GENFIRESTRING', f'{SigName} {osetting}\n')
+        slurmscript = slurmscripttemplate.replace('$JOBNAME', 'GENFIRE_'+SigName)
+        slurmscript = slurmscript.replace('$GENFIRESTRING', SigName+' '+osetting+'\n')
         with open(os.path.join(OutputDirectory,SigName+'_slurm.sh'), 'w') as f:
-            print(f'Writing {SigName}_slurm.sh')
+            print('Writing '+SigName+'_slurm.sh')
             f.write(slurmscript)
         
-        runall.write(f'sbatch {SigName}_slurm.sh\n')
+        runall.write('sbatch '+SigName+'_slurm.sh\n')
         runall.write('sleep 3\n')
-    print(f'Writing runall.sh')
+    print('Writing runall.sh')
     runall.close()
 
 if __name__ == '__main__':
@@ -495,10 +492,10 @@ if __name__ == '__main__':
     # # Read in the data and process it up to the point where we need to do stack alignment in an external program.
     # if False:
     #     Signals, Tilts = ExtractRawSignalsFromBrukerSequence(InputDirectory=InputDirectory, SignalNames=SignalNames)
-    #     print(f'Signal Names: {Signals.keys()}')
-    #     print(f'HAADF signal shape: {Signals["HAADF"].shape}')
-    #     print(f'Fe_Ka signal shape: {Signals["Fe_Ka"].shape}')
-    #     print(f'Tilts: {Tilts}')
+    #     print('Signal Names: '+str(Signals.keys()))
+    #     print('HAADF signal shape: '+str(Signals["HAADF"].shape))
+    #     print('Fe_Ka signal shape: '+str(Signals["Fe_Ka"].shape))
+    #     print('Tilts: '+str(Tilts))
     #     Signals, NormCurve = NormalizeSignals(Signals, Tilts, NormalizationSignalName='Fe_Ka', NormalizationImageFraction=0.5)
     #     print(NormCurve)
     #     WriteSignalsToTIFFs(OutputDirectory, Signals)

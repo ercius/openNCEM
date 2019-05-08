@@ -11,9 +11,9 @@ args = parser.parse_args()
 
 # Make a reconstruction using paramaters from default or from the command line.
 GF = gf.reconstruct.GenfireReconstructor(
-        projections = f"{args.fileroot}_aligned.npy",
+        projections = args.fileroot+"_aligned.npy",
         eulerAngles = "tilts.txt",
-        resultsFilename = f"{args.fileroot}_reconstruction.mrc",
+        resultsFilename = args.fileroot+"_reconstruction.mrc",
         numIterations = args.numIterations,
         interpolationCutoffDistance=0.7,
         oversamplingRatio=args.oversamplingRatio,
