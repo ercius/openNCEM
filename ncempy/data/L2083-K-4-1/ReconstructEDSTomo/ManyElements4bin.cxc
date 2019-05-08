@@ -1,111 +1,111 @@
 # Reds (typically)
 
-open "Output2bin/Reconstructed/C_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/C_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
 volume #2 style surface color red
 volume #2 projectionmode 3d
 volume #2 hide
 
-open "Output2bin/Reconstructed/Al_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Al_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #3 style surface color purple level 0.0114
+volume #3 style surface color purple level 0.288
 volume #3 projectionmode 3d
 volume #3 show
 
-open "Output2bin/Reconstructed/Fe_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Fe_Ka_reconstruction_cropped.mrc" 
 view orient cofr false
 volume voxelsize 1
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #4 style surface color red level 0.138
+volume #4 style surface color red level 0.908
 volume #4 projectionmode 3d
 volume #4 show
 
 # Greens (typically)
 
-open "Output2bin/Reconstructed/Ca_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Ca_Ka_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #5 style surface color gold level 0.0251
+volume #5 style surface color gold level 0.483
 volume #5 projectionmode 3d
 volume #5 show
 
-open "Output2bin/Reconstructed/Mg_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Mg_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #6 style surface color limegreen level 0.214
+volume #6 style surface color limegreen level 1.41
 volume #6 projectionmode 3d
 volume #6 show
 
-open "Output2bin/Reconstructed/Ni_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Ni_Ka_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #7 style surface color limegreen level 0.502
+volume #7 style surface color limegreen level 5.02
 volume #7 projectionmode 3d
 volume #7 hide
 
 # Blues (typically)
 
-open "Output2bin/Reconstructed/O_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/O_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
 volume #8 style surface color royalblue
 volume #8 projectionmode 3d
 volume #8 hide
 
-open "Output2bin/Reconstructed/Si_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Si_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
 volume #9 style surface color royalblue
 volume #9 projectionmode 3d
 volume #9 hide
 
-open "Output2bin/Reconstructed/S_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/S_K_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #10 style surface color royalblue level 0.125
+volume #10 style surface color royalblue level 0.428
 volume #10 projectionmode 3d
 volume #10 show
 
-open "Output2bin/Reconstructed/Cr_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Cr_Ka_reconstruction_cropped.mrc" 
 volume voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
 volume #11 style surface color royalblue
 volume #11 projectionmode 3d
 volume #11 hide
 
-open "Output2bin/Reconstructed/HAADF_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/HAADF_reconstruction_cropped.mrc" 
 volume bin #1 binsize 1
-volume #12 voxelsize 0.5
+volume #12 voxelsize 0.25
 view orient cofr false
 close #1
 volume #12 style solid color white
 volume #12 projectionmode 3d
 volume #12 hide
 
-# Clear surfaces
+# Clear surfaces (typically)
 
-open "Output2bin/Reconstructed/O_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/O_K_reconstruction_cropped.mrc" 
 volume #1 voxelsize 1
 view orient cofr false
 volume gaussian #1 sdev 1.0
@@ -114,16 +114,16 @@ volume #13 style surface color gray transparency 0.66 level 8.14
 volume #13 projectionmode 3d
 volume #13 hide
 
-open "Output2bin/Reconstructed/Si_Ka_reconstruction_cropped.mrc" 
+open "Output4bin/Reconstructed/Si_K_reconstruction_cropped.mrc" 
 volume #1 voxelsize 1
 view orient cofr false
-volume median #1 binSize 5
+volume median #1 binSize 3
 close #1
-volume #14 style surface color gray transparency 0.66 level 0.228
+volume #14 style surface color gray transparency 0.66 level 1.27
 volume #14 projectionmode 3d
 volume #14 show
 
-view matrix camera 0.0084842,0.056914,0.99834,311.26,-0.023125,-0.9981,0.057097,73.534,0.9997,-0.023571,-0.007152,62.162
+view matrix camera -0.099537,-0.039681,0.99424,137.68,-0.10676,-0.99301,-0.050319,24.569,0.98929,-0.11116,0.094604,41.171
 
 lighting shadows true intensity 0.5
 

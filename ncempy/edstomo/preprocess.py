@@ -2,48 +2,41 @@ import sys, os, shutil
 import re
 from collections import OrderedDict
 import json
-import glob2 as glob
 import numpy as np
-import hyperspy.api as hs
 from skimage.external import tifffile
 from scipy.ndimage.interpolation import shift
+from ncempy.edstomo.CharacteristicEmission import GetFluorescenceLineEnergy
+from ncempy.io.emd import fileEMD
 
-def GetTiltsFromBrukerSequence(Directory=None):
-    ''' Find the set of Bruker bcf files and figure out their tilts based on filenames.
+def BinEDSSpatialDimensions(Arr, Binning=4):
+    if len(Arr.shape) != 3:
+        print('Input stack needs to have a shape like (tilt, x, y).')
+        return Arr
 
-    There should be a set of bcf files in a directory with names: ... -10.bcf, -5.bcf, 0.bcf, 5.bcf ...
-    The number represents the stage tilt of that stack.
-    The angles do not matter but the names must be coded as above.  They will be automatically read and sorted.
+    if ((Arr.shape[1] % Binning) != 0) or ((Arr.shape[2] % Binning) != 0):
+        print('Input stack needs to have dimensions that are evenly divided by the binning factor.')
+        return Arr
 
-    Parameters:
-        Directory (str): Name of directory containing the bcf files.
+    # Create new axes with a length of Binning and fold the array into them.
+    ArrNew = Arr.reshape((  Arr.shape[0],                                   # Tilt dimension untouched
+                            Binning,int(Arr.shape[1]/Binning),              # Spatial dimension binned
+                            Binning,int(Arr.shape[2]/Binning)), order='F')   # Spatial dimension binned
+    # Sum along the binning directions.
+    ArrNew = np.sum(np.sum(ArrNew, axis=3), axis=1)
+    # print('Old shape: ' + str(Arr.shape))
+    # print('New shape: ' + str(ArrNew.shape))
+    return ArrNew
 
-    Returns:
-        (list of floats): A list of tilt angles.
-    '''
-
-    Bcfs = glob.glob(os.path.join(Directory, '*.bcf'))
-    NewBcfs = []
-    for i in Bcfs:
-        _ , FileName = os.path.split(i)
-        NewBcfs.append(FileName)
-    Tilts = list(map(lambda s: float(s[:-4]), NewBcfs))
-    Tilts.sort()
-
-    return Tilts
-
-def ExtractRawSignalsFromBrukerSequence(InputDirectory=None, SignalNames=['HAADF', 'Mg_Ka', 'Fe_Ka'], Binning=4):
+def ExtractSignalsFromEMD(InputEMD=None, SignalNames=['HAADF', 'Mg_K', 'Fe_Ka'], Binning=4):
     ''' Read in a set of Bruker bcf files containing EDS acquisitions.
 
-    This is typically run after GetTiltsFromBrukerSequence(), and uses the output as the Tilts parameter.
-
     Parameters:
-        InputDirectory (str): Name of directory containing the bcf files.
+        InputEMD (str): Name of EMD file containing the tilt stacks.
 
         SignalNames (list of str): A list of signals that should be extracted from the Bruker files.
             Valid values include:
             HAADF: For the HAADF signal
-            Element_edge: e.g. Fe_Ka for a specific line.  There is no brehmsstrahlung removal.
+            Element_Line: e.g. Fe_Ka for a weighted sum of Fe_Ka1 and Ka2, or Fe_Ka1 for just that line, or Mg_K for a weighted sum of all Mg-K lines.  There is no brehmsstrahlung removal.
             eV1-eV2: Start and stop energies in eV.  The signal will be the sum of all energies over the range [eV1, eV2).
 
         Binning (int): How much binning to do on EDS signals to reduce noise.  1 means no binning.  2 means each output voxel is 2x2x2 input voxels.  HAADF signals are not rebinned as they are usually not noisy.
@@ -54,56 +47,71 @@ def ExtractRawSignalsFromBrukerSequence(InputDirectory=None, SignalNames=['HAADF
 
     '''
 
-    # Find all the bcf files first.
-    Tilts = GetTiltsFromBrukerSequence(Directory=InputDirectory)
-
+    # for s in SignalNames:
+    #     if '_' in s:
+    #         El, Line = s.split('_')
+    #         print(GetFluorescenceLineEnergy(El, Series=Line[0], Line=Line))
+    
     # Make an ordered dictionary with one entry for each signal.
     SignalDict = OrderedDict()
     for n in SignalNames:
         SignalDict[n] = []
 
-    # We don't know the rebinning size before we've loaded any EDS data.  
-    # None means we don't know it yet.  We have an m x n cube in the spatial dimensions -- we don't bin energy here.
-    rebinsize_m=None
-    rebinsize_n=None
+    # Open the emd file that has our data.
+    EMD = fileEMD(InputEMD, readonly=True)
 
-    print('Extracting Signals from:')
-    for t in Tilts:
-        # Load the bruker file for this tilt.
-        fname = os.path.join(InputDirectory, f'{int(t)}.bcf')
-        x = hs.load(fname)
+    # We will compute the FWHM of peaks using the Mn-Ka reported in the EMD.
+    EnergyResolutionMnKa = EMD.microscope.attrs['MnKaResolution[eV]']
+    Mn_Ka_Energy = GetFluorescenceLineEnergy('Mn', Series='K', Line='Ka')
+    K = EnergyResolutionMnKa / np.sqrt(Mn_Ka_Energy)
+    print('Energy resolution of Mn-Ka is: ' + str(EnergyResolutionMnKa) + ' eV.')
+    print('Assumed FWHM of peaks will be (%g*sqrt(E))/2., hence at Mn-Ka: %g eV.' % (K, K*np.sqrt(Mn_Ka_Energy)/2))
 
-        # Only the first time, we need to calculate the rebinning.
-        if rebinsize_m is None:
-            rebinsize_m = int(x[0].data.shape[0]/Binning)
-            rebinsize_n = int(x[0].data.shape[1]/Binning)
-            print(f'Binning is {Binning} so rebinned cubes will have spatial dimension ({rebinsize_m}, {rebinsize_n}).')
+    # Get links to the data we'll need from the EMD.
+    HAADF, HAADF_dims = EMD.get_emdgroup(EMD.data['HAADF_TiltStack'])
+    EDS, EDS_dims  = EMD.get_emdgroup(EMD.data['EDS_TiltStack'])
+    Tilts = HAADF_dims[0][0]
+    print('HAADF dimensions are (%d, %d).'%(len(HAADF_dims[1][0]), len(HAADF_dims[1][0])))
 
-        print(f'{fname}:', end=' ')
+    # Calculate the rebinning size for the EDS data.
+    rebinsize_m = int(len(EDS_dims[1][0])/Binning)
+    rebinsize_n = int(len(EDS_dims[2][0])/Binning)
+    print('Binning is %d so rebinned EDS cubes will have spatial dimension (%d, %d).' % (Binning, rebinsize_m, rebinsize_n))
 
-        for sig in SignalDict.keys():
-            print(sig, end=', ')
-            if sig == 'HAADF':
-                SignalDict['HAADF'].append(x[0].data.copy().astype("float32")) # The HAADF doesn't get rebinned.
+    for sig in SignalDict.keys():
+        print(sig, end='')
+        if sig == 'HAADF':
+            SignalDict['HAADF'] = HAADF[:].astype("float32") # The HAADF doesn't get rebinned.
+            print('')
 
-            if '_' in sig:
-                # This is a fluorescence line.  Automatically pull it using hyperspy.
-                fluor = x[1].get_lines_intensity([sig])
-                SignalDict[sig].append(fluor[0].rebin((rebinsize_m,rebinsize_n)).data.copy().astype("float32"))
-            
-            if '-' in sig:
-                print('Energy range signals not implemented yet.')
+        if '_' in sig:
+            # This is a fluorescence line.  
+            El, Line = sig.split('_')
+            CenterEnergy = GetFluorescenceLineEnergy(El, Series=Line[0], Line=Line)
+            if CenterEnergy is None:
+                print('Unrecognized fluorescence line: %s-%s, ignoring this signal.'%(El,Line))
+                continue
+            LowEnergy = CenterEnergy - K*np.sqrt(CenterEnergy)/2
+            HighEnergy = CenterEnergy + K*np.sqrt(CenterEnergy)/2
+            LowEnergyIndex = np.argmin((EDS_dims[3][0] - LowEnergy)**2)
+            HighEnergyIndex = np.argmin((EDS_dims[3][0] - HighEnergy)**2)
+            print(', %g-%g eV window, energy bins: %d-%d.'% (LowEnergy, HighEnergy, LowEnergyIndex, HighEnergyIndex))
+            Cube = np.sum(EDS[:, :, :, LowEnergyIndex:HighEnergyIndex+1], axis=-1)
+            SignalDict[sig] = BinEDSSpatialDimensions(Cube, Binning)
+            # fluor[0].rebin((rebinsize_m,rebinsize_n)).data.copy().astype("float32"))
         
-        print('done.')
+        if '-' in sig:
+            print('Energy range signals not implemented yet.')
+    
+    print('Signals Extracted.')
 
     # Turn those signal readouts into 3D numpy arrays (tilt, x, y).
     for k, v in SignalDict.items():
         npStack = np.array(v)
         SignalDict[k] = npStack
 
-
     return SignalDict, Tilts
-
+    
 def NormalizeSignals(SignalDict, Tilts, NormalizationSignalName=None, NormalizationImageFraction=1):
     ''' 
     Parameters:
@@ -472,38 +480,45 @@ def WriteSignalsToGENFIRE(OutputDirectory, SignalDict, Tilts, GENFIRETemplateDir
 if __name__ == '__main__':
     print('------------------------------ Begin preprocess.py test ------------------------------')
 
-    InputDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'Input')
-    OutputDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'TestOutput', 'Unaligned')
-    AlignedDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'TestOutput', 'Aligned')
+
+    # InputDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'Input')
+    # OutputDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'TestOutput', 'Unaligned')
+    # AlignedDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'TestOutput', 'Aligned')
+    OutputDirectory = os.path.join('..', 'data', 'L2083-K-4-1', 'TestOutput')
     SignalNames = ['HAADF', 'Al_Ka', 'C_Ka', 'Ca_Ka', 'Cr_Ka', 'Fe_Ka', 'Ga_Ka', 'Mg_Ka', 'Na_Ka', 'Ni_Ka', 'O_Ka', 'P_Ka', 'Pt_La', 'S_Ka', 'Si_Ka']
+    EMDFileName = os.path.join('..', 'data', 'L2083-K-4-1', 'ConvertBrukerToEMD', 'Output', 'TomoData.emd')
 
-    # Read in the data and process it up to the point where we need to do stack alignment in an external program.
-    if False:
-        Signals, Tilts = ExtractRawSignalsFromBrukerSequence(InputDirectory=InputDirectory, SignalNames=SignalNames)
-        print(f'Signal Names: {Signals.keys()}')
-        print(f'HAADF signal shape: {Signals["HAADF"].shape}')
-        print(f'Fe_Ka signal shape: {Signals["Fe_Ka"].shape}')
-        print(f'Tilts: {Tilts}')
-        Signals, NormCurve = NormalizeSignals(Signals, Tilts, NormalizationSignalName='Fe_Ka', NormalizationImageFraction=0.5)
-        print(NormCurve)
-        WriteSignalsToTIFFs(OutputDirectory, Signals)
-        WriteMetaDataFiles(OutputDirectory, Tilts, NormCurve, NormalizationSignalName='Fe_Ka')
-        input('Please do the stack alignment in ImageJ with the Multistackreg plugin now.  Press any key to continue...')
+    Signals, Tilts = ExtractSignalsFromEMD(EMDFileName, SignalNames=['HAADF', 'Fe_Ka', 'Si_K', 'Mg_K'])
+    Signals, NormCurve = NormalizeSignals(Signals, Tilts, NormalizationSignalName='Si_K', NormalizationImageFraction=0.5)
+    # WriteSignalsToTIFFs(OutputDirectory, Signals)
 
-    # At this point you should align the stacks.
+    # # Read in the data and process it up to the point where we need to do stack alignment in an external program.
+    # if False:
+    #     Signals, Tilts = ExtractRawSignalsFromBrukerSequence(InputDirectory=InputDirectory, SignalNames=SignalNames)
+    #     print(f'Signal Names: {Signals.keys()}')
+    #     print(f'HAADF signal shape: {Signals["HAADF"].shape}')
+    #     print(f'Fe_Ka signal shape: {Signals["Fe_Ka"].shape}')
+    #     print(f'Tilts: {Tilts}')
+    #     Signals, NormCurve = NormalizeSignals(Signals, Tilts, NormalizationSignalName='Fe_Ka', NormalizationImageFraction=0.5)
+    #     print(NormCurve)
+    #     WriteSignalsToTIFFs(OutputDirectory, Signals)
+    #     WriteMetaDataFiles(OutputDirectory, Tilts, NormCurve, NormalizationSignalName='Fe_Ka')
+    #     input('Please do the stack alignment in ImageJ with the Multistackreg plugin now.  Press any key to continue...')
 
-    # Apply the alignment file to generate aligned stacks and produce input into GENFIRE.
-    if True:
-        SignalDict = ReadSignalsFromTIFFs(OutputDirectory, SignalNames=SignalNames)
-        Tilts, NormCurve, NormalizationSignalName = ReadMetaDataFiles(OutputDirectory)
-        Translations = ReadTomVizTranslations(os.path.join(OutputDirectory, 'TomVizAlignments.json'), Tilts)
-        # Translations = ReadImageJTranslations(os.path.join(OutputDirectory, 'TransformationMatrices.txt'), Tilts)
-        AlignedSignals = ApplyTranslations(SignalDict, Translations, 'HAADF')
-        WriteSignalsToTIFFs(AlignedDirectory, AlignedSignals)
-        WriteMetaDataFiles(AlignedDirectory, Tilts, NormCurve, NormalizationSignalName='Fe_Ka')
-        WriteSignalsToGENFIRE(AlignedDirectory, AlignedSignals, Tilts)
-        print('Now run GENFIRE using the (SignalName)_aligned.sh scripts.')
+    # # At this point you should align the stacks.
 
-    # At this point run GENFIRE.
+    # # Apply the alignment file to generate aligned stacks and produce input into GENFIRE.
+    # if True:
+    #     SignalDict = ReadSignalsFromTIFFs(OutputDirectory, SignalNames=SignalNames)
+    #     Tilts, NormCurve, NormalizationSignalName = ReadMetaDataFiles(OutputDirectory)
+    #     Translations = ReadTomVizTranslations(os.path.join(OutputDirectory, 'TomVizAlignments.json'), Tilts)
+    #     # Translations = ReadImageJTranslations(os.path.join(OutputDirectory, 'TransformationMatrices.txt'), Tilts)
+    #     AlignedSignals = ApplyTranslations(SignalDict, Translations, 'HAADF')
+    #     WriteSignalsToTIFFs(AlignedDirectory, AlignedSignals)
+    #     WriteMetaDataFiles(AlignedDirectory, Tilts, NormCurve, NormalizationSignalName='Fe_Ka')
+    #     WriteSignalsToGENFIRE(AlignedDirectory, AlignedSignals, Tilts)
+    #     print('Now run GENFIRE using the (SignalName)_aligned.sh scripts.')
+
+    # # At this point run GENFIRE.
 
     print('------------------------------ End preprocess.py test ------------------------------')
