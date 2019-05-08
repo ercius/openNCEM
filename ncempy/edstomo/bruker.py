@@ -103,7 +103,7 @@ def ExtractRawSignalsFromBrukerSequence(InputDirectory=None, OutputEMD=None):
             print('EDS has dimensions ' + str(EDSDim))
 
             HAADF = np.zeros(HAADFDim)
-            EDS = np.zeros(EDSDim)
+            EDS = np.zeros(EDSDim, dtype='float32')
 
             BeamEnergy = x[0].metadata['Acquisition_instrument']['TEM']['beam_energy']*1000 # eV
             EnergyResolutionMnKa = x[1].metadata['Acquisition_instrument']['TEM']['Detector']['EDS']['energy_resolution_MnKa'] # eV

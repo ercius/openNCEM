@@ -13192,6 +13192,17 @@ div#notebook {
     <div class="prompt"></div>
 
 
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>No pyFFTW installation found. Installing pyFFTW will significantly improve the speed of GENFIRE. Consult the documentation for more information. Continuing with NumPy FFT...
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>WARNING:hyperspy.api:The ipywidgets GUI elements are not available, probably because the hyperspy_gui_ipywidgets package is not installed.
 WARNING:hyperspy.api:The traitsui GUI elements are not available, probably because the hyperspy_gui_traitsui package is not installed.
@@ -13241,7 +13252,7 @@ etc.</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># First we extract the raw signals from the bcf files.  We infer the list of stage tilts from the names of the files.</span>
@@ -13256,20 +13267,6 @@ etc.</p>
 <div class="output_wrapper">
 <div class="output">
 
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING:hyperspy.io_plugins.bruker:unbcf_fast library is not present...
-Parsing BCF with Python-only backend, which is slow... please wait.
-If parsing is uncomfortably slow, first install cython, then reinstall hyperspy.
-For more information, check the &#39;Installing HyperSpy&#39; section in the documentation.
-</pre>
-</div>
-</div>
 
 <div class="output_area">
 
@@ -13342,7 +13339,7 @@ Created file Output/TomoData.emd
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>jupyter-nbconvert --to html <span class="s1">&#39;ConvertBrukerToEMD.ipynb&#39;</span>
@@ -13363,7 +13360,7 @@ Created file Output/TomoData.emd
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>[NbConvertApp] Converting notebook ConvertBrukerToEMD.ipynb to html
-[NbConvertApp] Writing 263670 bytes to ConvertBrukerToEMD.html
+[NbConvertApp] Writing 285145 bytes to ConvertBrukerToEMD.html
 </pre>
 </div>
 </div>

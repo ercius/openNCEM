@@ -453,7 +453,7 @@ def WriteSignalsToGENFIRE(OutputDirectory, SignalDict, Tilts, GENFIRETemplateDir
         Sig = np.swapaxes(np.swapaxes(Sig, 0,1), 1,2)
         if(RotationAxisVertical==True):
             Sig = np.swapaxes(Sig, 0,1)
-        print('Writing '+str(SigName)'_aligned.npy, ', end='')
+        print('Writing '+str(SigName)+'_aligned.npy, ', end='')
         np.save(os.path.join(OutputDirectory,SigName+'_aligned.npy'), np.array(Sig))
 
         # Write out a script file which will run GENFIRE for this MRC.
