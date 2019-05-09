@@ -96,4 +96,3 @@ sphinx-apidoc
 # Python stuff
 .pickle
 .pyc
-tags
