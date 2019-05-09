@@ -266,7 +266,7 @@ class fileEMD:
         return dset
         
         
-    def put_emdgroup(self, label, data, dims, parent=None, overwrite=False):
+    def put_emdgroup(self, label, data, dims, parent=None, overwrite=False, **kwargs):
         '''Put an emdtype dataset into the EMD file.
         
         Parameters:
@@ -325,7 +325,7 @@ class fileEMD:
             grp.attrs['emd_group_type'] = 1
                
             # create dataset
-            dset = grp.create_dataset('data', data=data)
+            dset = grp.create_dataset('data', data=data, **kwargs)
              
             # create dim datasets
             for i in range(len(dims)):
