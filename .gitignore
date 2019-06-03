@@ -93,3 +93,11 @@ sphinx-apidoc
 # Vim
 tags
 .swp
+
+# Mac stuff
+.DS_Store
+
+# Python stuff
+.pickle
+.pyc
+
