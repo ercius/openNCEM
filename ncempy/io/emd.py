@@ -278,7 +278,7 @@ class fileEMD:
         return dset
         
         
-    def put_emdgroup(self, label, data, dims, parent=None, overwrite=False):
+    def put_emdgroup(self, label, data, dims, parent=None, overwrite=False, **kwargs):
         '''Put an emdtype dataset into the EMD file.
         
         Parameters:
@@ -287,6 +287,7 @@ class fileEMD:
             dims (tuple):    Tuple containing the necessary dims as ((vec, name, units), (vec, name, units), ...)
             parent (h5py._hl.group.Group/None):    Parent for the emdtype group, if None it will be written to /data.
             overwrite (bool):    Set to force overwriting entry in EMD file.
+            **kwargs (various):    Keyword arguments to be passed to h5py.create_dataset(), e.g. for compression.
         
         Returns:
             (h5py._hl.group.Group/None):    Group referencing this emdtype dataset or None if failed.
@@ -337,7 +338,7 @@ class fileEMD:
             grp.attrs['emd_group_type'] = 1
                
             # create dataset
-            dset = grp.create_dataset('data', data=data)
+            dset = grp.create_dataset('data', data=data, **kwargs)
              
             # create dim datasets
             for i in range(len(dims)):
