@@ -908,7 +908,8 @@ class fileDM:
         Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
         
         Warning: DM4 files with 4D data sets are written as [X,Y,Z1,Z2]. This code currently gets the [X,Y] slice. 
-        Getting the [Z1,Z2] slice is not yet implemented.
+        Getting the [Z1,Z2] slice is not yet implemented. Use the getMemmap() function to retrieve other slices of 
+        large data sets.
         
         Parameters:
             index (int): The number of the dataset in the DM file.
@@ -978,12 +979,46 @@ class fileDM:
         This is not fully tested. Be careful using this.
         
         Returns:
-            {ndarrya}: numpy array of size [3,Y,X] which is an RGB thumbnail.
+            {ndarray}: numpy array of size [3,Y,X] which is an RGB thumbnail.
         '''
         self.seek(self.fid, self.dataOffset[0],0)
         return self._readRGB(self.ySize[0],self.xSize[0])
+    
+    def getMemmap(self, index):
+        '''Return a numpy memmap object (read-only) for the dataset requested. This is very useful 
+        for very large datasets to avoid loading the entire data set into memory. No meta data is
+        returned.
+        
+        Parameters:
+            index (int): The number of the dataset in the DM file.
+        
+        Returns:
+            [numpy.core.memmap]: A read-only numpy memmap object with access to the data.
+        '''
+        #The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
+        if self.numObjects == 1:
+            ii = index
+        else:
+            ii = index + 1
 
-def dmReader(filename,dSetNum=0,verbose=False):
+        #Check that the dataset exists.
+        try:
+            self._checkIndex(ii)
+        except:
+            raise
+        
+        # Check sliceZ and sliceZ2 are within the data arrray size bounds
+        if sliceZ > (self.zSize[ii]-1):
+            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ, self.zSize))
+        if sliceZ2 > (self.zSize2[ii]-1):
+            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ2, self.zSize2))
+        
+        data = np.memmap(self.fid, dtype = self._DM2NPDataType(self.dataType[ii]), mode = 'r', offset=self.dataOffset[ii], 
+                       shape = (self.xSize[ii],self.ySize[ii],self.zSize[ii],self.zSize2[ii]))
+        
+        return data
+    
+def dmReader(filename, dSetNum=0, verbose=False):
     '''A simple function to parse the file and read the requested dataset.
     Most users will want to use this function to simplify reading data
     directly into memory.
