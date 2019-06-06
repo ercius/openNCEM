@@ -908,7 +908,7 @@ class fileDM:
         Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
         
         Warning: DM4 files with 4D data sets are written as [X,Y,Z1,Z2]. This code currently gets the [X,Y] slice. 
-        Getting the [Z1,Z2] slice is not yet implemented. Use the getMemmap() function to retrieve other slices of 
+        Getting the [Z1,Z2] slice is not yet implemented. Use the getMemmap() function to retrieve arbitrary slices of 
         large data sets.
         
         Parameters:
@@ -1006,12 +1006,6 @@ class fileDM:
             self._checkIndex(ii)
         except:
             raise
-        
-        # Check sliceZ and sliceZ2 are within the data arrray size bounds
-        if sliceZ > (self.zSize[ii]-1):
-            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ, self.zSize))
-        if sliceZ2 > (self.zSize2[ii]-1):
-            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(sliceZ2, self.zSize2))
         
         data = np.memmap(self.fid, dtype = self._DM2NPDataType(self.dataType[ii]), mode = 'r', offset=self.dataOffset[ii], 
                        shape = (self.xSize[ii],self.ySize[ii],self.zSize[ii],self.zSize2[ii]))
