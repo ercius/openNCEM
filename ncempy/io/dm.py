@@ -1008,7 +1008,7 @@ class fileDM:
             raise
         
         data = np.memmap(self.fid, dtype = self._DM2NPDataType(self.dataType[ii]), mode = 'r', offset=self.dataOffset[ii], 
-                       shape = (self.xSize[ii],self.ySize[ii],self.zSize[ii],self.zSize2[ii]))
+                       shape = (self.zSize2[ii],self.zSize[ii],self.ySize[ii],self.xSize[ii]))
         
         return data
     
