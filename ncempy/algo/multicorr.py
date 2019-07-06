@@ -210,17 +210,12 @@ def upsampleFFT(imageInit, upsampleFactor):
     -------
         imageUpsampleReal : ndarray complex 
             The inverse Fourier transform of imageInit upsampled by the upsampleFactor.
-            
-    TODO
-    ----
-        This can be fully replaced by np.fft.ffts(im,s=(1024,1024)) where im.shape = (512,512)
-        Also change to use rfft2
+
     '''
-    imageSize = imageInit.shape
-    imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize))) + 0j
-    imageUpsample[:imageSize[0], :imageSize[1]] = imageInit
-    imageUpsample = np.roll(np.roll(imageUpsample, -int(imageSize[0]/2), 0), -int(imageSize[1]/2),1)
-    imageUpsampleReal = np.real(np.fft.ifft2(imageUpsample))
+    ss = [int(ii*upsampleFactor/4) for ii in imageInit.shape]
+    imageInit2 = np.pad(imageInit, ss, mode='constant')
+    imageUpsampleReal = np.real(np.fft.ifftn(np.fft.ifftshift(imageInit2)))
+
     return imageUpsampleReal
 
 def dftUpsample(imageCorr, upsampleFactor, xyShift):
