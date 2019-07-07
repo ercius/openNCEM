@@ -9,6 +9,9 @@ Structure
 
 The package is given the following structure:
 
+* data
+    Example datasets which can be used to test and demonstrate the code base.
+
 * docs
     Documentation of the `ncempy` package.
 
@@ -17,6 +20,9 @@ The package is given the following structure:
 
 * eval
     Evaluation routines build from the single algorithms in `algo`. These address specific tasks like evaluating the results from a particular method or experimental setup.
+
+* edstomo
+    Routines used for reconstructing STEM/EDS tomographic datasets.
 
 * io
     Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
@@ -37,12 +43,25 @@ It relies on the following packages:
 * h5py (for EMD files)
 * h5py_cache (for EMD Velox files)
 
+edstomo has addtional optional packages:
+* glob2
+* genfire
+* hyperspy
+* scipy
+* scikit-image
+* matplotlib
+* ipyvolume
+
 Installation
 ------------
 
-For now we support pip installing the ``ncempy`` package from the gitHub repository:
+We recommend installing the ``ncempy`` package from PyPi:
 
-``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy'``
+``pip install ncempy``
+
+If you wish to install the optional EDSTomo module then run:
+
+``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy[edstomo]'``
 
 License
 -------
