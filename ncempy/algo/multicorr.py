@@ -13,15 +13,13 @@ TODO
     - Better to make this a class. Then you can set it
       up and change the inputs without having to run
       through all of the setup again
-    - I think upSampleFFT can be replaced by np.fft.fft2
-      with the s option.
-    - imageShifter and multicorr output have opposite sign.
+    - imageShifter and multicorr output have opposite sign. ??
 
 '''
 
 import numpy as np
 
-def multicorr(G1, G2, method = 'cross', upsampleFactor = 1):
+def multicorr(G1, G2, method = 'cross', upsampleFactor = 1, verbose = True):
     '''Align a template to an image by cross correlation. THe template
     and the image must have the same size.
     
@@ -210,11 +208,19 @@ def upsampleFFT(imageInit, upsampleFactor):
     -------
         imageUpsampleReal : ndarray complex 
             The inverse Fourier transform of imageInit upsampled by the upsampleFactor.
-
+    OLD
+    ---
+    imageSize = imageInit.shape
+    imageUpsample = np.zeros(tuple((i*upsampleFactor for i in imageSize))) + 0j
+    imageUpsample[:imageSize[0], :imageSize[1]] = imageInit
+    imageUpsample = np.roll(np.roll(imageUpsample, -int(imageSize[0]/2), 0), -int(imageSize[1]/2),1)
+    imageUpsampleReal = np.real(np.fft.ifft2(imageUpsample))
+    return imageUpsampleReal
     '''
-    ss = [int(ii*upsampleFactor/4) for ii in imageInit.shape]
-    imageInit2 = np.pad(imageInit, ss, mode='constant')
-    imageUpsampleReal = np.real(np.fft.ifftn(np.fft.ifftshift(imageInit2)))
+    
+    ss = [int(ii*upsampleFactor/4) for ii in imageInit.shape] # pad size
+    imageInit2 = np.pad(imageInit, ss, mode='constant') # pad the FFT
+    imageUpsampleReal = np.real(np.fft.ifftn(np.fft.ifftshift(imageInit2))) # inverse FFT
 
     return imageUpsampleReal
 
