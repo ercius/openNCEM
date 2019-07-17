@@ -22,18 +22,18 @@ class fileEMDVelox:
     
     Parameters
     ----------
-        filename : str
+        filename: str
             Name of the EMD file.
     
     Attributes
     ----------
-        list_data : list
+        list_data: list
             A list containing each h5py data group.
         
-        file_hdl : h5py.File
+        file_hdl: h5py.File
             The File handle from h5py.File.
         
-        metaDataJSON : dict
+        metaDataJSON: dict
             The metadata for the most recently loaded data set.
         
     
@@ -43,7 +43,7 @@ class fileEMDVelox:
         
         >>> import ncempy.io as nio
         >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
-        >>> print(emd1) # print informatio about the file
+        >>> print(emd1) # print information about the file
         >>> im0, metadata0 = emd1.get_dataset(emd1.list_data[0])
         >>> plt.imshow(im0, extent = (0,md1['pixelSize'][0],0,md1['pixelSize'][1]))
     '''
@@ -54,7 +54,7 @@ class fileEMDVelox:
         
         Parameters
         ----------
-            filename :
+            filename:
                 The file path to load as a string.
         
         '''
@@ -132,7 +132,7 @@ class fileEMDVelox:
         
         Parameters
         ----------
-            group : HDF5 dataset or int
+            group: HDF5 dataset or int
                 The link to the HDF5 dataset in the file or an integer for the 
                 number of the dataset. The list of datasets is held in the
                 list_data attribute populated on class init.
@@ -158,13 +158,13 @@ class fileEMDVelox:
         
         Parameters
         ----------
-            group : h5py group
+            group: h5py group
                 The h5py group to load the metadata from. The string is loaded
                 and parsed by the json module into a dictionary
         
         Returns
         -------
-            md : dict
+            md: dict
                 The JSON information returned as a python dictionary.
         
         '''
