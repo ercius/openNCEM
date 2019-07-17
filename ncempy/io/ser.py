@@ -6,19 +6,19 @@ Following the information provided by Dr Chris Boothroyd (http://www.er-c.org/cb
 Note
 ----
     General users:
-        Use the simplified dm.dmReader() function to load the data and meta 
+        Use the simplified ser.serReader() function to load the data and meta 
         data as a python dictionary. 
         
     Advanced users and developers:
-        Access the file internals through the dm.fileDM() class.
+        Access the file internals through the ser.fileSER() class.
         
 '''
 import numpy as np
-import h5py
+#import h5py
 import os
 import re
 import xml.etree.ElementTree as ET
-import datetime
+#import datetime
 
 class NotSERError(Exception):
     '''Exception if a file is not in SER file format.
@@ -30,32 +30,38 @@ class NotSERError(Exception):
 class fileSER:
     ''' Class to represent SER files (read only).
     
+    Note
+    ----
+        For most user cases, we suggest using the ser.serReader() function to
+        load the full data set into memory. Otherwise, this class provides 
+        low level access to the ser file data and metadata.
+    
     Parameters
     ----------
-        filename : str
+        filename: str
             Name of the SER file.
-        emifile : str, optional
+        emifile: str, optional
             Name of an optional _emi file to read metadata.
-        verbose : bool, topional
+        verbose: bool, optional
             True to get extensive output while reading the file.
     
     Examples
     --------
-        Simple example for reading data from a single image into memory:
+        Read data from a single image into memory.
         
         >>> import matplotlib.pyplot as plt
-        >>> from ncempy.io import dm
-        >>> with dm.fileDM('filename.dm4') as dmFile1:
-            dataSet = dmFile1.getDataset(0)
-        >>> plt.imshow(dataSet['data'])
+        >>> import ncempy.io as nio
+        >>> with nio.ser.fileSER('filename.ser') as ser1:
+                data, metadata = ser1.getDataset(0)
+        >>> plt.imshow(data)
 
         SER files are structured such that each image in a series is a
         different dataset. Thus, time series data should be read as the
         following:
         
         >>> with ser.fileSER('filename_1.ser') as ser1:
-            image0, metadata0 = ser1.getDataset(0)
-            image1, metadata1 = ser1.getDataset(1)
+                image0, metadata0 = ser1.getDataset(0)
+                image1, metadata1 = ser1.getDataset(1)
         >>> plt.imshow(image0)
         >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     '''
@@ -132,13 +138,13 @@ class fileSER:
         
         Parameters
         ----------
-            verbose : bool
+            verbose: bool
                 True to get extensive output while reading the file.
 
         Returns
         -------
-            dict
-             The header of the SER file as dict.
+            : dict
+                 The header of the SER file as dict.
             
         '''
         
@@ -306,7 +312,7 @@ class fileSER:
         
         Parameters
         ----------
-            i : int
+            i: int
                 Index.
             
         '''
@@ -328,19 +334,16 @@ class fileSER:
         
         Parameters
         ----------
-            index : int
+            index: int
                 Index of dataset.
-            verbose : bool, optional
+            verbose: bool, optional
                 True to get extensive output while reading the file.
         
         Returns
         -------
-            : tuple
-                Tuple containing          
-                    data : np.ndarray
-                        Dataset as array.
-                    metadata: dict
-                        Metadata as dict.
+            dataset: tuple, 2 elements in form (data metadata)
+                Tuple contains data as np.ndarray and metadata
+                (pixel size, etc.) as a dict.
         
         '''
         
@@ -444,9 +447,9 @@ class fileSER:
 
         Parameters
         ----------
-            index : int
+            index: int
                 Index of tag.
-            verbose : bool
+            verbose: bool
                 True to get extensive output while reading the file.
 
         Returns
@@ -521,18 +524,18 @@ class fileSER:
         
         Parameters
         ----------
-            size : int
+            size: int
                 Number of elements.
-            offset : float
+            offset: float
                 Value at indicated element.
-            delta : float
+            delta: float
                 Difference between elements.
-            element : int
+            element: int
                 Indicates the element of value offset.
         
         Returns
         -------
-            dim : np.ndarray
+            dim: np.ndarray
                 Dimension vector as array.
         
         '''
@@ -558,12 +561,12 @@ class fileSER:
         
         Parameters
         ----------
-            value : str
+            value: str
                 String containing an int, float or string.
         
         Returns
         -------
-            p : int or float or str
+            p: int or float or str
                 Entry value as int, float or string.
             
         '''
@@ -587,12 +590,12 @@ class fileSER:
         
         Parameters
         ----------
-            filename : str
+            filename: str
                 Name of the _emi file.
         
         Returns
         -------
-            _emi : dict
+            _emi: dict
                 Dictionary of experimental metadata stored in the EMI file.
         '''
         
@@ -679,7 +682,7 @@ class fileSER:
         
         Parameters
         ----------
-            filename : str
+            filename: str
                 Name of the EMD file.
                 
         '''
@@ -952,12 +955,12 @@ def serReader(filename):
     
     Parameters
     ----------
-        filename : str
+        filename: str
             The filename of the SER file containing the data.
         
     Returns
     -------
-        dataOut : dict
+        dataOut: dict
             A dictionary containing the data and meta data. 
             The data is accessed using the 'data' key and is a 1, 2, 3, or 4
             dimensional numpy ndarray.
@@ -966,9 +969,9 @@ def serReader(filename):
     --------
         Load a single image data set and show the image:
             
-            >>> from ncempy.io import ser
-            >>> im0 = ser.serReader('filename_1.ser')
-            >>> plt.imshow(im0['data']) #show the single image from the data file
+            >>> import ncempy.io as nio
+            >>> ser1 = nio.ser.serReader('filename_1.ser')
+            >>> plt.imshow(ser1['data']) #show the single image from the data file
         
     '''
     # Open the file and init the class
