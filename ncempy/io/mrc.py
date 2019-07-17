@@ -5,6 +5,8 @@ Also works with FEI MRC files which include a special header block with experime
 written by: Peter Ercius, percius@lbl.gov
 '''
 
+from pathlib import Path
+
 import numpy as np
 
 class fileMRC:
@@ -13,13 +15,13 @@ class fileMRC:
             
     Parameters
     -----------
-        filename : str
-            String pointing to the filesystem location of the file.
+        filename: str or pathlib.Path
+            String or pathlib.Path object pointing to the filesystem location of the file.
         verbose : bool 
             If True, debug information is printed.
     Returns
     --------
-       out : dict
+       out: dict
             A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
     
     Note
@@ -40,9 +42,17 @@ class fileMRC:
     def __init__(self, filename, verbose = False):
 
         # check for string
-        if not isinstance(filename, str):
-            raise TypeError('Filename is supposed to be a string')
-            
+        #if not isinstance(filename, str):
+        #    raise TypeError('Filename is supposed to be a string')
+        
+        # check filename type
+        if isinstance(filename, str):
+            pass
+        elif isinstance(filename, Path):
+            filename = str(filename)
+        else:
+            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+        
         self.filename = filename
 
         # necessary declarations, if something fails
@@ -195,7 +205,7 @@ class fileMRC:
                 print('Position before reading extra header: ' + str(pos1))
                 print('Extra header size = ' +str(self.extra[1]))
             
-            '''Read the extra FEI header described as follows:
+            ''' Read the extra FEI header described as follows:
              1 a_tilt  first Alpha tilt (deg)
              2 b_tilt  first Beta tilt (deg)
              3 x_stage  Stage x position (Unit=m. But if value>1, unit=???m)
@@ -252,7 +262,7 @@ class fileMRC:
         
         Parameters
         ----------
-            num : int
+            num: int
                 Get the requested image.
         
         Returns
@@ -286,9 +296,11 @@ class fileMRC:
         returned.
         
         Parameters:
+        -----------
             None
         
         Returns:
+        --------
             [numpy.core.memmap]: A read-only numpy memmap object with access to the data on disk.
         '''
         mm = np.memmap(self.fid, dtype = self.dataType, mode = 'r', offset=self.dataOffset, 
@@ -313,7 +325,7 @@ class fileMRC:
         
         Parameters
         ----------
-            dataType : int
+            dataType: int
                 The data type value encoded in an MRC header
             
         Returns
@@ -341,14 +353,14 @@ def mrcReader(fname,verbose=False):
     
     Parameters
     ----------
-        fname : str
+        fname: str
             The name of the file to load
         verbose : bool, optional
             Enable printing debug messages as the header is parsed.
         
     Returns
     -------
-        out : dict
+        out: dict
             A dictionary containing the data and interesting metadata. The data is attached to the 'data' key.
         
     Example
@@ -371,7 +383,7 @@ def mrc2raw(fname):
     
     Parameters
     ----------
-        fname : str
+        fname: str
             The name of the file to convert.
     
     '''
@@ -387,12 +399,12 @@ def mrc2emd(fname):
     
     Parameters
     ----------
-        fname : str
+        fname: str
             The name of the file to convert from MRC to EMD format.
     
     Returns
     -------
-        out : int
+        out: int
             1 if successful.
     
     TODO
@@ -465,11 +477,11 @@ def mrcWriter(filename,data,pixelSize,forceWrite=False):
     
     Parameters
     ----------
-        filename : str
+        filename: str
             The name of the MRC file.
-        data : ndarray
+        data: ndarray
             The array data to write to disk.
-        pixelSize : tuple
+        pixelSize: tuple
             The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
     Returns
     -------
@@ -565,16 +577,16 @@ def writeHeader(filename,shape,dtype,pixelSize):
     
     Parameters
     ----------
-        filename : str
+        filename: str
             The name of the EMD file 
-        shape : tuple
+        shape: tuple
             The shape of the data to write
-        pixelSize : tuple
+        pixelSize: tuple
             The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
     
     Returns
     -------
-        out : int
+        out: int
             1 if successful.
 
     '''
@@ -654,9 +666,9 @@ def appendData(filename,data):
     
     Parameters
     ----------
-        filename : str
+        filename: str
             Name of the MRC file with pre-initiated header and some data already written.
-        data : ndarray
+        data: ndarray
             Data to append to the file.
     
     '''
@@ -670,12 +682,12 @@ def emd2mrc(filename,dsetPath):
     
     Parameters
     ----------
-        filename : str
+        filename: str
             The name of the EMD file
-        dsetPath : str
+        dsetPath: str
             The HDF5 path to the top group holding the data. ex. '/data/raw/'
     '''
-    
+    import h5py
     with h5py.File(filename,'r') as f1:
         #Get the pixel sizes and convert to Ang
         dimsPath = dsetPath + '/dim'
@@ -689,6 +701,6 @@ def emd2mrc(filename,dsetPath):
         filenameOut = filename.split('.emd')[0] + '.mrc' #use the first part of the file as the prefix removing the .emd on the end
         
         print('Warning: Converting to float32 before writing to disk')
-        mrc.mrcWriter(filenameOut,np.float32(f1[dsetPath+'/data']),(1,pixelSizeY,pixelSizeX)) #the extra slash is not a problem. // is the same as / in a HDF5 data set path
+        mrcWriter(filenameOut,np.float32(f1[dsetPath+'/data']),(1,pixelSizeY,pixelSizeX)) #the extra slash is not a problem. // is the same as / in a HDF5 data set path
         
         print('Finished writing to: {}'.format(filenameOut))
