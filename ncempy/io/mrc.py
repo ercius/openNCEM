@@ -279,6 +279,22 @@ class fileMRC:
         data1 = data1.reshape((self.dataSize[1],self.dataSize[2])) #reshape the image
             
         return data1
+        
+    def getMemmap(self, index):
+        '''Return a numpy memmap object (read-only) for the dataset. This is very useful 
+        for very large datasets to avoid loading the entire data set into memory. No meta data is
+        returned.
+        
+        Parameters:
+            None
+        
+        Returns:
+            [numpy.core.memmap]: A read-only numpy memmap object with access to the data on disk.
+        '''
+        mm = np.memmap(self.fid, dtype = self.dataType, mode = 'r', offset=self.dataOffset, 
+                       shape = tuple(self.dataSize))
+        
+        return mm
     
     def _applyAxisOrientations(self,arrayIn):
         ''' This is untested and unused.
