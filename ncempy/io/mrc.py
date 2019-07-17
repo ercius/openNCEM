@@ -280,7 +280,7 @@ class fileMRC:
             
         return data1
         
-    def getMemmap(self, index):
+    def getMemmap(self):
         '''Return a numpy memmap object (read-only) for the dataset. This is very useful 
         for very large datasets to avoid loading the entire data set into memory. No meta data is
         returned.
