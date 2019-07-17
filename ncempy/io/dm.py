@@ -202,8 +202,8 @@ class fileDM:
         
         Returns
         -------
-        pos: int
-            The current position in the file.
+            pos: int
+                The current position in the file.
         
         '''
         if self._on_memory:
@@ -228,7 +228,7 @@ class fileDM:
         
         Returns
         -------
-            vals : list
+            vals: list
                 A list of the requested dtype elements.
         
         '''
