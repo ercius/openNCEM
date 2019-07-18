@@ -23,7 +23,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.4.2',
+    version='1.5.0',
 
     description='openNCEM\'s Python Package',
     long_description=long_description,
@@ -32,7 +32,7 @@ setup(
     url='https://github.com/ercius/openNCEM',
 
     # Author details
-    author='P. Ercius, F. Niekiel, C. Ophus, T. Pekin',
+    author='P. Ercius, F. Niekiel, C. Ophus, T. Pekin, Z. Gainsforth',
     author_email='percius@lbl.gov',
 
     # Choose your license
@@ -63,7 +63,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'test']),
+    packages=find_packages(exclude=['contrib', 'docs', 'test', 'data']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
