@@ -18,9 +18,9 @@ class fileEMD:
     
     Parameters
     ----------
-        filename: str
+        filename : str
             Name of the EMD file.
-        readonly: bool
+        readonly : bool
             Set to open in read only mode.
     
     Note
@@ -59,7 +59,7 @@ class fileEMD:
         self.sample = None
         self.user = None
         self.comments = None
-        self.list_emds = []             # list of HDF5 groups with emd_data_type type
+        self.list_emds = [] # list of HDF5 groups with emd_data_type type
         
         # check for string
         if not isinstance(filename, str):

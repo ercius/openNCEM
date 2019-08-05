@@ -15,25 +15,25 @@ import h5py
 import h5py_cache
 
 class fileEMDVelox:
-    '''Class to represent Velox EMD files. It uses the h5py_cache module
+    ''' Class to represent Velox EMD files. It uses the h5py_cache module
     to increase the default cache size from 1MB to 10MB. This significantly
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and a poor choice of chunking.
     
     Parameters
     ----------
-        filename: str
+        filename : str
             Name of the EMD file.
     
     Attributes
     ----------
-        list_data: list
+        list_data : list
             A list containing each h5py data group.
         
-        file_hdl: h5py.File
+        file_hdl : h5py.File
             The File handle from h5py.File.
         
-        metaDataJSON: dict
+        metaDataJSON : dict
             The metadata for the most recently loaded data set.
         
     
@@ -49,12 +49,12 @@ class fileEMDVelox:
     '''
     
     def __init__(self, filename):
-        '''Init opening the file and finding all data groups. Currently only
+        ''' Init opening the file and finding all data groups. Currently only
         searches the /Data/Images group.
         
         Parameters
         ----------
-            filename:
+            filename : str
                 The file path to load as a string.
         
         '''
@@ -79,7 +79,7 @@ class fileEMDVelox:
         self._find_groups()
         
     def __del__(self):
-        '''Destructor for EMD file object.
+        ''' Destructor for EMD file object.
         
         Closes the h5py file.
         
@@ -88,13 +88,13 @@ class fileEMDVelox:
         self.file_hdl.close()
 
     def __enter__(self):
-        '''Implement python's with staement
+        ''' Implement python's with staement
         
         '''
         return self
         
     def __exit__(self,type,value,traceback):
-        '''Implement python's with statment
+        ''' Implement python's with statment
         and close the file via __del__()
         
         '''
@@ -114,7 +114,7 @@ class fileEMDVelox:
         return out
     
     def _find_groups(self):
-        '''Find all groups that contain data.
+        ''' Find all groups that contain image data.
         
         Note
         ----
@@ -128,11 +128,11 @@ class fileEMDVelox:
             raise
     
     def get_dataset(self, group):
-        '''Get the data from a group and the associated metadata.
+        ''' Get the data from a group and the associated metadata.
         
         Parameters
         ----------
-            group: HDF5 dataset or int
+            group : HDF5 dataset or int
                 The link to the HDF5 dataset in the file or an integer for the 
                 number of the dataset. The list of datasets is held in the
                 list_data attribute populated on class init.
@@ -152,19 +152,19 @@ class fileEMDVelox:
         return (data,metaData)
     
     def parseMetaData(self,group):
-        '''Parse metadata in a data group. Determines the pixelSize and 
+        ''' Parse metadata in a data group. Determines the pixelSize and 
         detector name. The EMDVelox data sets have extensive metadata
         stored as a JSON type string.
         
         Parameters
         ----------
-            group: h5py group
+            group : h5py group
                 The h5py group to load the metadata from. The string is loaded
                 and parsed by the json module into a dictionary
         
         Returns
         -------
-            md: dict
+            md : dict
                 The JSON information returned as a python dictionary.
         
         '''

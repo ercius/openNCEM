@@ -31,13 +31,13 @@ class fileDM:
         
     Parameters
     ----------
-        filename: str
+        filename : str
             String pointing to the filesystem location of the file.
         
-        verbose: bool, optional, default False
+        verbose : bool, optional, default False
             If True, debug information is printed.
         
-        on_memory: bool, optional, default False
+        on_memory : bool, optional, default False
             If True, file data is pre-loaded in memory and all data
             parsing is performed against memory. Use this mode if the file
             is in a network based or paralle file system.
@@ -197,12 +197,12 @@ class fileDM:
         return None
     
     def tell(self):
-        '''Return the current position in the file. Switches mode based 
+        ''' Return the current position in the file. Switches mode based 
         on on_memory mode.
         
         Returns
         -------
-            pos: int
+            pos : int
                 The current position in the file.
         
         '''
@@ -228,7 +228,7 @@ class fileDM:
         
         Returns
         -------
-            vals: list
+            vals : list
                 A list of the requested dtype elements.
         
         '''
@@ -255,12 +255,12 @@ class fileDM:
 
         Parameters
         ----------
-            fid: file id
+            fid : file id
                 File or memory map.
-            offset: int
+            offset : int
                 Number of bytes to move the head forward (positive value)
                 or backwards (negative value).
-            from_what: int
+            from_what : int
                 Reference point to use in the head movement. 0:
                 for beginning of the file (default behavior), 1: from the current
                 head position, and 2: from the end of the file.
@@ -283,7 +283,7 @@ class fileDM:
 
 
     def _validDM(self):
-        '''Test whether a file is a valid DM3 or DM4 file and written
+        ''' Test whether a file is a valid DM3 or DM4 file and written
         in little endian format.
         
         '''
@@ -515,12 +515,12 @@ class fileDM:
             
         Parameters
         ----------
-            encodedType: int
+            encodedType : int
                 The type value read from the header.
             
         Returns
         -------
-            encodedTypeSize: int
+            encodedTypeSize : int
                 Number of bytes this type uses.
         '''
         #print(encodedType)
@@ -547,12 +547,12 @@ class fileDM:
             
         Parameters
         ----------
-            encodedType: int
+            encodedType : int
                 The type value read from the header
             
         Returns
         -------
-            Type: numpy dtype
+            Type : numpy dtype
                 The Numpy dtype corresponding to the DM encoded value.
         
         '''
@@ -590,12 +590,12 @@ class fileDM:
         
         Parameters
         ----------
-            structTypes: ndarray
+            structTypes : ndarray
                 1D array containing fieldTypes
         
         Returns
         -------
-            struct: ndarray
+            struct : ndarray
                 1D array of data
         '''
         struct = np.zeros(structTypes.shape[0])
@@ -619,12 +619,12 @@ class fileDM:
             
         Parameters
         ----------
-            encodedType: int
+            encodedType : int
                 Encoded type value from DM header
         
         Returns
         -------
-            val: int or ndarray
+            val : int or ndarray
                 The value(s) read in.
         '''
         Type = self._TagType2NPDataTypes[encodedType]
@@ -663,12 +663,12 @@ class fileDM:
         
         Parameters
         ----------
-            arrayTypes: ndarray or tuple
+            arrayTypes : ndarray or tuple
                 The type of array data to read
             
         Returns
         -------
-            arrOut: str
+            arrOut : str
                 A string containing the key value pair of this tag
         
         '''
@@ -733,10 +733,11 @@ class fileDM:
         
         Parameters
         ----------
-            curTagName: str
+            curTagName : str
                 The Tag name; a key
-            curTagValue: object
-                This can be many different type of objects
+                
+            curTagValue : object
+                This can be many different types of objects
                 like int, float, string, etc.
         
         '''
@@ -757,11 +758,11 @@ class fileDM:
         
         Parameters
         ----------
-            totalTag: str
+            totalTag : str
                 The complete tag as a string
-            curTagName: str
+            curTagName : str
                 The tag name; the tag key
-            curTagValue:
+            curTagValue : object
                 Can be many different types of objects
         
         '''
@@ -825,7 +826,7 @@ class fileDM:
 
         Parameters
         ----------
-            i: int
+            i : int
                 Index.
         
         Raises
@@ -848,12 +849,12 @@ class fileDM:
         
         Parameters
         ----------
-            dd: int
+            dd : int
                 The value encoded in the DM file header.
             
         Returns
         -------
-            Type: numpy dtype
+            Type : numpy dtype
         '''
         
         try:
@@ -879,7 +880,7 @@ class fileDM:
             
         Parameters
         ----------
-            index: int
+            index : int
                 The number of the data set to retrieve ignoring the thumbnail.
                 If a thumbnail exists then inedx = 0 corresponds to second data
                 set in a DM file. 
@@ -947,15 +948,15 @@ class fileDM:
         
         Parameters
         ----------
-            index: int
+            index : int
                 The number of the dataset in the DM file.
-            sliceZ: int
+            sliceZ : int
                 The slice to get along the first dimension (C-ordering)
                 for 3D datasets or 4D datasets.
         
         Keywords
         --------
-            sliceZ2: int
+            sliceZ2 : int
                 For 4D dataset
     
         Returns
@@ -1035,7 +1036,7 @@ class fileDM:
         
         Parameters
         ----------
-            index: int
+            index : int
                 The number of the dataset in the DM file.
         
         Returns
@@ -1067,11 +1068,11 @@ def dmReader(filename, dSetNum=0, verbose=False):
     
     Parameters
     ----------
-        filename: str
+        filename : str
             The filename to open and read into memory
-        dSetNum: int
+        dSetNum : int
             The number of the data set to read. Almost always should be = 0. Default = 0
-        verbose: bool
+        verbose : bool
             Allow extra printing to see file internals. Default = False
 
     Returns
