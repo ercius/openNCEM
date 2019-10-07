@@ -61,7 +61,7 @@ We recommend installing the ``ncempy`` package from PyPi:
 
 If you wish to install the optional EDSTomo module then run:
 
-``pip install 'git+https://github.com/ercius/openNCEM.git@development#egg=ncempy[edstomo]'``
+``pip install 'ncempy[edstomo]'``
 
 License
 -------
