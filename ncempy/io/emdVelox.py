@@ -18,7 +18,7 @@ class fileEMDVelox:
     ''' Class to represent Velox EMD files. It uses the h5py_cache module
     to increase the default cache size from 1MB to 10MB. This significantly
     improves file reading for EMDVelox files which are written with Fortran-
-    style ordering and a poor choice of chunking.
+    style ordering and an inefficient choice of chunking.
     
     Parameters
     ----------
