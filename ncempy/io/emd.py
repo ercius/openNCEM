@@ -136,12 +136,13 @@ class fileEMD:
             
 
     def __del__(self):
+        pass
         '''Destructor for EMD file object. 
         
         '''
         # close the file
         #if(not self.file_hdl.closed):
-        self.file_hdl.close()
+        #self.file_hdl.close()
 
     def __enter__(self):
         '''Implement python's with staement
