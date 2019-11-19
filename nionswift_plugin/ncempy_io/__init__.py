@@ -54,7 +54,7 @@ class OpenNCEMExtension(object):
 	extension_id = "openNCEM.swift.extensions.filetypes"
 
 	def __init__(self, api_broker):
-		logging.debug('started an openNCEM extension...')
+		#logging.debug('started an openNCEM extension...')
 		# grab the api object.
 		api = api_broker.get_api(version="1", ui_version="1")
 		# be sure to keep a reference or it will be closed immediately.

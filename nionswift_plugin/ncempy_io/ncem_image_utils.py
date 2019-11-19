@@ -77,5 +77,36 @@ def loadEMD(fpath):
 
 		dimensional_calibrations = [Calibration(origin[i],pixsize[i],units[i]) for i in range(len(origin))]
 
-		return DataAndMetadata.new_data_and_metadata(data,dimensional_calibrations=dimensional_calibrations,data_descriptor=descriptor)		
+		return DataAndMetadata.new_data_and_metadata(data,dimensional_calibrations=dimensional_calibrations,data_descriptor=descriptor)
+	else:
+		# The file is a Velox EMD. Read using the Velox reader
+		# Currently supports only images
+		emd = fileEMDVelox(fpath)
+
+		first_dset, first_meta = emd.get_dataset(emd.list_data[0])
+
+		data = np.zeros((len(emd.list_data),first_dset.shape[0],first_dset.shape[1]),
+			dtype=first_dset.dtype)
+
+		dimensional_calibrations = [Calibration(0., first_meta['pixelSize'][0], first_meta['pixelSizeUnit'][0]),
+			Calibration(0., first_meta['pixelSize'][0], first_meta['pixelSizeUnit'][0])]
+
+		if len(emd.list_data) == 1:
+			descriptor = DataAndMetadata.DataDescriptor(False,0,2)
+		else:
+			descriptor = DataAndMetadata.DataDescriptor(False,1,2)
+			dimensional_calibrations.append(Calibration(0,0,''))
+
+
+		for i in range(len(emd.list_data)):
+			dset, meta = emd.get_dataset(emd.list_data[i])
+
+			data[i,:,:] = dset
+
+		return DataAndMetadata.new_data_and_metadata(np.squeeze(data),dimensional_calibrations=dimensional_calibrations,data_descriptor=descriptor)
+
+
+
+
+
 
