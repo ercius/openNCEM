@@ -83,20 +83,20 @@ def loadEMD(fpath):
 		# Currently supports only images
 		emd = fileEMDVelox(fpath)
 
+		if len(emd.list_data) == 1:
+			descriptor = DataAndMetadata.DataDescriptor(False,0,2)
+			dimensional_calibrations = []
+		else:
+			descriptor = DataAndMetadata.DataDescriptor(True,0,2)
+			dimensional_calibrations = [Calibration(0,0,'')]
+
 		first_dset, first_meta = emd.get_dataset(emd.list_data[0])
 
 		data = np.zeros((len(emd.list_data),first_dset.shape[0],first_dset.shape[1]),
 			dtype=first_dset.dtype)
 
-		dimensional_calibrations = [Calibration(0., first_meta['pixelSize'][0], first_meta['pixelSizeUnit'][0]),
-			Calibration(0., first_meta['pixelSize'][0], first_meta['pixelSizeUnit'][0])]
-
-		if len(emd.list_data) == 1:
-			descriptor = DataAndMetadata.DataDescriptor(False,0,2)
-		else:
-			descriptor = DataAndMetadata.DataDescriptor(False,1,2)
-			dimensional_calibrations.append(Calibration(0,0,''))
-
+		dimensional_calibrations.append(Calibration(0., first_meta['pixelSize'][0], first_meta['pixelSizeUnit'][0]))
+		dimensional_calibrations.append(Calibration(0., first_meta['pixelSize'][1], first_meta['pixelSizeUnit'][1]))
 
 		for i in range(len(emd.list_data)):
 			dset, meta = emd.get_dataset(emd.list_data[i])
