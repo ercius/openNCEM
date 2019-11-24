@@ -1,5 +1,6 @@
 """
-	Support for openNCEM file formats: *.emd, *.ser/*.emi, *.mrc
+	Support for images in openNCEM  supported 
+	file formats: *.emd and *.ser
 """
 
 # standard libraries
@@ -10,7 +11,7 @@ import logging
 # third party libraries
 
 # local libraries
-from .ncem_image_utils import loadSER, loadEMD, loadMRC
+from .ncem_image_utils import loadSER, loadEMD
 
 _ = gettext.gettext
 
@@ -21,20 +22,20 @@ class OpenNCEMDelegate(object):
 		self.__api = api
 		self.io_handler_id = "openNCEM-io-handler"
 		self.io_handler_name = _("openNCEM Supported")
-		self.io_handler_extensions = ["emd", "ser", "mrc", "h5"]
+		self.io_handler_extensions = ["emd", "ser", "h5"]
 
 
 
 	def read_data_and_metadata(self, extension, file_path):
 		logging.debug('entered read data_and_metadata')
-		assert extension in ['ser','emd','mrc','h5'], 'Unsupported extension'
+		assert extension in ['ser','emd','h5'], 'Unsupported extension'
 
 		if extension == 'ser':
 			return loadSER(file_path)
 		if extension in ['h5','emd']:
 			return loadEMD(file_path)
-		if extension == 'mrc':
-			return loadMRC(file_path)
+		# if extension == 'mrc':
+		# 	return loadMRC(file_path)
 
 
 	def can_write_data_and_metadata(self, data_and_metadata, extension):

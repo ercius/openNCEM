@@ -2,7 +2,7 @@ import numpy as np
 import logging
 
 from ncempy.io.ser import serReader
-from ncempy.io.mrc import mrcReader
+#from ncempy.io.mrc import mrcReader
 from ncempy.io.emd import fileEMD
 from ncempy.io.emdVelox import fileEMDVelox
 
@@ -31,9 +31,6 @@ def loadSER(fpath):
 
 def loadMRC(fpath):
 	pass
-
-
-
 
 
 def loadEMD(fpath):
