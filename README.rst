@@ -31,7 +31,7 @@ The openNCEM collection comes with different components, described below.
 
 
 **nionswift_plugin**
-    A plugin for `Nion Swift<http://nion.com/swift>`_ that adds openNCEM's ``ser``, ``emd``, and Velox file import capabilities (for images only, spectrum images are not currently supported). 
+    A plugin for Nion Swift (http://nion.com/swift) that adds openNCEM's ``ser``, ``emd``, and Velox file import capabilities (for images only, spectrum images are not currently supported). 
 
 Commands
 ========
