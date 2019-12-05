@@ -12,10 +12,8 @@ import json
 import numpy as np
 import h5py
 
-import h5py_cache
-
 class fileEMDVelox:
-    ''' Class to represent Velox EMD files. It uses the h5py_cache module
+    ''' Class to represent Velox EMD files. It uses the h5py caching functionality
     to increase the default cache size from 1MB to 10MB. This significantly
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and an inefficient choice of chunking.
@@ -70,8 +68,7 @@ class fileEMDVelox:
 
         # try opening the file
         try:
-            #self.file_hdl = h5py.File(filename, 'r')
-            self.file_hdl = h5py_cache.File(filename, 'r', chunk_cache_mem_size=10*1024**2)
+            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10*1024**2)
         except:
             print('Error opening file for readonly: "{}"'.format(filename))
             raise

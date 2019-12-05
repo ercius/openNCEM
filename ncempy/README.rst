@@ -41,7 +41,6 @@ It relies on the following packages:
 * scipy
 * matplotlib (for plotting)
 * h5py (for EMD files)
-* h5py_cache (for EMD Velox files)
 
 edstomo has addtional optional packages:
 * glob2
