@@ -1,2 +1,4 @@
 include ncempy/edstomo/Elam
 include ncempy/edstomo/Elam/ElamDB12.txt
+include ncempy/*.rst
+include LICENSE
