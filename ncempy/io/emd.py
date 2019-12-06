@@ -3,6 +3,8 @@ This module provides an interface to the Berkeley EMD file format.
 
 See https://emdatasets.com/ for more details.
 
+
+
 """
 
 import numpy as np
@@ -450,8 +452,8 @@ def defaultDims(data):
 
     dims = []
     for ii in range(num):
-        curDim = (np.linspace(0,data.shape[ii]-1,data.shape[ii]),
-                  'dim{}'.format(ii),'unit{}'.format(ii))
+        curDim = (np.linspace(0, data.shape[ii]-1, data.shape[ii]),
+                  'dim{}'.format(ii), 'unit{}'.format(ii)) #  TODO: Add pixel size option 
         dims.append(curDim)
 
     return dims
