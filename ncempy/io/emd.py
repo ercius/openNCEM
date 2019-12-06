@@ -88,8 +88,10 @@ class fileEMD:
                 # read version information
                 self.version = (self.file_hdl.attrs['version_major'], self.file_hdl.attrs['version_minor'])
                 # compare to implementation
-                if not self.version == (0,2):
-                    print('WARNING: You are reading a version {}.{} EMD file, this implementation assumes version 0.2!'.format(self.version[0], self.version[1]))
+                if not self.version == (0, 2):
+                    print(
+                        'WARNING: You are reading a version {}.{} EMD file, this implementation assumes version 0.2!'.format(
+                            self.version[0], self.version[1]))
             else:
                 # set version information
                 if not readonly:
@@ -139,7 +141,7 @@ class fileEMD:
 
         """
         # close the file
-        #if(not self.file_hdl.closed):
+        # if(not self.file_hdl.closed):
         self.file_hdl.close()
 
     def __enter__(self):
@@ -148,7 +150,7 @@ class fileEMD:
         '''
         return self
 
-    def __exit__(self,type,value,traceback):
+    def __exit__(self, type, value, traceback):
         '''Implement python's with statment
         and close the file via __del__()
         '''
@@ -209,7 +211,7 @@ class fileEMD:
         # get the dims
         dims = []
         for i in range(len(group['data'].shape)):
-            dim = group['dim{}'.format(i+1)]
+            dim = group['dim{}'.format(i + 1)]
             # save them as (vector, name, units)
 
             if isinstance(dim.attrs['name'], np.ndarray):
@@ -222,10 +224,10 @@ class fileEMD:
             else:
                 units = dim.attrs['units']
 
-            dims.append( (dim[:], name.decode('utf-8'), units.decode('utf-8')) )
+            dims.append((dim[:], name.decode('utf-8'), units.decode('utf-8')))
 
         dims = tuple(dims)
-        return(dims)
+        return (dims)
 
     def get_emdgroup(self, group):
         """Get the emdtype data saved in in group.
@@ -383,7 +385,7 @@ class fileEMD:
 
             # create dim datasets
             for i in range(len(dims)):
-                self.write_dim('dim{}'.format(i+1), dims[i], grp)
+                self.write_dim('dim{}'.format(i + 1), dims[i], grp)
 
             # update emds list
             self.list_emds = self.find_emdgroups(self.file_hdl)
@@ -426,11 +428,12 @@ class fileEMD:
         # write comment
         if timestamp in self.comments.attrs:
             # append to existing
-            self.comments.attrs[timestamp] += np.string_('\n'+msg)
+            self.comments.attrs[timestamp] += np.string_('\n' + msg)
 
         else:
             # create new entry
             self.comments.attrs[timestamp] = np.string_(msg)
+
 
 def defaultDims(data):
     """ A helper function that can generate a properly setup dim tuple
@@ -452,8 +455,39 @@ def defaultDims(data):
 
     dims = []
     for ii in range(num):
-        curDim = (np.linspace(0, data.shape[ii]-1, data.shape[ii]),
-                  'dim{}'.format(ii), 'unit{}'.format(ii)) #  TODO: Add pixel size option 
+        curDim = (np.linspace(0, data.shape[ii] - 1, data.shape[ii]),
+                  'dim{}'.format(ii), 'unit{}'.format(ii))  # TODO: Add pixel size option
         dims.append(curDim)
 
     return dims
+
+
+def emdReader(filename, dsetNum=0):
+    """ A simple helper function to read in the data and metadata in a structured format similar to the other readers.
+
+    Note
+    ----
+        Note implemented yet. Work in progress.
+
+    Parameters
+    ---------
+        filename : str
+            The path to the file as a string.
+        dsetNum : int
+                The index of the data set to load.
+    Returns
+    -------
+        : dict
+            Data and metadata as a dictionary similar to other ncempy readers.
+
+    Example
+    ------
+        Simply load all data and metadata from a data set in and EMD file
+            >> import ncempy.io as nio
+            >> data, metadata = nio.emd.emdReader('filename', group = 0)
+
+    """
+    with fileEMD(filename, readonly=True) as emd0:
+        d, md = emd0.get_emdgroup(dsetNum)
+        out = {'data': d, 'dims': md}  # TODO: Add in pixel size and other meta data
+        return out
