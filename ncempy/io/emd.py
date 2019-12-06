@@ -233,8 +233,9 @@ class fileEMD:
         
         Parameters
         ----------
-            group: h5py._hl.group.Group
-                Reference to the emdtype HDF5 group.
+            group: h5py._hl.group.Group or int
+                Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
+                is loaded
         
         Returns
         -------
@@ -251,8 +252,16 @@ class fileEMD:
         
         # check input
         if not isinstance(group, h5py._hl.group.Group):
-            raise TypeError('group needs to refer to a valid HDF5 group!')
-            
+            if isinstance(group, int):
+                try:
+                    group = self.list_emds[group]
+                except IndexError:
+                    print('group does not exist')
+                    return
+                    #raise
+            else:
+                raise TypeError('group needs to refer to a valid HDF5 group!')
+        
         if not 'emd_group_type' in group.attrs:
             raise TypeError('group is not a emd_group_type group!')
         if not group.attrs['emd_group_type'] == 1:
