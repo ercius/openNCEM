@@ -68,7 +68,7 @@ class fileEMDVelox:
 
         # try opening the file
         try:
-            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10*1024**2)
+            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes = 10485760) # rdcc_nbytes = 10*1024**2
         except:
             print('Error opening file for readonly: "{}"'.format(filename))
             raise
