@@ -114,7 +114,6 @@ class fileSER:
         if emifile is True:
             emifile = filename[:-6] + '.emi'
             if not os.path.exists(emifile):
-                print('no')
                 emifile = None
         # read emifile, if provided
         if emifile:
@@ -142,7 +141,10 @@ class fileSER:
         '''
         self.__del__()
         return None
-        
+    
+    def __str__(self):
+        return 'ncempy SER dataset'
+    
     def readHeader(self, verbose=False):
         '''Read and return the SER files header.
         

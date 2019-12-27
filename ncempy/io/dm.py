@@ -196,6 +196,9 @@ class fileDM:
         self.__del__()
         return None
     
+    def __str__(self):
+        return 'ncempy DM dataset'
+    
     def tell(self):
         ''' Return the current position in the file. Switches mode based 
         on on_memory mode.
