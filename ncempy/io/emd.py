@@ -489,6 +489,16 @@ def emdReader(filename, dsetNum=0):
 
     """
     with fileEMD(filename, readonly=True) as emd0:
-        d, md = emd0.get_emdgroup(dsetNum)
-        out = {'data': d, 'dims': md}  # TODO: Add in pixel size and other meta data
+        d, dims = emd0.get_emdgroup(dsetNum)
+        out = {'data': d}  # TODO: Add in pixel size and other meta data
+        
+        out['pixelSize'] = []
+        for dim in dims:
+            try:
+                d = dim[0][1] - dim[0][0]
+            except:
+                d = 0
+            out['pixelSize'].append(d)
+        out['pixelUnit'] = [aa[2] for aa in dims]
+        out['pixelName'] = [aa[1] for aa in dims]
         return out
