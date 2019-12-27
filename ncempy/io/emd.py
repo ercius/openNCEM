@@ -229,14 +229,16 @@ class fileEMD:
         dims = tuple(dims)
         return (dims)
 
-    def get_emdgroup(self, group):
-        """Get the emdtype data saved in in group.
+    def get_emdgroup(self, group, memmap = False):
+        """Get the emd data saved in the requested group.
 
         Parameters
         ----------
             group: h5py._hl.group.Group or int
                 Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
                 is loaded
+            memmap: bool
+                Return the data as a memmap instead of loading everything into memory
 
         Returns
         -------
@@ -247,7 +249,7 @@ class fileEMD:
                     The data of the emdtype group.
 
                 : list
-                    List of dimension vectors plus labels and units.
+                    List of [0] dimension vectors, [1] labels and [2] units.
 
         """
 
@@ -270,7 +272,10 @@ class fileEMD:
         # retrieve data
         try:
             # get the data
-            data = group['data'][:]
+            if memmap:
+                data = group['data']
+            else:
+                data = group['data'][:]
 
             # get the dimensions.
             dims = self.get_emddims(group)
@@ -433,7 +438,18 @@ class fileEMD:
         else:
             # create new entry
             self.comments.attrs[timestamp] = np.string_(msg)
-
+            
+    def get_memmap(self, group):
+        """ Get the emd group data as a memmap so that the data
+        is not loaded into memory. Essentially calls get_emdgroup()
+        with the keyword memmap keyord equals True.
+        
+        See get_emdgroup() for parameters and return values.
+        
+        
+        """
+        return self.get_emdgroup(group, memmap = True)
+        
 
 def defaultDims(data):
     """ A helper function that can generate a properly setup dim tuple
@@ -461,8 +477,7 @@ def defaultDims(data):
 
     return dims
 
-
-def emdReader(filename, dsetNum=0):
+def emdReader(filename, dsetNum = 0):
     """ A simple helper function to read in the data and metadata 
     in a structured format similar to the other ncempy readers.
 
@@ -476,6 +491,7 @@ def emdReader(filename, dsetNum=0):
             The path to the file as a string.
         dsetNum : int
             The index of the data set to load.
+            
     Returns
     -------
         : dict
@@ -488,8 +504,8 @@ def emdReader(filename, dsetNum=0):
             >> emd0 = nio.emd.emdReader('filename.emd', dsetNum = 0)
 
     """
-    with fileEMD(filename, readonly=True) as emd0:
-        d, dims = emd0.get_emdgroup(dsetNum)
+    with fileEMD(filename, readonly = True) as emd0:
+        d, dims = emd0.get_emdgroup(dsetNum, memmap = False) # memmap must be false. File is closed
         out = {'data': d}  # TODO: Add in pixel size and other meta data
         
         out['pixelSize'] = []
