@@ -148,16 +148,17 @@ class fileEMDVelox:
         metaData = self.parseMetaData(group)
         return (data,metaData)
     
-    def parseMetaData(self,group):
+    def parseMetaData(self, group):
         ''' Parse metadata in a data group. Determines the pixelSize and 
         detector name. The EMDVelox data sets have extensive metadata
         stored as a JSON type string.
         
         Parameters
         ----------
-            group : h5py group
-                The h5py group to load the metadata from. The string is loaded
-                and parsed by the json module into a dictionary
+            group : h5py group or int
+                The h5py group to load the metadata from. If int then the 
+                group corresponding to list_data is used. The string is loaded
+                and parsed by the json module into a dictionary.
         
         Returns
         -------
@@ -165,6 +166,12 @@ class fileEMDVelox:
                 The JSON information returned as a python dictionary.
         
         '''
+        try:
+            if type(group) is int:
+                group = self.list_data[group]
+        except IndexError:
+            raise IndexError('EMDVelox group #{} does not exist.'.format(group))
+        
         md = {}
         tempMetaData = group['Metadata'][:,0]
         # Reduce to valid metadata
@@ -183,3 +190,33 @@ class fileEMDVelox:
         
         return md
     
+def emdVeloxReader(filename, dsetNum = 0):
+    """ A simple helper function to read in the data and metadata in a 
+    structured format similar to the other ncempy readers.
+
+    Note
+    ----
+        Note fully implemented yet. Work in progress.
+
+    Parameters
+    ----------
+        filename : str
+            The path to the file as a string.
+        dsetNum : int
+            The index of the data set to load.
+    Returns
+    -------
+        : dict
+            Data and metadata as a dictionary similar to other ncempy readers.
+
+    Example
+    -------
+        Load all data and metadata from a data set in an EMD file
+            >> import ncempy.io as nio
+            >> emd0 = nio.emdVelox.emdVeloxReader('filename.emd', dsetNum = 0)
+
+    """
+    with fileEMDVelox(filename) as emd0:
+        d, md = emd0.get_dataset(dsetNum)
+        out = {'data': d, 'metadata': md}  # TODO: Add in pixel size and other meta data
+        return out

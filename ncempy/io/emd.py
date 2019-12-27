@@ -463,28 +463,29 @@ def defaultDims(data):
 
 
 def emdReader(filename, dsetNum=0):
-    """ A simple helper function to read in the data and metadata in a structured format similar to the other readers.
+    """ A simple helper function to read in the data and metadata 
+    in a structured format similar to the other ncempy readers.
 
     Note
     ----
-        Note implemented yet. Work in progress.
+        Note fully implemented yet. Work in progress.
 
     Parameters
-    ---------
+    ----------
         filename : str
             The path to the file as a string.
         dsetNum : int
-                The index of the data set to load.
+            The index of the data set to load.
     Returns
     -------
         : dict
             Data and metadata as a dictionary similar to other ncempy readers.
 
     Example
-    ------
-        Simply load all data and metadata from a data set in and EMD file
+    -------
+        Simply load all data and metadata from a data set in an EMD Velox file
             >> import ncempy.io as nio
-            >> data, metadata = nio.emd.emdReader('filename', group = 0)
+            >> emd0 = nio.emd.emdReader('filename.emd', dsetNum = 0)
 
     """
     with fileEMD(filename, readonly=True) as emd0:
