@@ -13,12 +13,13 @@ Note
         Access the file internals through the ser.fileSER() class.
         
 '''
-import numpy as np
-#import h5py
+
+import xml.etree.ElementTree as ET
+from pathlib import Path
 import os
 import re
-import xml.etree.ElementTree as ET
-#import datetime
+
+import numpy as np
 
 class NotSERError(Exception):
     '''Exception if a file is not in SER file format.
@@ -40,8 +41,10 @@ class fileSER:
     ----------
         filename: str
             Name of the SER file.
-        emifile: str, optional
-            Name of an optional _emi file to read metadata.
+        emifile: str or bool, optional
+            Name of an optional emi file to read metadata. If True then the
+            name will be automatically generated from the filename input. The
+            metadata is available as self._emi.
         verbose: bool, optional
             True to get extensive output while reading the file.
     
@@ -82,7 +85,7 @@ class fileSER:
     '''(dict):    Information on data format.'''
 
 
-    def __init__(self, filename, emifile=None, verbose=False):
+    def __init__(self, filename, emifile = None, verbose=False):
         '''Init opening the file and reading in the header.
         
         '''
@@ -106,10 +109,17 @@ class fileSER:
         # read header
         self.head = self.readHeader(verbose)
         
-        # read _emi, if provided
+        # generate emifile string if needed
+        # and test for file existence.
+        if emifile is True:
+            emifile = filename[:-6] + '.emi'
+            if not os.path.exists(emifile):
+                print('no')
+                emifile = None
+        # read emifile, if provided
         if emifile:
             self._emi = self.read_emi(emifile)
-
+        
     def __del__(self):
         '''Closing the file stream on del.
         
@@ -973,9 +983,9 @@ def serReader(filename):
             >>> ser1 = nio.ser.serReader('filename_1.ser')
             >>> plt.imshow(ser1['data']) #show the single image from the data file
         
-    '''
+    '''    
     # Open the file and init the class
-    with fileSER(filename) as f1: 
+    with fileSER(filename,emifile = True) as f1:
         if f1.head['ValidNumberElements'] > 0:
             # Get the first data set to setup the arrays
             data, metaData = f1.getDataset(0) 
@@ -1031,6 +1041,10 @@ def serReader(filename):
                     dataOut['pixelOrigin'].append(cal['CalibrationOffset'])
                     dataOut['pixelUnit'].append('m')
                 dataOut['filename'] = filename #save the file name
+            
+            # Add experimental metadata, if exists
+            if f1._emi:
+                dataOut['metadata'] = f1._emi
                 
         else:
             dataOut = {}
