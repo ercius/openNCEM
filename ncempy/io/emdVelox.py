@@ -239,5 +239,6 @@ def emdVeloxReader(filename, dsetNum = 0):
     """
     with fileEMDVelox(filename) as emd0:
         d, md = emd0.get_dataset(dsetNum)
-        out = {'data': d, 'metadata': md}  # TODO: Add in pixel size and other meta data
+        out = {'data': d}  # TODO: Add in pixel size and other meta data
+        out.update(md)
         return out
