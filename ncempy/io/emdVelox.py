@@ -8,6 +8,7 @@ Currently limited to only images. This file can not load spectra.
 '''
 
 import json
+import datetime
 
 import numpy as np
 import h5py
@@ -203,7 +204,11 @@ class fileEMDVelox:
         md['pixelSize'] = (pixelSizeX,pixelSizeY)
         md['pixelSizeUnit'] = ('nm','nm')
         md['detectorName'] = detectorName
-        md['metadata'] = metaDataJSON # return all other metdata
+        md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime']
+        md['Stage'] = self.metaDataJSON['Stage']
+        md['AcquisitionTime'] = datetime.datetime.fromtimestamp(int(
+            self.metaDataJSON['Acquisition']['AcquisitionStartDatetime']['DateTime']))
+        #md['metadata'] = self.metaDataJSON # return all other metdata
         return md
     
 def emdVeloxReader(filename, dsetNum = 0):
