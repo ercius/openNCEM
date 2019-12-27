@@ -61,6 +61,7 @@ class fileEMDVelox:
         self.file_hdl = None
         self.metaDataJSON = None
         self.list_data = None
+        self.list_emds = None # this will be identical to list_data
         
         # check for string
         if not isinstance(filename, str):
@@ -123,8 +124,10 @@ class fileEMDVelox:
         except:
             self.list_data = []
             raise
+        
+        self.list_emds = self.list_data # make a copy to match the Berkeley EMD attribute
     
-    def get_dataset(self, group):
+    def get_dataset(self, group, memmap = False):
         ''' Get the data from a group and the associated metadata.
         
         Parameters
@@ -133,10 +136,20 @@ class fileEMDVelox:
                 The link to the HDF5 dataset in the file or an integer for the 
                 number of the dataset. The list of datasets is held in the
                 list_data attribute populated on class init.
+            memmap: bool, optional
+                If False (default), then a numpy ndarray is returned. If True
+                the HDF5 dataset object is returned and data is loaded from
+                disk as needed.
+                
+        Returns
+        -------
+            : tuple (ndarray or HDF5 dataset, dict)
+                A tuple containing the data as a ndarray or a HDF5 dataset object.
+                The second argument is a python dict of metadata.
         '''
         # check input
         try:
-            if type(group) is int:
+            if isinstance(group, int):
                 group = self.list_data[group]
         except IndexError:
             raise IndexError('EMDVelox group #{} does not exist.'.format(group))
@@ -144,9 +157,12 @@ class fileEMDVelox:
         if not isinstance(group, h5py._hl.group.Group):
             raise TypeError('group needs to refer to a valid HDF5 group!')
 
-        data = np.squeeze(group['Data'][:]) #load the full data set
+        if memmap:
+            data = group['Data'] # return the HDF5 dataset object
+        else:
+            data = np.squeeze(group['Data'][:]) # load the full data set
         metaData = self.parseMetaData(group)
-        return (data,metaData)
+        return (data, metaData)
     
     def parseMetaData(self, group):
         ''' Parse metadata in a data group. Determines the pixelSize and 
@@ -187,7 +203,7 @@ class fileEMDVelox:
         md['pixelSize'] = (pixelSizeX,pixelSizeY)
         md['pixelSizeUnit'] = ('nm','nm')
         md['detectorName'] = detectorName
-        
+        md['metadata'] = metaDataJSON # return all other metdata
         return md
     
 def emdVeloxReader(filename, dsetNum = 0):
