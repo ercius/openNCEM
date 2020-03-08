@@ -71,7 +71,7 @@ class fileDM:
                  '_TagType2NPDataTypes','on_memory','verbose',
                  '_EncodedTypeDTypes')
     
-    def __init__(self, filename, verbose = False, on_memory = False):
+    def __init__(self, filename, verbose=False, on_memory=False):
         
         self.filename = filename
 
@@ -81,10 +81,18 @@ class fileDM:
         self._on_memory = on_memory
 
         # check for string
-        if not isinstance(filename, str):
-            raise TypeError('Filename is supposed to be a string')
+        #if not isinstance(filename, str):
+        #    raise TypeError('Filename is supposed to be a string')
 
-        #Add a top level variable to indicate verbosee output for debugging
+        # check filename type
+        if isinstance(filename, str):
+            pass
+        elif isinstance(filename, Path):
+            filename = str(filename)
+        else:
+            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+
+        # Add a top level variable to indicate verbose output for debugging
         self.v = verbose
 
         # try opening the file

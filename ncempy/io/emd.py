@@ -7,9 +7,11 @@ See https://emdatasets.com/ for more details.
 
 """
 
+from pathlib import Path
+import datetime
+
 import numpy as np
 import h5py
-import datetime
 
 
 class fileEMD:
@@ -64,8 +66,16 @@ class fileEMD:
         self.list_emds = []  # list of HDF5 groups with emd_data_type type
 
         # check for string
-        if not isinstance(filename, str):
-            raise TypeError('Filename is supposed to be a string!')
+        #if not isinstance(filename, str):
+        #    raise TypeError('Filename is supposed to be a string!')
+
+        # check filename type
+        if isinstance(filename, str):
+            pass
+        elif isinstance(filename, Path):
+            filename = str(filename)
+        else:
+            raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
         # try opening the file
         if readonly:

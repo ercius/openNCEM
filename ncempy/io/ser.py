@@ -94,8 +94,16 @@ class fileSER:
         self._emi = None
 
         # check for string
-        if not isinstance(filename, str):
-            raise TypeError('Filename is supposed to be a string')
+        #if not isinstance(filename, str):
+        #    raise TypeError('Filename is supposed to be a string')
+
+        # check filename type
+        if isinstance(filename, str):
+            pass
+        elif isinstance(filename, Path):
+            filename = str(filename)
+        else:
+            raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
         # try opening the file
         try:
