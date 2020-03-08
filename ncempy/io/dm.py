@@ -71,7 +71,7 @@ class fileDM:
                  '_TagType2NPDataTypes','on_memory','verbose',
                  '_EncodedTypeDTypes')
     
-    def __init__(self, filename, verbose=False, on_memory=False):
+    def __init__(self, filename, verbose=False, on_memory=True):
         
         self.filename = filename
 
