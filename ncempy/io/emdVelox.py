@@ -48,15 +48,15 @@ class fileEMDVelox:
     '''
     
     def __init__(self, filename):
-        ''' Init opening the file and finding all data groups. Currently only
+        """ Init opening the file and finding all data groups. Currently only
         searches the /Data/Images group.
-        
+
         Parameters
         ----------
             filename : str
                 The file path to load as a string.
-        
-        '''
+
+        """
         
         ## necessary declaration in case something goes wrong
         self.file_hdl = None
@@ -86,33 +86,33 @@ class fileEMDVelox:
         self._find_groups()
         
     def __del__(self):
-        ''' Destructor for EMD file object.
-        
+        """ Destructor for EMD file object.
+
         Closes the h5py file.
-        
-        '''
+
+        """
         # close the file
         self.file_hdl.close()
 
     def __enter__(self):
-        ''' Implement python's with staement
-        
-        '''
+        """ Implement python's with staement
+
+        """
         return self
         
     def __exit__(self,type,value,traceback):
-        ''' Implement python's with statment
-        and close the file via __del__()
-        
-        '''
+        """ Implement python's with statement
+        and close the file using  __del__()
+
+        """
         self.__del__()
         return None
     
     def __str__(self):
-        ''' Print out the detectors used to take the data and
+        """ Print out the detectors used to take the data and
         the pixel size to help with telling users about the data in the file.
-        
-        '''
+
+        """
         out = 'EMD file contains {} data sets\n'.format(len(self.list_data))
         for ii, group in enumerate(self.list_data):
             md = self.parseMetaData(group)
@@ -121,12 +121,12 @@ class fileEMDVelox:
         return out
     
     def _find_groups(self):
-        ''' Find all groups that contain image data.
-        
+        """ Find all groups that contain image data.
+
         Note
         ----
             This currently only finds images.
-        '''
+        """
         try:
             # Get all of the groups in the Image group
             self.list_data = list(self.file_hdl['Data/Image'].values())
@@ -136,26 +136,26 @@ class fileEMDVelox:
         
         self.list_emds = self.list_data # make a copy to match the Berkeley EMD attribute
     
-    def get_dataset(self, group, memmap = False):
-        ''' Get the data from a group and the associated metadata.
-        
+    def get_dataset(self, group, memmap=False):
+        """ Get the data from a group and the associated metadata.
+
         Parameters
         ----------
             group : HDF5 dataset or int
-                The link to the HDF5 dataset in the file or an integer for the 
+                The link to the HDF5 dataset in the file or an integer for the
                 number of the dataset. The list of datasets is held in the
                 list_data attribute populated on class init.
-            memmap: bool, optional
+            memmap: bool, default = False
                 If False (default), then a numpy ndarray is returned. If True
-                the HDF5 dataset object is returned and data is loaded from
+                the HDF5 data set object is returned and data is loaded from
                 disk as needed.
-                
+
         Returns
         -------
             : tuple (ndarray or HDF5 dataset, dict)
                 A tuple containing the data as a ndarray or a HDF5 dataset object.
                 The second argument is a python dict of metadata.
-        '''
+        """
         # check input
         try:
             if isinstance(group, int):
@@ -171,26 +171,26 @@ class fileEMDVelox:
         else:
             data = np.squeeze(group['Data'][:]) # load the full data set
         metaData = self.parseMetaData(group)
-        return (data, metaData)
+        return data, metaData
     
     def parseMetaData(self, group):
-        ''' Parse metadata in a data group. Determines the pixelSize and 
+        """ Parse metadata in a data group. Determines the pixelSize and
         detector name. The EMDVelox data sets have extensive metadata
         stored as a JSON type string.
-        
+
         Parameters
         ----------
             group : h5py group or int
-                The h5py group to load the metadata from. If int then the 
+                The h5py group to load the metadata from. If int then the
                 group corresponding to list_data is used. The string is loaded
                 and parsed by the json module into a dictionary.
-        
+
         Returns
         -------
             md : dict
                 The JSON information returned as a python dictionary.
-        
-        '''
+
+        """
         try:
             if type(group) is int:
                 group = self.list_data[group]
@@ -218,7 +218,8 @@ class fileEMDVelox:
             self.metaDataJSON['Acquisition']['AcquisitionStartDatetime']['DateTime']))
         #md['metadata'] = self.metaDataJSON # return all other metdata
         return md
-    
+
+
 def emdVeloxReader(filename, dsetNum = 0):
     """ A simple helper function to read in the data and metadata in a 
     structured format similar to the other ncempy readers.
@@ -247,6 +248,6 @@ def emdVeloxReader(filename, dsetNum = 0):
     """
     with fileEMDVelox(filename) as emd0:
         d, md = emd0.get_dataset(dsetNum)
-        out = {'data': d}  # TODO: Add in pixel size and other meta data
+        out = {'data': d, 'filename': filename}  # TODO: Add in pixel size and other meta data
         out.update(md)
         return out
