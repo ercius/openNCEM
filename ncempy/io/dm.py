@@ -19,6 +19,7 @@ Note
   
 """
 
+from pathlib import Path
 import mmap
 import os
 from os import stat as fileStats
@@ -37,10 +38,11 @@ class fileDM:
         verbose : bool, optional, default False
             If True, debug information is printed.
         
-        on_memory : bool, optional, default False
+        on_memory : bool, optional, default True
             If True, file data is pre-loaded in memory and all data
-            parsing is performed against memory. Use this mode if the file
-            is in a network based or paralle file system.
+            parsing is performed against memory. This mode is necessary
+            for network based or parallel file systems but seems to
+            improve reading in all cases.
     
     Example
     -------

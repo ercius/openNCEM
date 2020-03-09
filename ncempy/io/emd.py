@@ -497,7 +497,7 @@ def emdReader(filename, dsetNum = 0):
 
     Parameters
     ----------
-        filename : str
+        filename : str or pathlib.Path
             The path to the file as a string.
         dsetNum : int
             The index of the data set to load.
@@ -516,9 +516,8 @@ def emdReader(filename, dsetNum = 0):
     """
     with fileEMD(filename, readonly = True) as emd0:
         d, dims = emd0.get_emdgroup(dsetNum, memmap = False) # memmap must be false. File is closed
-        out = {'data': d}  # TODO: Add in pixel size and other meta data
-        
-        out['pixelSize'] = []
+        out = {'data': d, 'filename': filename, 'pixelSize': []}  # TODO: Add in pixel size and other meta data
+
         for dim in dims:
             try:
                 d = dim[0][1] - dim[0][0]
