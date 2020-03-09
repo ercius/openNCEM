@@ -9,7 +9,7 @@ Currently limited to only images. This file can not load spectra.
 
 import json
 import datetime
-
+from pathlib import Path
 import numpy as np
 import h5py
 
@@ -229,9 +229,9 @@ def emdVeloxReader(filename, dsetNum = 0):
 
     Parameters
     ----------
-        filename : str
-            The path to the file as a string.
-        dsetNum : int
+        filename : str or pathlib.Path
+            The path to the file.
+        dsetNum : int, default = 0
             The index of the data set to load.
     Returns
     -------
