@@ -1,11 +1,11 @@
-''' Provides an interface to Velox EMD datasets. Not to be confused with
+""" Provides an interface to Velox EMD datasets. Not to be confused with
 Berkeley EMD data sets (see emd.py) instead.
 
 The reader for EMD Berkeley and Velox files will be combined in the near
 future once they are fully tested separately.
 
 Currently limited to only images. This file can not load spectra.
-'''
+"""
 
 import json
 import datetime
@@ -14,38 +14,38 @@ import numpy as np
 import h5py
 
 class fileEMDVelox:
-    ''' Class to represent Velox EMD files. It uses the h5py caching functionality
+    """ Class to represent Velox EMD files. It uses the h5py caching functionality
     to increase the default cache size from 1MB to 10MB. This significantly
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and an inefficient choice of chunking.
-    
+
     Parameters
     ----------
         filename : str
             Name of the EMD file.
-    
+
     Attributes
     ----------
         list_data : list
             A list containing each h5py data group.
-        
+
         file_hdl : h5py.File
             The File handle from h5py.File.
-        
+
         metaDataJSON : dict
             The metadata for the most recently loaded data set.
-        
-    
+
+
     Example
     -------
         Open an EMD Velox file of 1 image.
-        
+
         >>> import ncempy.io as nio
         >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
         >>> print(emd1) # print information about the file
         >>> im0, metadata0 = emd1.get_dataset(emd1.list_data[0])
         >>> plt.imshow(im0, extent = (0,md1['pixelSize'][0],0,md1['pixelSize'][1]))
-    '''
+    """
     
     def __init__(self, filename):
         """ Init opening the file and finding all data groups. Currently only
