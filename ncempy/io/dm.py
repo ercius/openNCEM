@@ -188,7 +188,7 @@ class fileDM:
         '''Destructor which also closes the file
         
         '''
-        if(not self._on_memory and self.fid):
+        if not self.fid.closed:
             if self.v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
