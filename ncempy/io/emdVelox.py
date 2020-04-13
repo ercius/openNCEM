@@ -58,15 +58,11 @@ class fileEMDVelox:
 
         """
         
-        ## necessary declaration in case something goes wrong
+        # necessary declaration in case something goes wrong
         self.file_hdl = None
         self.metaDataJSON = None
         self.list_data = None
         self.list_emds = None # this will be identical to list_data
-        
-        # check for string
-        #if not isinstance(filename, str):
-        #    raise TypeError('Filename is supposed to be a string!')
 
         # check filename type
         if isinstance(filename, str):
