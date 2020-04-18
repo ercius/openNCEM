@@ -179,11 +179,9 @@ def image_phase_correlate(image, reference, real_filter=1, k_filter=1, shift_fun
     return output, shifts
 
 
-def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_func='shift', use_center_ref=True):
-    """ Align a series of images by cross-correlation. All images are aligned to the start image from
-    ref_num -> array end and then ref_num -> array start. Uses image_correlate.
-
-    Adapted from tomviz v1.0.0.
+def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_func='shift'):
+    """ Align a series of images by cross-correlation. All images are aligned to the first image Uses image_correlate
+    which is based on simple cross correlation.
 
     Parameters
     ----------
