@@ -12,6 +12,7 @@ import ncempy.algo.local_max
 import ncempy.algo.distortion
 import ncempy.algo.math
 import ncempy.algo.radial_profile
+import ncempy.viz
 
 
 class test_ringdiff(unittest.TestCase):
@@ -49,7 +50,7 @@ class test_ringdiff(unittest.TestCase):
         dists = ncempy.algo.distortion.optimize_distortion(points_plr, ns)
         
         # check input
-        plot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists, ns, show=show)
+        plot = ncempy.viz.plot_distpolar(points_plr, dims, dists, ns, show=show)
         
         
         ## corrected images

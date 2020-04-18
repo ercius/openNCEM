@@ -6,6 +6,9 @@ useful for S/TEM data visualization.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
+
+from ncempy.algo.distortion import rad_dis
 
 
 def imsd(im, vmin=-2, vmax=2, **kwargs):
@@ -146,3 +149,121 @@ class stack_view():
         self.axI.set_data(self._st[int(round(num)), :, :])
         self.fig.canvas.draw_idle()
 
+
+def plot_ringpolar(points, dims, show=False):
+    '''Plot points in polar coordinate system.
+
+    Parameters:
+        points (np.ndarray):    Positions in polar coords.
+        dims (tuple):    Dimension information to plot labels.
+        show (bool):    Set to directly show plot in interactive mode.
+
+    Returns:
+        (np.ndarray):    Image of the plot.
+
+    '''
+
+    try:
+        # try to convert input to np.ndarray with 2 columns (necessary if only one entry provided)
+        points = np.reshape(np.array(points), (-1,2))
+        # check if enough dims available
+        assert(len(dims)>=2)
+        assert(len(dims[0])==3)
+    except:
+        raise TypeError('Something wrong with the input!')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # mean value as line
+    ax.axhline(np.mean(points[:,0]), ls='--', c='k')
+
+    # points
+    ax.plot(points[:,1], points[:,0], 'rx')
+
+    # labels
+    ax.set_xlabel('theta /[rad]')
+    ax.set_xlim( (-np.pi, np.pi) )
+    ax.set_ylabel('r /{}'.format(dims[0][2]))
+
+    if show:
+        plt.show(block=False)
+
+    # render to array
+    fig.canvas.draw()
+    plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    plot = plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return plot
+
+
+def plot_distpolar(points, dims, dists, ns, show=False):
+    '''Plot the results of distortion fitting in polar coordinates.
+
+    Parameters:
+        points (np.ndarray):    Points in polar coords.
+        dims (tuple):    Dimensions, necessary to have unit information.
+        dists (np.ndarray):    Results of dist fitting, length according to ns.
+        ns (list):    List of used orders.
+        show (bool):    Set to directly show the plot in interactive mode.
+
+    Returns:
+        (np.ndarray):    Image of the plot.
+
+    '''
+
+    try:
+        # check points
+        assert(isinstance(points, np.ndarray))
+        assert(points.shape[1] == 2)
+
+        # check if enough dims availabel
+        assert(len(dims)>=2)
+        assert(len(dims[0])==3)
+
+        # check orders
+        assert(len(ns)>=1)
+
+        # check dists
+        assert(dists.shape[0] == len(ns)*2+1)
+    except:
+        raise TypeError('Something wrong with the input!')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # stuff from the single orders
+    ax.axhline(dists[0], ls='--', c='k')
+    xpl_ell = np.linspace(-np.pi, np.pi, 100)
+    for i in range(len(ns)):
+        plt.plot( xpl_ell, dists[0]*rad_dis(xpl_ell, dists[i*2+1], dists[i*2+2], ns[i]), 'm--')
+
+    # points before
+    ax.plot(points[:,1], points[:,0], 'rx')
+
+    # sum of all distorts
+    sum_dists = np.ones(xpl_ell.shape)*dists[0]
+    for i in range(len(ns)):
+        sum_dists *= rad_dis(xpl_ell, dists[i*2+1], dists[i*2+2], ns[i])
+    plt.plot( xpl_ell, sum_dists, 'b-' )
+
+    # points after
+    points_corr = np.copy(points)
+    for i in range(len(ns)):
+        points_corr[:,0] /= rad_dis(points[:,1], dists[i*2+1], dists[i*2+2], ns[i])
+    plt.plot( points_corr[:,1], points_corr[:,0], 'gx')
+
+    # labels
+    ax.set_xlabel('theta /[rad]')
+    ax.set_xlim( (-np.pi, np.pi) )
+    ax.set_ylabel('r /{}'.format(dims[0][2]))
+
+    if show:
+        plt.show(block=False)
+
+    # render to array
+    fig.canvas.draw()
+    plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    plot = plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return plot

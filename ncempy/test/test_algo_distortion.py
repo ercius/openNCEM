@@ -10,6 +10,8 @@ import os
 import ncempy.io.emd
 import ncempy.algo.local_max
 import ncempy.algo.distortion
+import ncempy.viz
+
 
 class test_ringdiff(unittest.TestCase):
     '''
@@ -79,16 +81,16 @@ class test_ringdiff(unittest.TestCase):
         ## plot_ringpolar
         # wrong input
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_ringpolar(np.array([0,1,2,3,4]), dims)
+            noplot = ncempy.viz.plot_ringpolar(np.array([0, 1, 2, 3, 4]), dims)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_ringpolar(42, dims)
+            noplot = ncempy.viz.plot_ringpolar(42, dims)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_ringpolar(points_plr, dims[0])
+            noplot = ncempy.viz.plot_ringpolar(points_plr, dims[0])
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_ringpolar(points_plr, 42)
+            noplot = ncempy.viz.plot_ringpolar(points_plr, 42)
                     
         # working
-        plot = ncempy.algo.distortion.plot_ringpolar(points_plr, dims, show=show)
+        plot = ncempy.viz.plot_ringpolar(points_plr, dims, show=show)
         
         
         ## optimize_center
@@ -108,7 +110,7 @@ class test_ringdiff(unittest.TestCase):
         center = ncempy.algo.distortion.optimize_center(points, center_init, verbose=True)
         
         points_plr = ncempy.algo.distortion.points_topolar(points, center)
-        plot = ncempy.algo.distortion.plot_ringpolar(points_plr, dims, show=show)
+        plot = ncempy.viz.plot_ringpolar(points_plr, dims, show=show)
     
         ## optimize_distortion
         # wrong input
@@ -125,22 +127,22 @@ class test_ringdiff(unittest.TestCase):
         ## plot_distpolar
         # wrong input
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_distpolar(np.array([[0,1,2,3],[4,5,6,7]]), dims, dists, (2,3,4))
+            noplot = ncempy.viz.plot_distpolar(np.array([[0, 1, 2, 3], [4, 5, 6, 7]]), dims, dists, (2, 3, 4))
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_distpolar(42, dims, dists, (2,3,4))
+            noplot = ncempy.viz.plot_distpolar(42, dims, dists, (2, 3, 4))
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_distpolar(points_plr, dims[0], dists, (2,3,4))
+            noplot = ncempy.viz.plot_distpolar(points_plr, dims[0], dists, (2, 3, 4))
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists[0:3], (2,3,4))
+            noplot = ncempy.viz.plot_distpolar(points_plr, dims, dists[0:3], (2, 3, 4))
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists, 42)
+            noplot = ncempy.viz.plot_distpolar(points_plr, dims, dists, 42)
             
         
         # try a bunch of fits
         for ns in ( (2,), (2,3), (2,3,4), (2,3,4,5), (4,) ):
      
             dists = ncempy.algo.distortion.optimize_distortion(points_plr, ns, verbose=True)
-            plot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists, ns, show=show)
+            plot = ncempy.viz.plot_distpolar(points_plr, dims, dists, ns, show=show)
             
 
         # wait for plots

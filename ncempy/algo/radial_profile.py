@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 
 import ncempy.algo.math
 import ncempy.algo.distortion
+import ncempy.viz
+
 
 def calc_polarcoords ( center, dims, ns=None, dists=None ):
     '''Calculate the polar coordinates for an image of given shape.
@@ -433,7 +435,7 @@ def run_singleImage( img, dims, settings, show=False ):
     points_plr = ncempy.algo.distortion.points_topolar(points, center)
     dists = ncempy.algo.distortion.optimize_distortion(points_plr, mysettings['ns'])
     if show:
-        plot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists, mysettings['ns'], show=show)
+        plot = ncempy.viz.plot_distpolar(points_plr, dims, dists, mysettings['ns'], show=show)
     
     # calc coordinates in optimized system
     rs, thes = ncempy.algo.radial_profile.calc_polarcoords( center, dims, mysettings['ns'], dists )
