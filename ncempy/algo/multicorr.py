@@ -331,6 +331,6 @@ if __name__ == '__main__':
 
     with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
         dd, md = f0.get_emdgroup(f0.list_emds[0])
-    dd2 = ndimage.shift(dd, (4.6, 5.8), mode='mirror')
+    dd2 = ndimage.shift(dd, sh0, mode='mirror')
     sh = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), method=method, upsample_factor=up)
     print('Final shift = {}'.format(sh))

@@ -2,7 +2,7 @@ import numpy as np
 from scipy import ndimage
 
 
-def imageCrossCor(image, reference, real_filter=1, k_filter=1):
+def image_cross_corr(image, reference, real_filter=1, k_filter=1):
     """ Calculate image cross-correlation. See imageCrossCorRealShift and other
     similar functions to calculate the shift and apply the shift.
 
@@ -30,7 +30,7 @@ def imageCrossCor(image, reference, real_filter=1, k_filter=1):
     if type(image) is not np.ndarray or type(reference) is not np.ndarray:
         raise TypeError("Must use ndarrays")
 
-    if np.iscomplex(image) or np.iscomplex(reference):
+    if np.iscomplexobj(image) or np.iscomplexobj(reference):
         raise TypeError("Images mst be real")
 
     # Calculate FFT of images
@@ -43,60 +43,13 @@ def imageCrossCor(image, reference, real_filter=1, k_filter=1):
     return xcor
 
 
-def imageCrossCorRealRoll(image, reference, real_filter=1, k_filter=1):
-    """ Align image to reference by cross-correlation.
+def image_correlate(image, reference, real_filter=1, k_filter=1, shift_func='shift', verbose=False):
+    """ Align image to reference by cross-correlation. Outputs shifts and shifted images.
     Uses the real FFT for ~2x speed improvement. The k_filter must have
     a shape that matches the np.fft.rfft2() of image and reference.
-    Shift the input image using np.roll to be reversible.
-
-    Note
-    ----
-        image, reference and real_filter must all have the same shape (N, M).
-        k_filter must have a shape that matches the np.fft.rfft2() of
-        the other inputs: (N, M/2+1)
-
-    Parameters
-    ----------
-        image : ndarray
-            A image as a 2D ndarray.
-
-        reference : ndarray
-            The reference image to align to.
-
-        real_filter : ndarray, optional, default = 1 (no filter)
-            A real space filter applied to image and reference before
-            calculating the shift.
-
-        k_filter : ndarray, optional, default = 1 (no filter)
-            A Fourier space filter applied to the fourier transform of
-            image and reference before calculating the cross-correlation.
-
-    Returns
-    ------
-        : tuple, (ndarray, tuple)
-            A tuple containing the shifted image and the shifts applied.
-
-    """
-
-    image_f = np.fft.rfft2((image - np.mean(image)) * real_filter)
-    reference_f = np.fft.rfft2((reference - np.mean(reference)) * real_filter)
-    xcor = abs(np.fft.irfft2(np.conj(image_f) * reference_f * k_filter))
-
-    shifts = np.unravel_index(xcor.argmax(), xcor.shape)
-    shifts = [int(i) for i in shifts]  # convert to integers
-
-    # shift image using roll to be reversible
-    output = np.roll(image, shifts[0], axis=0)
-    output = np.roll(output, shifts[1], axis=1)
-
-    return output, shifts
-
-
-def imageCrossCorRealShift(image, reference, real_filter=1, k_filter=1, verbose=False):
-    """ Align image to reference by cross-correlation.
-    Uses the real FFT for ~2x speed improvement. The k_filter must have
-    a shape that matches the np.fft.rfft2() of image and reference.
-    Uses scipy.ndimage.shift() to shift the image and remove border pixels.
+    Uses scipy.ndimage.shift() or np.roll to move the image. Use 'roll' to avoid losing
+    data off the edge for multiple shifting operations. Use shift to avoid wrap around problems and when there
+    is only one shifting operation.
 
     Note
     ----
@@ -120,6 +73,9 @@ def imageCrossCorRealShift(image, reference, real_filter=1, k_filter=1, verbose=
             A Fourier space filter applied to the fourier transform of
             image and reference before calculating the cross-correlation.
 
+        shift_func : str, default is 'shift'
+            The function to use to shift the images. 'roll' uses np.roll and 'shift' uses ndimage.shift.
+
         verbose : bool
             Plots the cross-correlation using matplotlib for debugging purposes.
 
@@ -128,6 +84,11 @@ def imageCrossCorRealShift(image, reference, real_filter=1, k_filter=1, verbose=
         : tuple, (ndarray, tuple)
             A tuple containing the shifted image and the shifts applied.
     """
+    output = None
+
+    if shift_func is not 'shift' and shift_func is not 'roll':
+        raise KeyError('Shift function has to be either shift or roll')
+
     image_f = np.fft.rfft2((image - np.mean(image)) * real_filter)
     reference_f = np.fft.rfft2((reference - np.mean(reference)) * real_filter)
 
@@ -140,14 +101,19 @@ def imageCrossCorRealShift(image, reference, real_filter=1, k_filter=1, verbose=
     shifts = (shifts[0] - xcor.shape[0] / 2, shifts[1] - xcor.shape[1] / 2)
     shifts = [int(i) for i in shifts]  # convert to integers
 
-    # shift image using ndimage.shift
-    output = ndimage.interpolation.shift(image, shifts, order=0)
+    if shift_func == 'shift':
+        # shift image using ndimage.shift
+        output = ndimage.interpolation.shift(image, shifts, order=0)
+    elif shift_func == 'roll':
+        # shift image using roll to be reversible
+        output = np.roll(image, shifts[0], axis=0)
+        output = np.roll(output, shifts[1], axis=1)
 
     return output, shifts
 
 
-def imageCrossPhaseRealShift(image, reference, real_filter=1, k_filter=1, verbose=False):
-    """ Align image to reference by phase-correlation.
+def image_phase_correlate(image, reference, real_filter=1, k_filter=1, shift_func='shift', verbose=False):
+    """ Align image to reference by phase-correlation. Outputs shifted images and shift.
     Uses np.fft.rfft2 for ~2x speed improvement.
     Uses scipy.ndimage.shift() to shift the image and remove border pixels.
 
@@ -166,6 +132,7 @@ def imageCrossPhaseRealShift(image, reference, real_filter=1, k_filter=1, verbos
 
         reference : ndarray
             The reference image to align to.
+
         real_filter : ndarray, optional, default = 1
             A real space filter applied to image and reference before
             calculating the shift.
@@ -174,6 +141,10 @@ def imageCrossPhaseRealShift(image, reference, real_filter=1, k_filter=1, verbos
             A Fourier space filter applied to the fourier transform of
             image and reference before calculating the cross-correlation.
 
+        shift_func : str, default is 'shift'
+            The function to use to shift the images. 'roll' uses np.roll and 'shift' uses ndimage.shift.
+
+
         verbose : bool
             Plots the cross-correlation using matplotlib for debugging purposes.
 
@@ -181,7 +152,6 @@ def imageCrossPhaseRealShift(image, reference, real_filter=1, k_filter=1, verbos
     ------
         : tuple, (ndarray, tuple)
             A tuple containing the shifted image and the shifts applied.
-
 
     """
 
@@ -198,29 +168,30 @@ def imageCrossPhaseRealShift(image, reference, real_filter=1, k_filter=1, verbos
     shifts = (shifts[0] - pcor.shape[0] / 2, shifts[1] - pcor.shape[1] / 2)
     shifts = [int(i) for i in shifts]  # convert to integers
 
-    # shift image using ndimage's shift
-    output = ndimage.interpolation.shift(image, shifts, order=0)
+    if shift_func == 'shift':
+        # shift image using ndimage.shift
+        output = ndimage.interpolation.shift(image, shifts, order=0)
+    elif shift_func == 'roll':
+        # shift image using roll to be reversible
+        output = np.roll(image, shifts[0], axis=0)
+        output = np.roll(output, shifts[1], axis=1)
 
     return output, shifts
 
 
-def stackCrossCorReal(tilt_series, angles, real_filter=1, k_filter=1, use_center_ref=True):
-    """ Align a tilt series of images by cross-correlation. The
-    function uses the min(abs(angles) to determine the angle closest
-    to zero degree tilt. All images are aliged to this start image from
-    start -> max(angles) and then start -> min(angles). The function
-    uses np.fft.rfft2() to increase the speed.
+def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_func='shift', use_center_ref=True):
+    """ Align a series of images by cross-correlation. All images are aligned to the start image from
+    ref_num -> array end and then ref_num -> array start. Uses image_correlate.
 
     Adapted from tomviz v1.0.0.
 
     Parameters
     ----------
-        tilt_series : ndarray, 3D
+        stack : ndarray, 3D
             The stack of images to align. Shape [num, Y, X]
 
-        angles : ndarray, 1D
-            The angles in degrees for each image in the stack.
-            Shape should be [num,].
+        ref_num : int
+            The image number in the stack to use at the reference.
 
         real_filter : ndarray, optional, default = 1
             A real space filter to apply before cross-correlation
@@ -230,46 +201,63 @@ def stackCrossCorReal(tilt_series, angles, real_filter=1, k_filter=1, use_center
             A Fourier space filter to apply before cross-correlation.
             Shape must be [Y, X/2 + 1]
 
-        use_center_ref : bool
-            Use the central image as the reference for all images
+        shift_func : str, default is 'shift'
+            The function to use to shift the images. 'roll' uses np.roll and 'shift' uses ndimage.shift.
+
+        align_type: str
+            static or dynamic alignment. Static aligns all images to the first image. Dynamic aligns
+            each image to the previous image starting with the first image
 
     Returns
     -------
-        : tuple
+        : tuple, aligned stack, shifts
             A tuple containing the aligned images as a 3D ndarray of shape
             [num, Y, X] and shifts as a 2D ndarray of shape [num, 2]
     """
 
-    # Determine reference image index
-    zeroDegreeTiltImage = np.where(angles == 0)
-    if zeroDegreeTiltImage[0]:
-        referenceIndex = zeroDegreeTiltImage[0]
-    else:
-        print('No zero degree image. Using middle image.')
-        referenceIndex = tilt_series.shape[0] // 2
+    if align_type is not 'static' and align_type is not 'dynamic':
+        raise KeyError('Incorrect align type. Must be static or dynamic')
 
     # Pre-allocate the arrays
-    aligned = np.zeros_like(tilt_series)  # shifted data array
-    shifts = np.zeros((tilt_series.shape[0], 2))  # the applied shifts
+    aligned = np.zeros_like(stack)  # shifted data array
+    shifts = np.zeros((stack.shape[0], 2))  # the applied shifts
 
-    # save reference image
-    aligned[referenceIndex, :, :] = tilt_series[referenceIndex, :, :]
+    aligned[0, :, :] = stack[0, :, :]
 
     # Align positive angles
-    j = referenceIndex
-    for i in range(referenceIndex, tilt_series.shape[0] - 1):
-        if not use_center_ref:
-            j = i
-        output, sh = imageCrossCorRealShift(tilt_series[i + 1, :, :], tilt_series[j, :, :], real_filter, k_filter)
-        aligned[i + 1, :, :] = output
-        shifts[i + 1, :] = sh
-
-    # Align negative angles
-    for i in range(referenceIndex, 0, -1):
-        if not use_center_ref:
-            j = i
-        output, sh = imageCrossCorRealShift(tilt_series[i - 1, :, :], tilt_series[j, :, :], real_filter, k_filter)
-        aligned[i - 1, :, :] = output
-        shifts[i - 1, :] = sh
+    jj = 0
+    for ii in range(1, stack.shape[0]):
+        if align_type is 'dynamic':
+            j = ii - 1
+        output, sh = image_correlate(stack[ii, :, :], stack[jj, :, :], real_filter, k_filter, shift_func=shift_func)
+        aligned[ii, :, :] = output
+        shifts[ii, :] = sh
 
     return aligned, shifts
+
+
+if __name__ == '__main__':
+    import ncempy.io as nio
+    from scipy import ndimage
+    import matplotlib.pyplot as plt
+
+    sh0 = [14, 15]
+
+    print('Applied shift = {}'.format(sh0))
+
+    with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
+        dd, md = f0.get_emdgroup(f0.list_emds[0])
+    dd2 = ndimage.shift(dd, sh0, mode='mirror')
+
+    xcor2 = image_cross_corr(dd, dd2)
+
+    outShift = image_correlate(dd, dd2)
+    assert sh0 == outShift[1]
+
+    stack0 = np.zeros((5, *dd.shape), dtype=dd.dtype)
+    shifts0 = np.asarray( ((range(4,-6,-2)), (range(6,-8,-3))) ).T
+    for ii, sh in enumerate(shifts0):
+        stack0[ii, :, :] = ndimage.shift(dd, sh, mode='mirror')
+    out_stack, out_stack_shifts = stack_align(stack0, align_type='static')
+    print(shifts0)
+    print(out_stack_shifts)
