@@ -9,6 +9,7 @@ import os
 
 import ncempy.io.emd
 import ncempy.algo.local_max
+import ncempy.viz
 
 
 class test_localmax(unittest.TestCase):
@@ -52,12 +53,12 @@ class test_localmax(unittest.TestCase):
         ## plot_points
         # not working
         with self.assertRaises(TypeError):
-            plot = ncempy.algo.local_max.plot_points(42, points)
+            plot = ncempy.viz.plot_points(42, points)
         with self.assertRaises(TypeError):
-            plot = ncempy.algo.local_max.plot_points(img, np.array([[0,1,2,3,4],[5,6,7,8,9]]))
+            plot = ncempy.viz.plot_points(img, np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]))
             
         # px coords, non inverted
-        plot = ncempy.algo.local_max.plot_points(img, points, vminmax=(0.0,0.2), show=show)
+        plot = ncempy.viz.plot_points(img, points, vminmax=(0.0, 0.2), show=show)
         
         
         ## points_todim
@@ -72,7 +73,7 @@ class test_localmax(unittest.TestCase):
         points = ncempy.algo.local_max.points_todim(points, dims)
         
         # real coords, inverted
-        plot = ncempy.algo.local_max.plot_points(img, points, vminmax=(0.0,0.2), dims=dims, invert=True, show=show)
+        plot = ncempy.viz.plot_points(img, points, vminmax=(0.0, 0.2), dims=dims, invert=True, show=show)
         
         
         # wait for plots

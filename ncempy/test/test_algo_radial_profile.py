@@ -12,6 +12,7 @@ import ncempy.algo.local_max
 import ncempy.algo.distortion
 import ncempy.algo.math
 import ncempy.algo.radial_profile
+import ncempy.viz
 
 
 class test_ringdiff(unittest.TestCase):
@@ -49,7 +50,7 @@ class test_ringdiff(unittest.TestCase):
         dists = ncempy.algo.distortion.optimize_distortion(points_plr, ns)
         
         # check input
-        plot = ncempy.algo.distortion.plot_distpolar(points_plr, dims, dists, ns, show=show)
+        plot = ncempy.viz.plot_distpolar(points_plr, dims, dists, ns, show=show)
         
         
         ## corrected images
@@ -106,20 +107,20 @@ class test_ringdiff(unittest.TestCase):
         ## plot_radialprofile
         # wrong input
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_radialprofile( 42, I, dims )
+            noplot = ncempy.viz.plot_radialprofile(42, I, dims)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_radialprofile( R, 42, dims )
+            noplot = ncempy.viz.plot_radialprofile(R, 42, dims)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_radialprofile( R, I, 'notdims' )
+            noplot = ncempy.viz.plot_radialprofile(R, I, 'notdims')
         
         # working
-        plot = ncempy.algo.radial_profile.plot_radialprofile( R, I, dims, show=show) 
-        plot = ncempy.algo.radial_profile.plot_radialprofile( emR, emI, dims, show=show)
+        plot = ncempy.viz.plot_radialprofile(R, I, dims, show=show)
+        plot = ncempy.viz.plot_radialprofile(emR, emI, dims, show=show)
         
         
         ## compare without distortion correction
         R_nodist, I_nodist = ncempy.algo.radial_profile.calc_radialprofile( img, rs_nodist, rMax, dr, rsigma )
-        plot = ncempy.algo.radial_profile.plot_radialprofile( R_nodist, I_nodist, dims, show=show)
+        plot = ncempy.viz.plot_radialprofile(R_nodist, I_nodist, dims, show=show)
         
         
         # cut radial profile
@@ -153,20 +154,20 @@ class test_ringdiff(unittest.TestCase):
         ## plot_fit
         # wrong input
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_fit( 42, I, dims, funcs, res )
+            noplot = ncempy.viz.plot_fit(42, I, dims, funcs, res)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_fit( R, 42, dims, funcs, res )
+            noplot = ncempy.viz.plot_fit(R, 42, dims, funcs, res)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_fit( R, I, 'notdims', funcs, res )
+            noplot = ncempy.viz.plot_fit(R, I, 'notdims', funcs, res)
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_fit( R, I, dims, funcs, res[0:3] )
+            noplot = ncempy.viz.plot_fit(R, I, dims, funcs, res[0:3])
         with self.assertRaises(TypeError):
-            noplot = ncempy.algo.radial_profile.plot_fit( R, I, dims, 42, res )
+            noplot = ncempy.viz.plot_fit(R, I, dims, 42, res)
 
         # before fit
-        plot = ncempy.algo.radial_profile.plot_fit( R, I, dims, funcs, init_guess, show=show )
+        plot = ncempy.viz.plot_fit(R, I, dims, funcs, init_guess, show=show)
         # after fit
-        plot = ncempy.algo.radial_profile.plot_fit( R, I, dims, funcs, res, show=show )
+        plot = ncempy.viz.plot_fit(R, I, dims, funcs, res, show=show)
         
         
         # try two voigts
@@ -174,7 +175,7 @@ class test_ringdiff(unittest.TestCase):
         init_guess = ( 6e10, 7.3e9, 2e7, 2e7, 
                        8e10, 2.4e9, 1e8, 1e8 )
         res = ncempy.algo.radial_profile.fit_radialprofile( R, I, funcs, init_guess, maxfev=10000 )
-        plot = ncempy.algo.radial_profile.plot_fit( R, I, dims, funcs, res, show=show )
+        plot = ncempy.viz.plot_fit(R, I, dims, funcs, res, show=show)
 
 
         # subtract a power law background fitted to specific points
@@ -191,11 +192,11 @@ class test_ringdiff(unittest.TestCase):
         funcs = [ 'const', 'powlaw']
         init_guess = (1, 1.0e12, -1.0)
         res = ncempy.algo.radial_profile.fit_radialprofile( fit_R, fit_I, funcs, init_guess, maxfev=1000 )
-        plot = ncempy.algo.radial_profile.plot_fit( R, I, dims, funcs, res, show=show )
+        plot = ncempy.viz.plot_fit(R, I, dims, funcs, res, show=show)
         
         I = I - ncempy.algo.math.sum_functions(R, funcs, res)
         
-        plot = ncempy.algo.radial_profile.plot_radialprofile( R, I, dims, show=show )
+        plot = ncempy.viz.plot_radialprofile(R, I, dims, show=show)
 
         #import pdb;pdb.set_trace()
         
