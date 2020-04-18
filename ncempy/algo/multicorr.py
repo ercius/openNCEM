@@ -10,8 +10,8 @@ TODO
 import numpy as np
 
 
-def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
-    """Align a template to an image by cross correlation. THe template
+def multicorr(g1, g2, method='cross', upsample_factor=1, verbose=True):
+    """Align a template to an image by cross correlation. The template
     and the image must have the same size.
 
     The function takes in FFTs so that any FFT algorithm can be used to
@@ -19,14 +19,16 @@ def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
 
     Parameters
     ----------
-        G1 : complex ndarray
+        g1 : complex ndarray
             Fourier transform of reference image.
-        G2 : complex ndarray
+        g2 : complex ndarray
             Fourier transform of the image to register (the kernel).
         method : str, optional
             The correlation method to use. Must be 'phase' or 'cross' or 'hybrid' (default = 'cross')
-        upsampleFactor : int
+        upsample_factor : int
             Upsample factor for subpixel precision of cross correlation. (default = 1)
+        verbose : bool, default is False
+            Print output.
 
     Returns
     -------
@@ -46,13 +48,13 @@ def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
     """
     
     # Check to make sure both G1 and G2 are arrays
-    if type(G1) is not np.ndarray:
+    if type(g1) is not np.ndarray:
         raise TypeError('G1 must be an ndarray')
-    elif type(G2) is not np.ndarray:
+    elif type(g2) is not np.ndarray:
         raise TypeError('G2 must be an ndarray')
     
     # Check that the inputs are complex FFTs (common error)
-    if not np.iscomplexobj(G1) or not np.iscomplexobj(G2):
+    if not np.iscomplexobj(g1) or not np.iscomplexobj(g2):
         raise TypeError('G1 and G2 must be complex FFTs.')
     
     # Check to make sure method and upsample factor are the correct values
@@ -60,38 +62,42 @@ def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
         print('Unknown method used, setting to cross.')
         method = 'cross'
 
-    if type(upsampleFactor) is not int and type(upsampleFactor) is not float:
+    if type(upsample_factor) is not int and type(upsample_factor) is not float:
         print('Upsample factor is not an integer or float, setting to 1')
-        upsampleFactor = 1
-    elif type(upsampleFactor) is not int:
+        upsample_factor = 1
+    elif type(upsample_factor) is not int:
         print('Upsample factor is not an integer, rounding down')
-        upsampleFactor = int(upsampleFactor)
-        if upsampleFactor < 1:
+        upsample_factor = int(upsample_factor)
+        if upsample_factor < 1:
             print('Upsample factor is < 1, setting to 1')
-            upsampleFactor = 1
+            upsample_factor = 1
+
+    if upsample_factor < 1:
+        raise ValueError('upsample_factor must be >= 1')
 
     # Verify images are the same size.
-    if G1.shape != G2.shape:
-        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(G1.shape, G2.shape))
+    if g1.shape != g2.shape:
+        raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(g1.shape, g2.shape))
 
-    imageCorr = initial_correlation_image(G1, G2, method, verbose=verbose)
-    xyShift = upsampled_correlation(imageCorr, upsampleFactor, verbose=verbose)
+    imageCorr = initial_correlation_image(g1, g2, method, verbose=verbose)
+    xyShift = upsampled_correlation(imageCorr, upsample_factor, verbose=verbose)
     
     return xyShift
 
 
-def initial_correlation_image(G1, G2, method='cross', verbose=False):
+def initial_correlation_image(g1, g2, method='cross', verbose=False):
     """Generate correlation image at initial resolution using the method specified.
 
     Parameters
     ----------
-        G1 : complex ndarray
+        g1 : complex ndarray
             Fourier transform of reference image.
-        G2 : complex ndarray
+        g2 : complex ndarray
             Fourier transform of the image to register (the kernel).
         method : str, optional
             The correlation method to use. Must be 'phase' or 'cross' or 'hybrid' (default = 'cross')
-
+        verbose : bool, default is False
+            Print output.
     Returns
     -------
         imageCorr : ndarray complex
@@ -99,7 +105,7 @@ def initial_correlation_image(G1, G2, method='cross', verbose=False):
     """
     if verbose:
         print('Method is {}'.format(method))
-    G12 = G2 * np.conj(G1)  # is this the correct order that we want?
+    G12 = g2 * np.conj(g1)  # is this the correct order that we want?
     if method == 'phase':
         imageCorr = np.exp(1j * np.angle(G12))
     elif method == 'cross':
@@ -112,35 +118,36 @@ def initial_correlation_image(G1, G2, method='cross', verbose=False):
     return imageCorr
 
 
-def upsampled_correlation(imageCorr, upsampleFactor, verbose=False):
-    """Upsamples the correlation image by a set integer factor upsampleFactor.
-    If upsampleFactor == 2, then it is naively Fourier upsampled.
-    If the upsampleFactor is higher than 2, then it uses dftUpsample, which is
+def upsampled_correlation(image_corr, upsample_factor, verbose=False):
+    """Upsamples the correlation image by a set integer factor upsample_factor.
+    If upsample_factor == 2, then it is naively Fourier upsampled.
+    If the upsample_factor is higher than 2, then it uses dftUpsample, which is
     a more efficient way to Fourier upsample the image.
 
     Parameters
     ----------
-        imageCorr : ndarray complex
+        image_corr : ndarray complex
             Fourier transformed correlation image returned by initial_correlation_image.
-        upsampleFactor : int
+        upsample_factor : int
             Upsampling factor.
         verbose : bool
             Provide output for debugging
+
     Returns
     -------
         xyShift : list
             Shift in x and y of G2 with respect to G1.
     """
-    imageCorrIFT = np.real(np.fft.ifft2(imageCorr))
+    imageCorrIFT = np.real(np.fft.ifft2(image_corr))
     xyShift = list(np.unravel_index(imageCorrIFT.argmax(), imageCorrIFT.shape, 'C'))
     if verbose:
         print('xyShift initial = {}'.format(xyShift))
-    if upsampleFactor == 1:
+    if upsample_factor == 1:
         imageSize = imageCorrIFT.shape
         xyShift[0] = ((xyShift[0] + imageSize[0]/2) % imageSize[0]) - imageSize[0]/2
         xyShift[1] = ((xyShift[1] + imageSize[1]/2) % imageSize[1]) - imageSize[1]/2
     else:
-        imageCorrLarge = upsampleFFT(imageCorr, 2)
+        imageCorrLarge = upsampleFFT(image_corr, 2)
         imageSizeLarge = imageCorrLarge.shape
         xySubShift2 = list(np.unravel_index(imageCorrLarge.argmax(), imageSizeLarge, 'C'))
         if verbose:
@@ -151,20 +158,20 @@ def upsampled_correlation(imageCorr, upsampleFactor, verbose=False):
         if verbose:
             print('xyShift line 127 = {}'.format(xyShift))
 
-        if upsampleFactor > 2:
+        if upsample_factor > 2:
             # here is where we use DFT registration to make things much faster
             # we cut out and upsample a peak 1.5 by 1.5 px from our original correlation image.
 
-            xyShift[0] = np.round(xyShift[0] * upsampleFactor) / upsampleFactor
-            xyShift[1] = np.round(xyShift[1] * upsampleFactor) / upsampleFactor
+            xyShift[0] = np.round(xyShift[0] * upsample_factor) / upsample_factor
+            xyShift[1] = np.round(xyShift[1] * upsample_factor) / upsample_factor
 
-            globalShift = np.fix(np.ceil(upsampleFactor * 1.5)/2)
+            globalShift = np.fix(np.ceil(upsample_factor * 1.5) / 2)
             if verbose:
                 print('globalShift = {}'.format(globalShift))
                 print('xyShift = {}'.format(xyShift))
 
-            imageCorrUpsample = np.conj(dftUpsample(np.conj(imageCorr), upsampleFactor,
-                                                    globalShift - np.multiply(xyShift, upsampleFactor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * upsampleFactor ** 2)
+            imageCorrUpsample = np.conj(dftUpsample(np.conj(image_corr), upsample_factor,
+                                                    globalShift - np.multiply(xyShift, upsample_factor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * upsample_factor ** 2)
 
             xySubShift = np.unravel_index(imageCorrUpsample.argmax(), imageCorrUpsample.shape, 'C')
             if verbose:
@@ -177,26 +184,26 @@ def upsampled_correlation(imageCorr, upsampleFactor, verbose=False):
                 dx = (icc[2, 1] - icc[0, 1]) / (4 * icc[1, 1] - 2 * icc[2, 1] - 2 * icc[0, 1])
                 dy = (icc[1, 2] - icc[1, 0]) / (4 * icc[1, 1] - 2 * icc[1, 2] - 2 * icc[1, 0])
             except:
-                dx, dy = 0, 0 #  this is the case when the peak is near the edge and one of the above values does not exist
+                dx, dy = 0, 0 #  peak is near the edge and one of the above values does not exist
 
             xySubShift = xySubShift - globalShift
-            xyShift = xyShift + (xySubShift + np.array([dx, dy])) / upsampleFactor
+            xyShift = xyShift + (xySubShift + np.array([dx, dy])) / upsample_factor
 
     return xyShift
 
 
-def upsampleFFT(imageInit, upsampleFactor):
+def upsampleFFT(image_init, upsample_factor):
     """This does a Fourier upsample of the imageInit. imageInit is the Fourier transform of the correlation image.
-    The function returns the real space correlation image that has been Fourier upsampled by the upsampleFactor.
+    The function returns the real space correlation image that has been Fourier upsampled by the upsample_factor.
     An upsample factor of 2 is generally sufficient.
 
     The way it works is that it embeds imageInit in a larger array of zeros, then does the inverse Fourier transform to return the Fourier upsampled image in real space.
 
     Parameters
     ----------
-        imageInit : ndarray  complex
+        image_init : ndarray  complex
             The image to be Fourier upsampled. This should be in the Fourier domain.
-        upsampleFactor : int
+        upsample_factor : int
             THe upsample factor (usually 2).
 
     Returns
@@ -213,14 +220,14 @@ def upsampleFFT(imageInit, upsampleFactor):
     return imageUpsampleReal
     """
     
-    ss = [int(ii*upsampleFactor/4) for ii in imageInit.shape]  # pad size
-    imageInit2 = np.pad(np.fft.fftshift(imageInit), ss, mode='constant')  # pad the FFT
-    imageUpsampleReal = np.real(np.fft.ifftn(np.fft.ifftshift(imageInit2)))  # inverse FFT
+    ss = [int(ii * upsample_factor / 4) for ii in image_init.shape]  # pad size
+    imageInit2 = np.pad(np.fft.fftshift(image_init), ss, mode='constant')  # pad the FFT
+    image_upsample_real = np.real(np.fft.ifftn(np.fft.ifftshift(imageInit2)))  # inverse FFT
 
-    return imageUpsampleReal
+    return image_upsample_real
 
 
-def dftUpsample(imageCorr, upsampleFactor, xyShift):
+def dftUpsample(image_corr, upsample_factor, xy_shift):
     """
     This performs a matrix multiply DFT around a small neighboring region of the initial correlation peak.
     By using the matrix multiply DFT to do the Fourier upsampling, the efficiency is greatly improved.
@@ -234,52 +241,52 @@ def dftUpsample(imageCorr, upsampleFactor, xyShift):
 
     Parameters
     ----------
-        imageCorr : ndarray
+        image_corr : ndarray
             Correlation image between two images in Fourier space.
-        upsampleFactor : int
+        upsample_factor : int
             Scalar integer of how much to upsample.
-        xyShift : list of 2 floats
+        xy_shift : list of 2 floats
             Single pixel shift between images previously computed. Used to center the matrix multiplication
             on the correlation peak.
 
     Returns
     -------
-        imageUpsample : ndarray
+        image_upsample : ndarray
             Upsampled image from region around correlation peak.
 
     """
-    imageSize = imageCorr.shape
+    imageSize = image_corr.shape
     pixelRadius = 1.5
-    numRow = np.ceil(pixelRadius * upsampleFactor)
+    numRow = np.ceil(pixelRadius * upsample_factor)
     numCol = numRow
 
-    colKern = np.exp((-1j * 2 * np.pi / (imageSize[1] * upsampleFactor)) *
+    colKern = np.exp((-1j * 2 * np.pi / (imageSize[1] * upsample_factor)) *
                      (np.fft.ifftshift( (np.arange(imageSize[1]))) -
                      np.floor(imageSize[1]/2)) *
-                     (np.arange(numCol) - xyShift[1])[:, np.newaxis]
-                    )
+                     (np.arange(numCol) - xy_shift[1])[:, np.newaxis]
+                     )
 
     rowKern = np.exp(
-    (-1j * 2 * np.pi / (imageSize[0] * upsampleFactor))
-    * (np.arange(numRow) - xyShift[0])
+    (-1j * 2 * np.pi / (imageSize[0] * upsample_factor))
+    * (np.arange(numRow) - xy_shift[0])
     * (np.fft.ifftshift(np.arange(imageSize[0]))
     - np.floor(imageSize[0]/2))[:, np.newaxis]
     ) # Comment from above applies.
 
-    imageUpsample = np.real(np.dot(np.dot(rowKern.transpose(), imageCorr), colKern.transpose()))
+    image_upsample = np.real(np.dot(np.dot(rowKern.transpose(), image_corr), colKern.transpose()))
 
-    return imageUpsample
+    return image_upsample
 
 
-def imageShifter(G2, xyShift):
+def imageShifter(g1, xy_shift):
     """
-    This function multiplies G2 by a plane wave that has the real space effect of shifting ifft2(G2) by [x, y] pixels.
+    Multiply im by a plane wave that has the real space effect of shifting ifft2(G2) by [x, y] pixels.
 
     Parameters
    -----------
-        G2 : complex ndarray
+        g1 : complex ndarray
             The Fourier transform of an image.
-        xyShift : list
+        xy_shift : list
             A two element list of the shifts along each axis.
 
     Returns
@@ -295,17 +302,17 @@ def imageShifter(G2, xyShift):
 
     """
     # Check that the inputs are complex FFTs (common error)
-    if not np.iscomplexobj(G2):
-        raise TypeError('G2 must be complex FFTs.')
+    if not np.iscomplexobj(g1):
+        raise TypeError('g1 must be complex FFTs.')
 
-    imageSize = G2.shape
+    imageSize = g1.shape
     qx = np.fft.fftfreq(imageSize[0], 1)  # does this need to be a column vector
     if imageSize[1] == imageSize[0]:
         qy = qx
     else:
         qy = np.fft.fftfreq(imageSize[1], 1)
 
-    G2shift = np.multiply(G2, np.outer( np.exp(-2j * np.pi * qx * xyShift[0]),  np.exp(-2j * np.pi * qy * xyShift[1])))
+    G2shift = np.multiply(g1, np.outer(np.exp(-2j * np.pi * qx * xy_shift[0]), np.exp(-2j * np.pi * qy * xy_shift[1])))
 
     return G2shift
 
@@ -315,9 +322,9 @@ if __name__ == '__main__':
     import multicorr
     from scipy import ndimage
 
-    up = 4
+    up = 2
     sh0 = (4.6, 5.8)
-    method = 'phase'
+    method = 'hybrid'
 
     print('Upsample factor = {}'.format(up))
     print('Applied shift = {}'.format(sh0))
@@ -325,5 +332,5 @@ if __name__ == '__main__':
     with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
         dd, md = f0.get_emdgroup(f0.list_emds[0])
     dd2 = ndimage.shift(dd, (4.6, 5.8), mode='mirror')
-    sh = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), method=method, upsampleFactor=up)
+    sh = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), method=method, upsample_factor=up)
     print('Final shift = {}'.format(sh))
