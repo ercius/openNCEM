@@ -230,9 +230,9 @@ def upsampleFFT(imageInit, upsampleFactor):
 
 def dftUpsample(imageCorr, upsampleFactor, xyShift):
     """
-    This performs a matrix multiply DFT around a small neighboring region of the inital correlation peak.
+    This performs a matrix multiply DFT around a small neighboring region of the initial correlation peak.
     By using the matrix multiply DFT to do the Fourier upsampling, the efficiency is greatly improved.
-    This is adapted from the subfuction dftups found in the dftregistration function on the Matlab File Exchange.
+    This is adapted from the subfunction dftups found in the dftregistration function on the Matlab File Exchange.
 
     https://www.mathworks.com/matlabcentral/fileexchange/18401-efficient-subpixel-image-registration-by-cross-correlation
 
@@ -304,37 +304,12 @@ def imageShifter(G2, xyShift):
 
     """
     imageSize = G2.shape
-    qx = makeFourierCoords(imageSize[0], 1)  # does this need to be a column vector
+    qx = np.fft.fftfreq(imageSize[0], 1)  # does this need to be a column vector
     if imageSize[1] == imageSize[0]:
         qy = qx
     else:
-        qy = makeFourierCoords(imageSize[1], 1)
+        qy = np.fft.fftfreq(imageSize[1], 1)
 
     G2shift = np.multiply(G2, np.outer( np.exp(-2j * np.pi * qx * xyShift[0]),  np.exp(-2j * np.pi * qy * xyShift[1])))
 
     return G2shift
-
-
-def makeFourierCoords(N, pSize):
-    """
-    This function creates Fourier coordinates such that (0,0) is in the center of the array.
-
-    Parameters
-    ----------
-        N :int
-            The maximum coordinate in the original frame.
-        pSize : float
-            The pixel size.
-
-    Returns
-    -------
-        q : ndarray
-            A single row array that has transformed 0:N to -N/2:N/2, such that the array sizes are the same.
-    """
-
-    N = float(N)
-    if N % 2 == 0:
-        q = np.roll(np.arange(-N/2, N/2, dtype='float64') / (N * pSize), int(-N/2), axis=0)
-    else:
-        q = np.roll(np.arange((1-N)/2, (N+1)/2) / (N * pSize), int((1-N)/2), axis=0)
-    return q
