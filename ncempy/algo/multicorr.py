@@ -3,16 +3,8 @@ Module to correlate two images, functionally written.
 
 TODO
 ----
-    - Add verbose output
-    - upsampled_correlation has ```if upSample > 2``` but
-      should it be if upSample >= 2?
     - Cant use rfft2 currently. This gives one shift as 1/2 the value. How
       can this be improved to improve speed?
-    - Better to make this a class. Then you can set it
-      up and change the inputs without having to run
-      through all of the setup again
-    - imageShifter and multicorr output have opposite sign. ??
-
 """
 
 import numpy as np
@@ -46,12 +38,11 @@ def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
         Cross correlate two images already stored as ndarrays. You must input the FFT
         of the images.
 
-        >>> import ncempy.multicorr as mc
+        >>> from ncempy.algo.multicorr import multicorr
         >>> import numpy as np
         >>> im0FFT = np.fft.fft2(im0)
         >>> im1FFT = np.fft.fft2(im1)
-        >>> shifts = mc.multicorr(im0FFT,im1FFT)
-
+        >>> shifts = multicorr(im0FFT, im1FFT)
     """
     
     # Check to make sure both G1 and G2 are arrays
@@ -83,13 +74,13 @@ def multicorr(G1, G2, method='cross', upsampleFactor=1, verbose=True):
     if G1.shape != G2.shape:
         raise TypeError('G1 and G2 are not the same size, G1 is {0} and G2 is {1}'.format(G1.shape, G2.shape))
 
-    imageCorr = initial_correlation_image(G1, G2, method)
-    xyShift = upsampled_correlation(imageCorr, upsampleFactor)
+    imageCorr = initial_correlation_image(G1, G2, method, verbose=verbose)
+    xyShift = upsampled_correlation(imageCorr, upsampleFactor, verbose=verbose)
     
     return xyShift
 
 
-def initial_correlation_image(G1, G2, method='cross'):
+def initial_correlation_image(G1, G2, method='cross', verbose=False):
     """Generate correlation image at initial resolution using the method specified.
 
     Parameters
@@ -106,20 +97,22 @@ def initial_correlation_image(G1, G2, method='cross'):
         imageCorr : ndarray complex
             Correlation array which has not yet been inverse Fourier transformed.
     """
+    if verbose:
+        print('Method is {}'.format(method))
     G12 = G2 * np.conj(G1)  # is this the correct order that we want?
     if method == 'phase':
         imageCorr = np.exp(1j * np.angle(G12))
     elif method == 'cross':
         imageCorr = G12
     elif method == 'hybrid':
-        imageCorr = np.multiply(np.sqrt(np.absolute(G12)), np.exp(1j * np.angle(G12)))
+        imageCorr = np.sqrt(np.abs(G12)) * np.exp(1j * np.angle(G12))
     else:
         raise TypeError('{} method is not allowed'.format(str(method)))
 
     return imageCorr
 
 
-def upsampled_correlation(imageCorr, upsampleFactor):
+def upsampled_correlation(imageCorr, upsampleFactor, verbose=False):
     """Upsamples the correlation image by a set integer factor upsampleFactor.
     If upsampleFactor == 2, then it is naively Fourier upsampled.
     If the upsampleFactor is higher than 2, then it uses dftUpsample, which is
@@ -131,13 +124,13 @@ def upsampled_correlation(imageCorr, upsampleFactor):
             Fourier transformed correlation image returned by initial_correlation_image.
         upsampleFactor : int
             Upsampling factor.
-
+        verbose : bool
+            Provide output for debugging
     Returns
     -------
         xyShift : list
             Shift in x and y of G2 with respect to G1.
     """
-    verbose = True
     imageCorrIFT = np.real(np.fft.ifft2(imageCorr))
     xyShift = list(np.unravel_index(imageCorrIFT.argmax(), imageCorrIFT.shape, 'C'))
     if verbose:
@@ -165,28 +158,29 @@ def upsampled_correlation(imageCorr, upsampleFactor):
             xyShift[0] = np.round(xyShift[0] * upsampleFactor) / upsampleFactor
             xyShift[1] = np.round(xyShift[1] * upsampleFactor) / upsampleFactor
 
-            globalShift = np.fix(np.ceil(upsampleFactor * 1.5)/2)  # this line might have an off by one error based. The associated matlab comment is "this will be used to center the output array at dftshift + 1"
+            globalShift = np.fix(np.ceil(upsampleFactor * 1.5)/2)
             if verbose:
-                print('globalShift', globalShift, 'upsampleFactor', upsampleFactor, 'xyShift', xyShift)
+                print('globalShift = {}'.format(globalShift))
+                print('xyShift = {}'.format(xyShift))
 
-            imageCorrUpsample = np.conj(dftUpsample(np.conj(imageCorr), upsampleFactor, globalShift - np.multiply(xyShift, upsampleFactor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * upsampleFactor ** 2)
+            imageCorrUpsample = np.conj(dftUpsample(np.conj(imageCorr), upsampleFactor,
+                                                    globalShift - np.multiply(xyShift, upsampleFactor))) / (np.fix(imageSizeLarge[0]) * np.fix(imageSizeLarge[1]) * upsampleFactor ** 2)
 
             xySubShift = np.unravel_index(imageCorrUpsample.argmax(), imageCorrUpsample.shape, 'C')
-            # print('xySubShift = {}'.format(xySubShift))
+            if verbose:
+                print('xySubShift = {}'.format(xySubShift))
 
             # add a subpixel shift via parabolic fitting
             try:
-                icc = np.real(imageCorrUpsample[xySubShift[0] - 1 : xySubShift[0] + 2, xySubShift[1] - 1 : xySubShift[1] + 2])
-                dx = (icc[2,1] - icc[0,1]) / (4 * icc[1,1] - 2 * icc[2,1] - 2 * icc[0,1])
-                dy = (icc[1,2] - icc[1,0]) / (4 * icc[1,1] - 2 * icc[1,2] - 2 * icc[1,0])
+                icc = np.real(imageCorrUpsample[xySubShift[0] - 1 : xySubShift[0] + 2,
+                                                xySubShift[1] - 1 : xySubShift[1] + 2])
+                dx = (icc[2, 1] - icc[0, 1]) / (4 * icc[1, 1] - 2 * icc[2, 1] - 2 * icc[0, 1])
+                dy = (icc[1, 2] - icc[1, 0]) / (4 * icc[1, 1] - 2 * icc[1, 2] - 2 * icc[1, 0])
             except:
                 dx, dy = 0, 0 #  this is the case when the peak is near the edge and one of the above values does not exist
-            #print('dxdy = {}, {}'.format(dx, dy))
-            #print('xyShift = {}'.format(xyShift))
-            xySubShift = xySubShift - globalShift;
-            #print('xysubShift2 = {}'.format(xySubShift))
+
+            xySubShift = xySubShift - globalShift
             xyShift = xyShift + (xySubShift + np.array([dx, dy])) / upsampleFactor
-            #print('xyShift2 = {}'.format(xyShift))
 
     return xyShift
 
@@ -259,12 +253,11 @@ def dftUpsample(imageCorr, upsampleFactor, xyShift):
     numRow = np.ceil(pixelRadius * upsampleFactor)
     numCol = numRow
 
-    colKern = np.exp(
-    (-1j * 2 * np.pi / (imageSize[1] * upsampleFactor))
-    * (np.fft.ifftshift( (np.arange(imageSize[1])) )
-    - np.floor(imageSize[1]/2))
-    * (np.arange(numCol) - xyShift[1])[:, np.newaxis]
-    ) # I think this can be written differently without the need for np.newaxis. This might require np.outer to compute the matrix itself instead of just using np.dot.
+    colKern = np.exp((-1j * 2 * np.pi / (imageSize[1] * upsampleFactor)) *
+                     (np.fft.ifftshift( (np.arange(imageSize[1]))) -
+                     np.floor(imageSize[1]/2)) *
+                     (np.arange(numCol) - xyShift[1])[:, np.newaxis]
+                    )
 
     rowKern = np.exp(
     (-1j * 2 * np.pi / (imageSize[0] * upsampleFactor))
@@ -316,13 +309,21 @@ def imageShifter(G2, xyShift):
 
     return G2shift
 
+
 if __name__ == '__main__':
     import ncempy.io as nio
     import multicorr
     from scipy import ndimage
 
+    up = 4
+    sh0 = (4.6, 5.8)
+    method = 'phase'
+
+    print('Upsample factor = {}'.format(up))
+    print('Applied shift = {}'.format(sh0))
+
     with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
         dd, md = f0.get_emdgroup(f0.list_emds[0])
     dd2 = ndimage.shift(dd, (4.6, 5.8), mode='mirror')
-    sh = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), upsampleFactor=1)
-    print(sh)
+    sh = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), method=method, upsampleFactor=up)
+    print('Final shift = {}'.format(sh))
