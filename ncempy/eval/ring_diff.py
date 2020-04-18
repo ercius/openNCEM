@@ -1,6 +1,6 @@
-'''
+"""
 Module to process ring diffraction patterns.
-'''
+"""
 
 import ncempy.algo.local_max
 import ncempy.algo.distortion
@@ -8,7 +8,7 @@ import ncempy.algo.radial_profile
 import ncempy.algo.math
 import ncempy.io.emd
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
@@ -20,7 +20,7 @@ cur_set_vers = 'ring_diffraction_setting_vers0.1'
 cur_eva_vers = 'ring_diffraction_evaluation_vers0.1'
 '''(str):    Used to identify evaluation hdf5 groups.'''
 
-dummie_settings = { 'lmax_r': 1,
+dummy_settings = {'lmax_r': 1,
                     'lmax_thresh': 1,
                     'lmax_cinit': (1,1),
                     'lmax_range': (1.,2.),
@@ -31,16 +31,16 @@ dummie_settings = { 'lmax_r': 1,
                     'rad_sigma': 0.1,
                     'mask': np.ones((5,5)),
                     'fit_rrange': (1.0, 2.0),
-                    'back_xs': (1.0, 2.0, 3.0),
-                    'back_xswidth': 0.1,
-                    'back_init': (1.0, 1.0, 1.0),
-                    'fit_funcs': ('voigt',),
-                    'fit_init': (1.0, 1.0, 1.0, 1.0),
-                    'fit_maxfev':10
+                  'back_xs': (1.0, 2.0, 3.0),
+                  'back_xswidth': 0.1,
+                  'back_init': (1.0, 1.0, 1.0),
+                  'fit_funcs': ('voigt',),
+                  'fit_init': (1.0, 1.0, 1.0, 1.0),
+                  'fit_maxfev':10
                   }
 '''(dict):    Dummy settings with all parameters set.'''
 
-min_dummie_settings = { 'lmax_r': 1,
+min_dummy_settings = {'lmax_r': 1,
                         'lmax_thresh': 1,
                         'lmax_cinit': (1,1),
                         'lmax_range': (1.,2.),
@@ -51,33 +51,32 @@ min_dummie_settings = { 'lmax_r': 1,
                         'rad_sigma': None,
                         'mask': None,
                         'fit_rrange': (1.0, 2.0),
-                        'back_xs': (1.0, 2.0, 3.0),
-                        'back_xswidth': 0.1,
-                        'back_init': (1.0, 1.0, 1.0),
-                        'fit_funcs': ('voigt',),
-                        'fit_init': (1.0, 1.0, 1.0, 1.0),
-                        'fit_maxfev': None
-                    }
+                      'back_xs': (1.0, 2.0, 3.0),
+                      'back_xswidth': 0.1,
+                      'back_init': (1.0, 1.0, 1.0),
+                      'fit_funcs': ('voigt',),
+                      'fit_init': (1.0, 1.0, 1.0, 1.0),
+                      'fit_maxfev': None
+                      }
 '''(dict):    Dummy settings with all parameters set but all optional ones as Nones.'''
 
 
 def get_settings( parent ):
-    '''Get settings for radial profile evaluation.
-    
+    """Get settings for radial profile evaluation.
+
     Parameters:
         parent (h5py._hl.group.Group):    Input group.
-    
+
     Returns:
         (dict):    Settings read from parent.
-        
-    '''
+
+    """
     
     try:
-        assert( isinstance(parent, h5py._hl.group.Group) )
+        assert(isinstance(parent, h5py._hl.group.Group))
     except:
         raise TypeError('Something wrong with the input.')
-    
-    
+
     if not parent.attrs['type'] == np.string_(cur_set_vers):
         print('Don\'t  know the format of these settings.')
         return None
@@ -94,8 +93,7 @@ def get_settings( parent ):
     settings['back_xswidth'] = parent.attrs['back_xswidth']
     settings['back_init'] = parent.attrs['back_init']
     settings['fit_init'] = parent.attrs['fit_init']
-    
-    
+
     if isinstance(parent.attrs['fit_funcs'], np.ndarray):
         in_funcs = parent.attrs['fit_funcs'][0]
     else:
@@ -106,8 +104,7 @@ def get_settings( parent ):
     for i in range(len(in_funcs)):
         out_funcs.append(in_funcs[i].decode('utf-8').strip())
     settings['fit_funcs'] = tuple(out_funcs)
-    
-    
+
     if 'plt_imgminmax' in parent.attrs:
         settings['plt_imgminmax'] = parent.attrs['plt_imgminmax']
     else:
@@ -142,18 +139,18 @@ def get_settings( parent ):
 
 
 def put_settings( parent, settings ):
-    '''Put settings for radial profile evaluation.
-    
+    """Put settings for radial profile evaluation.
+
     Creates a subgroup in parent holding the settings as attributes.
-    
+
     Parameters:
         parent (h5py._hl.group.Group):    Group to hold settings subgroup.
         setting (dict):    Settings to write.
-    
+
     Returns:
         (h5py._hl.group.Group):    Handle to settings group.
-        
-    '''
+
+    """
  
     try:
         assert( isinstance(parent, h5py._hl.group.Group) )
@@ -205,28 +202,27 @@ def put_settings( parent, settings ):
 
 
 def put_sglgroup(parent, label, data_grp):
-    '''Puts the todo evaluation into parent.
-    
-    Remember that the ressource of the external link must not be already opened elsewhere to access data.
-    
+    """Adds the evaluation into parent.
+
+    Remember that the resource of the external link must not be already opened elsewhere to access data.
+
     Parameters:
         parent (h5py._hl.group.Group):    Hdf5 group to add this evaluation group to.
         label (str):    Label for the evaluation group.
         data_grp (h5py._hl.group.Group):    Emdtype group where to find the data.
-    
+
     Returns:
         (h5py._hl.group.Group):    Handle to group.
-        
-    '''
+
+    """
     
     try:
         assert( isinstance(parent, h5py._hl.group.Group) )
         label = str(label)
         assert( isinstance(data_grp, h5py._hl.group.Group) )
-    except:
+    except TypeError:
         raise TypeError('Something wrong with the input')
-        
-    
+
     # create the evaluation group
     grp = parent.create_group(label)
     grp.attrs['type'] = np.string_(cur_eva_vers)
@@ -240,16 +236,16 @@ def put_sglgroup(parent, label, data_grp):
     
 
 def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False):
-    '''Run evaluation on a single group.
-    
+    """Run evaluation on a single group.
+
     Parameters:
         group (h5py._hl.group.Group):    Handle to evaluation group to execute.
         outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
         overwrite (bool):    Set to overwrite existing results in outfile.
         verbose (bool):    Set to get verbose output during run.
         showplots (bool):    Set to directly show plots interactively.
-        
-    '''
+
+    """
 
     try:
         assert(isinstance(group, h5py._hl.group.Group))
@@ -258,12 +254,10 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
         assert(isinstance(outfile, ncempy.io.emd.fileEMD))
     except:
         raise TypeError('Something wrong with the input.')
-        
-    
+
     if verbose:
         print('Running evaluation of "{}".'.format(group.name))
-        
-        
+
     # get the emdgroup
     if verbose:
         print('.. getting data from {}:{}'.format(group.attrs['filename'].decode('utf-8'), group.attrs['internal_path'].decode('utf-8')))
@@ -315,12 +309,12 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
                 fits_back = np.zeros( (res_back.shape[0], data.shape[0]) )
                 
             # assign data    
-            profiles[:,i] = profile[:,1]
-            fits[:,i] = res[:]
-            centers[:,i] = center[:]
-            distss[:,i] = dists[:]
-            rawprofiles[:,i] = rawprofile[:,1]
-            fits_back[:,i] = res_back[:]
+            profiles[:, i] = profile[:, 1]
+            fits[:, i] = res[:]
+            centers[:, i] = center[:]
+            distss[:, i] = dists[:]
+            rawprofiles[:, i] = rawprofile[:, 1]
+            fits_back[:, i] = res_back[:]
 
         # save results in this group
         outfile.put_emdgroup('radial_profile', profiles, ( (profile[:,0], 'radial distance', dims[2][2]) , dims[0]), parent=group, overwrite=overwrite)
@@ -350,19 +344,19 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
     
 
 def run_all(parent, outfile, overwrite=False, verbose=False, showplots=False):
-    '''
+    """
     Run on a set-up emd file to do evaluations and save results.
-    
+
     All evaluations within parent are run.
-    
+
     Parameters:
         parent (h5py._hl.group.Group):    Handle to parent.
         outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
         overwrite (bool):    Set to overwrite existing results in outfile.
         verbose (bool):    Set to get verbose output during run.
         showplots (bool):    Set to directly show plots interactively.
-        
-    '''
+
+    """
     
     # get all groups with evaluations to do
     todo = []
@@ -384,5 +378,3 @@ def run_all(parent, outfile, overwrite=False, verbose=False, showplots=False):
     # run through all evaluations
     for i in range(len(todo)):
         run_sglgroup(todo[i], outfile, overwrite=overwrite, verbose=verbose, showplots=showplots)
-    
-

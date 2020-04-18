@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
 
+import ncempy.algo
 from ncempy.algo.distortion import rad_dis
 
 
@@ -257,6 +258,182 @@ def plot_distpolar(points, dims, dists, ns, show=False):
     ax.set_xlabel('theta /[rad]')
     ax.set_xlim( (-np.pi, np.pi) )
     ax.set_ylabel('r /{}'.format(dims[0][2]))
+
+    if show:
+        plt.show(block=False)
+
+    # render to array
+    fig.canvas.draw()
+    plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    plot = plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return plot
+
+
+def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False):
+    """Plot the detected points on the input image for checking.
+
+    Parameters:
+        img (np.ndarray):    Image.
+        points (np.ndarray):    Array containing the points.
+        vminmax (tuple):    Tuple of two values for relative lower and upper cut off to display image.
+        dims (tuple):    Tuple of dims to plot in dimensions.
+        invert (bool):    Set to invert the image.
+        show (bool):    Set to directly show the plot interactively.
+
+    Returns:
+        (np.ndarray):    Image of the plot.
+
+    """
+
+    try:
+        assert(isinstance(img, np.ndarray))
+
+        assert(isinstance(points, np.ndarray))
+        assert(points.shape[1] == 2)
+        assert(len(points.shape) == 2)
+    except:
+        raise TypeError('Something wrong with the input!')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    if invert:
+        cmap = "Greys"
+    else:
+        cmap = "gray"
+
+    if dims:
+        ax.imshow(img, cmap=cmap, vmin=np.min(img)+vminmax[0]*(np.max(img)-np.min(img)),
+                  vmax=np.min(img)+vminmax[1]*(np.max(img)-np.min(img)),
+                  extent=(np.min(dims[0][0]), np.max(dims[0][0]), np.max(dims[1][0]), np.min(dims[1][0])))
+        ax.set_xlabel('{} {}'.format(dims[0][1], dims[0][2]))
+        ax.set_ylabel('{} {}'.format(dims[1][1], dims[1][2]))
+        ax.set_xlim((np.min(dims[0][0]), np.max(dims[0][0])))
+        ax.set_ylim((np.max(dims[1][0]), np.min(dims[1][0])))
+    else:
+        ax.imshow(img, cmap=cmap, vmin=np.min(img)+vminmax[0]*(np.max(img)-np.min(img)), vmax=np.min(img)+vminmax[1]*(np.max(img)-np.min(img)) )
+        ax.set_xlim((0,img.shape[1]-1))
+        ax.set_ylim((img.shape[0]-1,0))
+
+    ax.scatter(points[:, 1], points[:, 0], color='r', marker='o', facecolors='none')
+
+    if show:
+        try:
+            plt.show(block=False)
+        except:
+            pass
+
+    fig.canvas.draw()
+
+    plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    plot = plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return plot
+
+
+def plot_radialprofile( r, intens, dims, show=False ):
+    """Plot radial profile.
+
+    Parameters:
+        r (np.ndarray):    r-axis of radial profile.
+        intens (np.ndarray):    Intensity-axis of radial profile.
+        dims (tuple):    Dimensions of original image to read out units.
+        show (bool):    Set to directly show plot interactively.
+
+    Returns:
+        (np.ndarray):    Image of the plot.
+
+    """
+
+    try:
+        # check data
+        assert(isinstance(r, np.ndarray))
+        assert(isinstance(intens, np.ndarray))
+        assert(np.array_equal(r.shape, intens.shape))
+
+        # check if dims availabel
+        assert(len(dims)>=1)
+        assert(len(dims[0])==3)
+
+    except:
+        raise TypeError('Something wrong with the input!')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.plot(r, intens, 'r-')
+
+    # labels
+    ax.set_xlabel('r /{}'.format(dims[0][2]))
+    ax.set_ylabel('I /[a.u.]')
+
+    if show:
+        plt.show(block=False)
+
+    # render to array
+    fig.canvas.draw()
+    plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    plot = plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return plot
+
+
+def plot_fit( r, intens, dims, funcs, param, show=False ):
+    """Plot the fit results to the radial profile.
+
+    Parameters:
+        r (np.ndarray):    r-axis of radial profile.
+        intens (np.ndarray):    Intensity-axis of radial profile.
+        dims (tuple):    Dimensions of original image to read out units.
+        funcs (tuple):    List of functions.
+        param (np.ndarray):    Parameters for functions in funcs.
+        show (bool):    Set to directly show plot interactively.
+
+    Returns:
+        (np.ndarray):    Image of the plot.
+
+    """
+
+    try:
+        # check data
+        assert(isinstance(r, np.ndarray))
+        assert(isinstance(intens, np.ndarray))
+        assert(np.array_equal(r.shape, intens.shape))
+
+        # check if dims availabel
+        assert(len(dims)>=1)
+        assert(len(dims[0])==3)
+
+        # funcs and params
+        assert(len(funcs)>=1)
+        for i in range(len(funcs)):
+            assert(funcs[i] in ncempy.algo.math.lkp_funcs)
+
+        param = np.array(param)
+        param = np.reshape(param, sum(map(lambda x: ncempy.algo.math.lkp_funcs[x][1], funcs)))
+
+    except:
+        raise TypeError('Something wrong with the input!')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # plot radial profile
+    ax.plot(r, intens, 'r-')
+
+    # plot single
+    n = 0
+    for i in range(len(funcs)):
+        ax.plot(r, ncempy.algo.math.lkp_funcs[funcs[i]][0]( r, param[n:n+ncempy.algo.math.lkp_funcs[funcs[i]][1]]), 'g-' )
+        n += ncempy.algo.math.lkp_funcs[funcs[i]][1]
+    # sum of functions
+    sum_funcs = ncempy.algo.math.sum_functions( r, funcs, param )
+    ax.plot(r, sum_funcs, 'b-')
+
+    # labels
+    ax.set_xlabel('r /{}'.format(dims[0][2]))
+    ax.set_ylabel('I /[a.u.]')
 
     if show:
         plt.show(block=False)

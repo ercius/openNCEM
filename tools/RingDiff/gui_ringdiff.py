@@ -841,9 +841,9 @@ class Main(QtGui.QMainWindow):
             mysettings = copy.deepcopy(self.settings)
             # reinsert mask
             mysettings['mask'] = self.mask
-            for key in ncempy.eval.ring_diff.min_dummie_settings:
+            for key in ncempy.eval.ring_diff.min_dummy_settings:
                 if not key in mysettings:
-                    mysettings[key] = ncempy.eval.ring_diff.min_dummie_settings[key]
+                    mysettings[key] = ncempy.eval.ring_diff.min_dummy_settings[key]
             
             ncempy.eval.ring_diff.put_settings( hdl, mysettings )
             

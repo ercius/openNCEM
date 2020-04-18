@@ -25,7 +25,7 @@ grp_eva = femd_out.file_hdl.create_group('evaluation')
 print('Evaluation file {} created.'.format(args.output[0]))
 
 # insert dummy settings
-grp_set = ncempy.eval.ring_diff.put_settings( grp_eva, ncempy.eval.ring_diff.dummie_settings )
+grp_set = ncempy.eval.ring_diff.put_settings(grp_eva, ncempy.eval.ring_diff.dummy_settings)
 
 print('Dummy settings written to {}.'.format(grp_set.name))
 print('.. to be edited with external hdf5 viewer. Note that you can copy this settings group and all attributes to the evaluation subgroups, if you want to use customized settings for single evaluations. A number of settings is optional and the corresponding attributes/datasets can be deleted to use default values during evaluation: plt_imgminmax, rad_rmax, rad_dr, rad_sigma, mask, fit_maxfev.')
