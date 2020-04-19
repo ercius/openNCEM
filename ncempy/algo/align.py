@@ -183,6 +183,11 @@ def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_f
     """ Align a series of images by cross-correlation. All images are aligned to the first image Uses image_correlate
     which is based on simple cross correlation.
 
+    Notes
+    -----
+        You should probably use ncempy.algo.stack_align since it uses mutlicorr and is more
+        functional.
+
     Parameters
     ----------
         stack : ndarray, 3D
