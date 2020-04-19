@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import ndimage
 
 
 def image_cross_corr(image, reference, real_filter=1, k_filter=1):
@@ -154,6 +153,7 @@ def image_phase_correlate(image, reference, real_filter=1, k_filter=1, shift_fun
             A tuple containing the shifted image and the shifts applied.
 
     """
+    output = None
 
     image_f = np.fft.rfft2((image - np.mean(image)) * real_filter)
     reference_f = np.fft.rfft2((reference - np.mean(reference)) * real_filter)
@@ -179,7 +179,7 @@ def image_phase_correlate(image, reference, real_filter=1, k_filter=1, shift_fun
     return output, shifts
 
 
-def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_func='shift'):
+def stack_align(stack, align_type='static', real_filter=1, k_filter=1, shift_func='shift'):
     """ Align a series of images by cross-correlation. All images are aligned to the first image Uses image_correlate
     which is based on simple cross correlation.
 
@@ -192,9 +192,6 @@ def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_f
     ----------
         stack : ndarray, 3D
             The stack of images to align. Shape [num, Y, X]
-
-        ref_num : int
-            The image number in the stack to use at the reference.
 
         real_filter : ndarray, optional, default = 1
             A real space filter to apply before cross-correlation
@@ -231,7 +228,7 @@ def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_f
     jj = 0
     for ii in range(1, stack.shape[0]):
         if align_type is 'dynamic':
-            j = ii - 1
+            jj = ii - 1
         output, sh = image_correlate(stack[ii, :, :], stack[jj, :, :], real_filter, k_filter, shift_func=shift_func)
         aligned[ii, :, :] = output
         shifts[ii, :] = sh
@@ -242,7 +239,6 @@ def stack_align(stack, align_type = 'static', real_filter=1, k_filter=1, shift_f
 if __name__ == '__main__':
     import ncempy.io as nio
     from scipy import ndimage
-    import matplotlib.pyplot as plt
 
     sh0 = [14, 15]
 
@@ -258,9 +254,9 @@ if __name__ == '__main__':
     assert sh0 == outShift[1]
 
     stack0 = np.zeros((5, *dd.shape), dtype=dd.dtype)
-    shifts0 = np.asarray( ((range(4,-6,-2)), (range(6,-8,-3))) ).T
-    for ii, sh in enumerate(shifts0):
-        stack0[ii, :, :] = ndimage.shift(dd, sh, mode='mirror')
+    shifts0 = np.asarray(((range(4, -6, -2)), (range(6, -8, -3)))).T
+    for ii2, sh1 in enumerate(shifts0):
+        stack0[ii2, :, :] = ndimage.shift(dd, sh1, mode='mirror')
     out_stack, out_stack_shifts = stack_align(stack0, align_type='static')
     print(shifts0)
     print(out_stack_shifts)

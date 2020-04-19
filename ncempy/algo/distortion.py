@@ -1,23 +1,23 @@
-'''
+"""
 Module to handle distortions in diffraction patterns.
-'''
+"""
 
 import numpy as np
 import scipy.optimize
 
 
 def filter_ring(points, center, rminmax):
-    '''Filter points to be in a certain radial distance range from center.
-    
+    """Filter points to be in a certain radial distance range from center.
+
     Parameters:
         points (np.ndarray):    Candidate points.
         center (np.ndarray/tuple):    Center position.
         rminmax (tuple):    Tuple of min and max radial distance.
-    
+
     Returns:
         (np.ndarray):    List of filtered points, two column array.
-        
-    '''
+
+    """
     
     try:
         # points have to be 2D array with 2 columns
@@ -48,18 +48,18 @@ def filter_ring(points, center, rminmax):
     
     
 def points_topolar(points, center):
-    '''Convert points to polar coordinate system.
-    
+    """Convert points to polar coordinate system.
+
     Can be either in pixel or real dim, but should be the same for points and center.
-    
+
     Parameters:
         points (np.ndarray):    Positions as two column array.
         center (np.ndarray/tuple):    Origin of the polar coordinate system.
-    
+
     Returns:
         (np.ndarray):    Positions in polar coordinate system as two column array (r, theta).
-    
-    '''
+
+    """
     
     try:
         # points have to be 2D array with 2 columns
@@ -83,16 +83,16 @@ def points_topolar(points, center):
 
 
 def residuals_center( param, data):
-    '''Residual function for minimizing the deviations from the mean radial distance.
-    
+    """Residual function for minimizing the deviations from the mean radial distance.
+
     Parameters:
         param (np.ndarray):    The center to optimize.
         data (np.ndarray):    The points in x,y coordinates of the original image.
-        
+
     Returns:
-        (np.ndarray):   Residuals.    
-        
-    '''
+        (np.ndarray):   Residuals.
+
+    """
     
     # manually calculating the radii, as we do not need the thetas
     rs = np.sqrt( np.square(data[:,0]-param[0]) + np.square(data[:,1]-param[1]) )
@@ -101,18 +101,18 @@ def residuals_center( param, data):
     
     
 def optimize_center(points, center, maxfev=1000, verbose=None):
-    '''Optimize the center by minimizing the sum of square deviations from the mean radial distance.
-    
+    """Optimize the center by minimizing the sum of square deviations from the mean radial distance.
+
     Parameters:
         points (np.ndarray):    The points to which the optimization is done (x,y coords in org image).
         center (np.ndarray/tuple):    Initial center guess.
         maxfev (int):    Max number of iterations forwarded to scipy.optimize.leastsq().
         verbose (bool):    Set to get verbose output.
-    
+
     Returns:
         (np.ndarray):    The optimized center.
-    
-    '''
+
+    """
 
     try:
         # points have to be 2D array with 2 columns
@@ -140,36 +140,36 @@ def optimize_center(points, center, maxfev=1000, verbose=None):
     
 
 def rad_dis( theta, alpha, beta, order=2 ):
-    '''Radial distortion due to ellipticity or higher order distortion.
-    
+    """Radial distortion due to ellipticity or higher order distortion.
+
     Relative distortion, to be multiplied with radial distance.
-    
+
     Parameters:
         theta (np.ndarray/float):    Angles at which to evaluate.
         alpha (float):    Orientation of major axis.
         beta (float):    Strength of distortion (beta = (1-r_min/r_max)/(1+r_min/r_max).
         order (int):    Order of distortion.
-        
+
     Returns:
         (np.ndarray/float):    Distortion factor.
-        
-    '''
+
+    """
     
     return (1.-np.square(beta))/np.sqrt(1.+np.square(beta)-2.*beta*np.cos(order*(theta+alpha)))
 
     
 def residuals_dis(param, points, ns):
-    '''Residual function for distortions.
-    
+    """Residual function for distortions.
+
     Parameters:
         param (np.ndarray):    Parameters for distortion.
         points (np.ndarray):    Points to fit to.
         ns (tuple):    List of orders to account for.
-    
+
     Returns:
         (np.ndarray):   Residuals.
-        
-    '''
+
+    """
 
     est = param[0]*np.ones(points[:,1].shape)
     for i in range(len(ns)):
@@ -179,20 +179,20 @@ def residuals_dis(param, points, ns):
     
     
 def optimize_distortion(points, ns, maxfev=1000, verbose=False):
-    '''Optimize distortions.
-    
+    """Optimize distortions.
+
     The orders in the list ns are first fitted subsequently and the result is refined in a final fit simultaneously fitting all orders.
-    
+
     Parameters:
         points (np.ndarray):    Points to optimize to (in polar coords).
         ns (tuple):    List of orders to correct for.
         maxfev (int):    Max number of iterations forwarded to scipy.optimize.leastsq().
         verbose (bool):    Set for verbose output.
-    
+
     Returns:
         (np.ndarray):    Optimized parameters according to ns.
-        
-    '''
+
+    """
     
     try:
         assert(isinstance(points, np.ndarray))
