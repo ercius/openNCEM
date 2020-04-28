@@ -516,7 +516,7 @@ def emdReader(filename, dsetNum = 0):
     """
     with fileEMD(filename, readonly = True) as emd0:
         d, dims = emd0.get_emdgroup(dsetNum, memmap = False) # memmap must be false. File is closed
-        out = {'data': d, 'filename': filename, 'pixelSize': []}  # TODO: Add in pixel size and other meta data
+        out = {'data': d, 'filename': filename, 'pixelSize': []}
 
         for dim in dims:
             try:
@@ -527,3 +527,11 @@ def emdReader(filename, dsetNum = 0):
         out['pixelUnit'] = [aa[2] for aa in dims]
         out['pixelName'] = [aa[1] for aa in dims]
         return out
+
+
+if __name__ == '__main__':
+    fPath = Path(r'C:\Users\linol\Data') / Path('Acquisition_18.emd')
+
+    emd0 = emdReader(fPath)
+
+    print(emd0['pixelSize'])
