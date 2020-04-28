@@ -543,9 +543,9 @@ def emdReader(filename, dsetNum = 0):
 if __name__ == '__main__':
     fPath = Path(r'C:\Users\linol\Data') / Path('Acquisition_18.emd')
 
-    emd0 = emdReader(fPath)
+    emd00 = emdReader(fPath)
 
-    print(emd0['pixelSize'])
+    print(emd00['pixelSize'])
 
     print(defaultDims(np.zeros((10, 20, 30)), pixel_size=(0.1, 0.2, 0.3)))
     print(defaultDims(np.zeros((10, 20, 30))))
