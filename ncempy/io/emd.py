@@ -461,31 +461,42 @@ class fileEMD:
         return self.get_emdgroup(group, memmap = True)
         
 
-def defaultDims(data):
+def defaultDims(data, pixel_size=None):
     """ A helper function that can generate a properly setup dim tuple
     with default values to allow quick writing of EMD files without
-    the need to create these dim vectors.
+    the need to create these dim vectors manually.
 
     Parameters
     ----------
-        data: ndarray
+        data : ndarray
             The data that will be written to the EMD file. This is used to get the number of dims and their shape
+
+        pixel_size : tuple, optional
+            A tuple of pixel sizes. Must have same length as the number of dimensions of data.
 
     Returns
     -------
         dims: tuple
-            A properly formatter tuple of dim vectors used as input
+            A properly formatted tuple of dim vectors used as input
             to emd.emdFile.put_emdgroup()
     """
+
     num = data.ndim
+
+    if not pixel_size:
+        pixel_size = (1,) * num
+
+    if len(pixel_size) != data.ndim:
+        raise ValueError('pixel_size and data dimensions must match')
 
     dims = []
     for ii in range(num):
-        curDim = (np.linspace(0, data.shape[ii] - 1, data.shape[ii]),
-                  'dim{}'.format(ii), 'unit{}'.format(ii))  # TODO: Add pixel size option
+        curDim = (np.linspace(0, data.shape[ii] - 1, data.shape[ii]) * pixel_size[ii],
+                  'dim{}'.format(ii+1), 'unit{}'.format(ii+1))
         dims.append(curDim)
 
     return dims
+
 
 def emdReader(filename, dsetNum = 0):
     """ A simple helper function to read in the data and metadata 
@@ -535,3 +546,6 @@ if __name__ == '__main__':
     emd0 = emdReader(fPath)
 
     print(emd0['pixelSize'])
+
+    print(defaultDims(np.zeros((10, 20, 30)), pixel_size=(0.1, 0.2, 0.3)))
+    print(defaultDims(np.zeros((10, 20, 30))))
