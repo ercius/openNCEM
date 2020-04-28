@@ -38,8 +38,8 @@ class fileMRC:
 
         Low level operations to get 1 slice of the 3D data
             >>> import ncempy.io as nio
-            >>> mrc0 = mrc.fileMRC('file.mrc')
-            >>> single_image = mrc0.getSlice(0) #get only 1 image from disk
+            >>> with nio.mrc.fileMRC('file.mrc') as f1:
+                    single_slice = f1.getSlice(0)
     """
 
     def __init__(self, filename, verbose=False):
@@ -56,10 +56,22 @@ class fileMRC:
 
         # necessary declarations, if something fails
         self.fid = None
+        self.mrcType = None
+        self.dataType = None
+        self.dataSize = None
+        self.gridSize = None
+        self.volumeSize = None
+        self.voxelSize = None
+        self.cellAngles = None
+        self.axisOrientations = None
+        self.minMaxMean = None
+        self.extra = None
+        self.FEIinfo = None
+        self.dataOffset = None
 
         self.dataOut = {}  # will hold the data and metadata to output to the user after getDataset() call
 
-        # Add a top level variable to indicate verbosee output for debugging
+        # Add a top level variable to indicate verbose output for debugging
         self.v = verbose
 
         # Open the file and quit if the file does not exist
@@ -120,11 +132,17 @@ class fileMRC:
         
         '''
 
-        # Always start at the beginnging of the file.
+        # Always start at the beginning of the file.
         self.fid.seek(0)
 
+        header_dtype = np.dtype(
+            [('head1', '10int32'), ('head2', '6float32'), ('axisOrientations', '3int32'), ('minMaxMean', '3int32'),
+             ('extra', '32int32')])
+        header = np.fromfile(self.fid, dtype=header_dtype, count=1)
+
         # Read in the initial header values
-        head1 = np.fromfile(self.fid, dtype=np.int32, count=10)
+        #head1 = np.fromfile(self.fid, dtype=np.int32, count=10)
+        head1 = header['head1'][0]
         if self.v:
             print('header1 = {}'.format(head1))
         # Set the number of pixels for each dimension
@@ -144,8 +162,8 @@ class fileMRC:
             print('mrc defined gridSize = {}'.format(self.gridSize))
 
         # Get the physical volume size (always in Angstroms) (starting at byte #11 in the file).
-        head2 = np.fromfile(self.fid, dtype=np.float32, count=6)
-
+        #head2 = np.fromfile(self.fid, dtype=np.float32, count=6)
+        head2 = header['head2'][0]
         self.volumeSize = head2[0:3]
         if self.v:
             print('mrc defined volumeSize = {}'.format(self.volumeSize))
@@ -166,7 +184,8 @@ class fileMRC:
             print('cellAngles = {}'.format(self.cellAngles))
 
         # Axis orientations. Tells which axes are X,Y,Z
-        self.axisOrientations = np.fromfile(self.fid, dtype=np.int32, count=3)
+        #self.axisOrientations = np.fromfile(self.fid, dtype=np.int32, count=3)
+        self.axisOrientations = header['axisOrientations'][0]
         if self.v:
             print('axisOrientations = {}'.format(self.axisOrientations))
 
@@ -175,15 +194,22 @@ class fileMRC:
         #    print('data shape = {}'.format(self.Shape))
 
         # Min, max,mean
-        self.minMaxMean = np.fromfile(self.fid, dtype=np.int32, count=3)
+        #self.minMaxMean = np.fromfile(self.fid, dtype=np.int32, count=3)
+        self.minMaxMean = header['minMaxMean'][0]
 
-        # Extra information (for FEI MRC file, extra(1) is the size of the FEI information encoded with the file in terms of 4 byte floats)
-        self.extra = np.fromfile(self.fid, dtype=np.int32, count=34)
+        # Extra information (for FEI MRC file, extra(1) is the size of the FEI information encoded with the file in
+        # terms of 4 byte floats)
+        #self.extra = np.fromfile(self.fid, dtype=np.int32, count=34)
+        self.extra = header['extra'][0]
 
-        # Numpy uses C-style ordering. The header is written in Fortran-Style ordering. Flip the order of everything useful
+        # Numpy uses C-style ordering. The header is written in Fortran-Style ordering.
+        # Flip the order of everything useful
         if self.v:
             print(
-                'Note: The MRC header is written in Fortran-Style ordering, but Numpy uses C-style ordering. This program will now reverse the order (using [::-1]) of useful metadata: (dataSize, gridSize,volumeSize,voxelSize,cellAngles,axisOrientations)')
+                'Note: The MRC header is written in Fortran-Style ordering, but Numpy uses C-style ordering. '
+                'This program will now reverse the order (using [::-1]) of useful metadata: (dataSize, gridSize, '
+                'volumeSize, voxelSize, cellAngles, axisOrientations)')
+
         self.dataSize = self.dataSize[::-1]
         self.gridSize = self.gridSize[::-1]
         self.volumeSize = self.volumeSize[::-1]
@@ -241,7 +267,7 @@ class fileMRC:
         self.dataOffset = 1024 + self.extra[1]  # offset of the data from the start of the file
 
         # Add relevant information (metadata) to the output dictionary
-        self.dataOut = {'voxelSize': self.voxelSize, 'axisOrientations': self.axisOrientations,
+        self.dataOut = {'pixelSize': self.voxelSize, 'voxelSize': self.voxelSize,
                         'cellAngles': self.cellAngles, 'axisOrientations': self.axisOrientations,
                         'filename': self.filename}
         if self.extra[1] != 0:
@@ -256,10 +282,11 @@ class fileMRC:
         """
         self.fid.seek(self.dataOffset, 0)  # move to the start of the data from the start of the file
         try:
-            data1 = np.fromfile(self.fid, dtype=self.dataType, count=np.prod(self.dataSize, dtype=np.uint64))
+            num0 = np.prod(self.dataSize, dtype=np.uint64)
+            data1 = np.fromfile(self.fid, dtype=self.dataType, count=num0)
             self.dataOut['data'] = data1.reshape(self.dataSize)
         except MemoryError:
-            print("Not enough memory to read in the full data set")
+            print("Not enough memory to read in the full data set. Use getMemmap")
         return self.dataOut
 
     def getSlice(self, num):
@@ -350,6 +377,7 @@ class fileMRC:
             Type = np.uint16
         else:
             print("Unsupported data type" + str(dataType))  # complex data types are currently unsupported
+            Type = None
         return Type
 
 
@@ -404,13 +432,13 @@ def mrc2raw(fname):
     fid.close()
 
 
-def mrc2emd(fname):
+def mrc2emd(file_name):
     """Write an MRC file as an HDF5 file in EMD format with same file name and .emd ending.
     Header information is retained as attributes.
 
     Parameters
     ----------
-        fname: str
+        file_name: str
             The name of the file to convert from MRC to EMD format.
 
     Returns
@@ -425,63 +453,44 @@ def mrc2emd(fname):
     import h5py
 
     # Read in the MRC data and reshape to C-style ordering
-    tomo = mrcReader(fname)
+    tomo = mrcReader(file_name)
 
     # create the HDF5 file
-    try:
-        f1 = h5py.File(fname.rsplit('.mrc', 1)[0] + '.emd', 'w')  # w- will error if the file exists
-    except:
-        print("Problem opening file. Maybe it already exists?")
-        f1.close()
-        del tomo
-        return 0
+    with h5py.File(file_name.rsplit('.mrc', 1)[0] + '.emd', 'w') as f1:  # w- will error if the file exists
 
-    # Create the axis vectors in nanometers. Standard MRC pixel size is in Angstroms
-    xFull = np.linspace(0, tomo['voxelSize'][0] * tomo['data'].shape[0] - 1, tomo['data'].shape[0])
-    yFull = np.linspace(0, tomo['voxelSize'][1] * tomo['data'].shape[1] - 1, tomo['data'].shape[1])
-    zFull = np.linspace(0, tomo['voxelSize'][2] * tomo['data'].shape[2] - 1, tomo['data'].shape[2])
+        # Create the axis vectors in nanometers. Standard MRC pixel size is in Angstroms
+        xFull = np.linspace(0, tomo['voxelSize'][0] * tomo['data'].shape[0] - 1, tomo['data'].shape[0])
+        yFull = np.linspace(0, tomo['voxelSize'][1] * tomo['data'].shape[1] - 1, tomo['data'].shape[1])
+        zFull = np.linspace(0, tomo['voxelSize'][2] * tomo['data'].shape[2] - 1, tomo['data'].shape[2])
 
-    # Root data group
-    dataTop = f1.create_group('data')
+        # Root data group
+        dataTop = f1.create_group('data')
 
-    # Create tilt series group
-    tiltseriesGroup = dataTop.create_group('data')
-    tiltseriesGroup.attrs['emd_group_type'] = np.int8(1)
+        # Create tilt series group
+        tiltseriesGroup = dataTop.create_group('data')
+        tiltseriesGroup.attrs['emd_group_type'] = np.int8(1)
 
-    # Save the data to the EMD file and reshape it to a C-style array
-    try:
-        tiltDset = tiltseriesGroup.create_dataset('data', data=tomo['data'], compression='gzip', shuffle=True)
-    except MemoryError:
-        print("Not enough memory to write out data to EMD file")
-        del tomo
-        f1.close()
-        return 0
+        # Save the data to the EMD file and reshape it to a C-style array
+        try:
+            tiltDset = tiltseriesGroup.create_dataset('data', data=tomo['data'], compression='gzip', shuffle=True)
+        except MemoryError:
+            raise MemoryError("Not enough memory to write out data to EMD file")
 
-    dim1 = tiltseriesGroup.create_dataset('dim1', data=xFull)
-    dim1.attrs['name'] = np.string_('x')
-    dim1.attrs['units'] = np.string_('')
-    dim2 = tiltseriesGroup.create_dataset('dim2', data=yFull)
-    dim2.attrs['name'] = np.string_('y')
-    dim2.attrs['units'] = np.string_('')
-    dim3 = tiltseriesGroup.create_dataset('dim3', data=zFull)
-    dim3.attrs['name'] = np.string_('z')
-    dim3.attrs['units'] = np.string_('')
+        dim1 = tiltseriesGroup.create_dataset('dim1', data=xFull)
+        dim1.attrs['name'] = np.string_('x')
+        dim1.attrs['units'] = np.string_('')
+        dim2 = tiltseriesGroup.create_dataset('dim2', data=yFull)
+        dim2.attrs['name'] = np.string_('y')
+        dim2.attrs['units'] = np.string_('')
+        dim3 = tiltseriesGroup.create_dataset('dim3', data=zFull)
+        dim3.attrs['name'] = np.string_('z')
+        dim3.attrs['units'] = np.string_('')
 
-    # Create the other groups
-    scopeGroup = f1.create_group('Microscope')
-    scopeGroup.attrs['voxel sizes'] = tomo['voxelSize']
-    userGroup = f1.create_group('User')
-    commentGroup = f1.create_group('Comments')
-
-    # Possible way using keyword arguments to populate these fields
-    # def greet_me(**kwargs):
-    # if kwargs is not None:
-    #    for key, value in kwargs.iteritems():
-    #        print("%s == %s" %(key,value))
-
-    f1.close()
-
-    return 1
+        # Create the other groups
+        scopeGroup = f1.create_group('Microscope')
+        scopeGroup.attrs['voxel sizes'] = tomo['voxelSize']
+        userGroup = f1.create_group('User')
+        commentGroup = f1.create_group('Comments')
 
 
 def mrcWriter(filename, data, pixelSize, forceWrite=False):
@@ -502,87 +511,85 @@ def mrcWriter(filename, data, pixelSize, forceWrite=False):
 
     """
 
-    fid = open(filename, 'wb')
+    with open(filename, 'wb') as fid:
 
-    if len(data.shape) > 3:
-        print("Too many dimensions")
-        return 0;
+        if len(data.shape) > 3:
+            print("Too many dimensions")
+            return
 
-    if not data.flags['C_CONTIGUOUS']:
-        print(
-            "Error: Array must be C-style ordering: [numImages,Y,X]. Use numpy.tranpspose and np.ascontiguousarray to change data ordering in memory")
-        print('Exiting')
-        return 0;
+        if not data.flags['C_CONTIGUOUS']:
+            print("Error: Array must be C-style ordering: [numImages,Y,X]. "
+                  "Use numpy.tranpspose and np.ascontiguousarray to change data ordering in memory")
+            print('Exiting')
+            return
 
-    # initialize the header with 256 zeros with size 4 bytes
-    header = np.zeros(256, dtype=np.int32)
-    fid.write(header)
-    fid.seek(0, 0)  # return to the beginning of the file
+        # initialize the header with 256 zeros with size 4 bytes
+        header = np.zeros(256, dtype=np.int32)
+        fid.write(header)
+        fid.seek(0, 0)  # return to the beginning of the file
 
-    # Initialize the int32 part of the header
-    header1 = np.zeros(10, dtype=np.int32)
+        # Initialize the int32 part of the header
+        header1 = np.zeros(10, dtype=np.int32)
 
-    # Write the number of columns, rows and sections (images)
-    # header1[0:3] = np.int32(dims) #data size in pixels
-    header1[0] = np.int32(data.shape[2])  # num columns, the last index in C-style ordering
-    header1[1] = np.int32(data.shape[1])  # num rows
-    header1[2] = np.int32(data.shape[0])  # num sections (images)
+        # Write the number of columns, rows and sections (images)
+        # header1[0:3] = np.int32(dims) #data size in pixels
+        header1[0] = np.int32(data.shape[2])  # num columns, the last index in C-style ordering
+        header1[1] = np.int32(data.shape[1])  # num rows
+        header1[2] = np.int32(data.shape[0])  # num sections (images)
 
-    if data.dtype == np.float32:
-        header1[3] = np.int32(2)
-    elif data.dtype == np.uint16:
-        header1[3] = np.int32(6)
-    elif data.dtype == np.int16:
-        header1[3] = np.int32(1)
-    elif data.dtype == np.int8:
-        header1[3] = np.int32(0)
-    else:
-        print("Data type " + str(data.dtype) + " is unsupported. Only int8, int16, uint16, and float32 are supported")
-        return 0;
+        if data.dtype == np.float32:
+            header1[3] = np.int32(2)
+        elif data.dtype == np.uint16:
+            header1[3] = np.int32(6)
+        elif data.dtype == np.int16:
+            header1[3] = np.int32(1)
+        elif data.dtype == np.int8:
+            header1[3] = np.int32(0)
+        else:
+            print("Data type {} is unsupported. Only int8, int16, uint16, and float32 are supported".format(data.dtype))
+            return
 
-    # Starting point of sub image (not used in IMOD)
-    header1[4:7] = np.zeros(3, dtype=np.int32)
+        # Starting point of sub image (not used in IMOD)
+        header1[4:7] = np.zeros(3, dtype=np.int32)
 
-    # Grid size in X,Y,Z
-    # header1[7:10] = np.int32(dims); #data size in pixels
-    header1[7] = np.int32(data.shape[2])  # mx
-    header1[8] = np.int32(data.shape[1])  # my
-    header1[9] = np.int32(data.shape[0])  # mz
+        # Grid size in X,Y,Z
+        # header1[7:10] = np.int32(dims); #data size in pixels
+        header1[7] = np.int32(data.shape[2])  # mx
+        header1[8] = np.int32(data.shape[1])  # my
+        header1[9] = np.int32(data.shape[0])  # mz
 
-    # Write out the first part of the header information
-    fid.write(header1)
+        # Write out the first part of the header information
+        fid.write(header1)
 
-    # Cell dimensions (in Angstroms)
-    # pixel spacing = xlen/mx, ylen/my, zlen/mz
-    fid.write(np.float32(pixelSize[2] * data.shape[2]))  # xlen
-    fid.write(np.float32(pixelSize[1] * data.shape[1]))  # ylen
-    fid.write(np.float32(pixelSize[0] * data.shape[0]))  # zlen
+        # Cell dimensions (in Angstroms)
+        # pixel spacing = xlen/mx, ylen/my, zlen/mz
+        fid.write(np.float32(pixelSize[2] * data.shape[2]))  # xlen
+        fid.write(np.float32(pixelSize[1] * data.shape[1]))  # ylen
+        fid.write(np.float32(pixelSize[0] * data.shape[0]))  # zlen
 
-    # Cell angles (in degrees)
-    fid.write(np.float32([90.0, 90.0, 90.0]))
+        # Cell angles (in degrees)
+        fid.write(np.float32([90.0, 90.0, 90.0]))
 
-    # Description of array directions with respect to: Columns, Rows, Images
-    fid.write(np.int32([1, 2, 3]))
+        # Description of array directions with respect to: Columns, Rows, Images
+        fid.write(np.int32([1, 2, 3]))
 
-    # Minimum and maximum density
-    fid.write(np.float32(np.min(data)))
-    fid.write(np.float32(np.max(data)))
-    fid.write(np.float32(np.mean(data)))
+        # Minimum and maximum density
+        fid.write(np.float32(np.min(data)))
+        fid.write(np.float32(np.max(data)))
+        fid.write(np.float32(np.mean(data)))
 
-    # Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
-    fid.seek(212, 0)
-    fid.write(np.int8([68, 65, 0, 0]))  # use [17,17,0,0] for big endian
+        # Needed to indicate that the data is little endian for NEW-STYLE MRC image2000 HEADER - IMOD 2.6.20 and above
+        fid.seek(212, 0)
+        fid.write(np.int8([68, 65, 0, 0]))  # use [17,17,0,0] for big endian
 
-    # Write out the data
-    fid.seek(1024)
-    if forceWrite:
-        fid.write(np.ascontiguousarray(data))  # Change to C ordering array for writing to disk
-    else:
-        fid.write(data)  # msut be C-contiguous
+        # Write out the data
+        fid.seek(1024)
+        if forceWrite:
+            fid.write(np.ascontiguousarray(data))  # Change to C ordering array for writing to disk
+        else:
+            fid.write(data)  # must be C-contiguous
 
-    # Close the file
-    fid.close()
-    return 1
+        # Close the file
 
 
 def writeHeader(filename, shape, dtype, pixelSize):
@@ -610,10 +617,6 @@ def writeHeader(filename, shape, dtype, pixelSize):
             print("Too many dimensions")
             return 0
 
-        # if not data.flags['C_CONTIGUOUS']:
-        #    print("Error: Array must be C-style ordering: [numImages,Y,X]. Use np.ascontiguousarray(numpy.transpose(data,[])) to change data ordering in memory\nExiting")
-        #    return 0
-
         # Initialize the header with 256 zeros with size 4 bytes
         header = np.zeros(256, dtype=np.int32)
         fid.write(header)
@@ -637,7 +640,7 @@ def writeHeader(filename, shape, dtype, pixelSize):
             header1[3] = np.int32(0)
         else:
             print("Data type " + str(dtype) + " is unsupported. Only int8, int16, uint16, and float32 are supported")
-            return 0;
+            return 0
 
         # Starting point of sub image (not used in IMOD)
         header1[4:7] = np.zeros(3, dtype=np.int32)
@@ -730,3 +733,10 @@ if __name__ == '__main__':
     fPath = Path(r'C:\Users\linol\Data') / Path('AgNWweld_tomo2_1wire_115kx_160mmCL.mrc')
 
     mrc0 = mrcReader(fPath)
+
+    print(mrc0['voxelSize'])
+
+    with fileMRC(fPath) as f2:
+        _ = f2.getDataset()
+        _ = f2.getMemmap()
+        _ = f2.getSlice(0)
