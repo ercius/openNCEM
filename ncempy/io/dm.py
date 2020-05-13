@@ -1117,6 +1117,8 @@ def dmReader(filename, dSetNum=0, verbose=False):
         : dict
             A dictionary of keys where the data is in the 'data' key.
             Other metadata is contained in other named keys such as 'pixelSize'.
+            'coords' contains the coordinate axes with the proper origin and scale
+            applied (i.e. the energy loss axis for EELS data)
 
     Example
     -------
@@ -1127,6 +1129,12 @@ def dmReader(filename, dSetNum=0, verbose=False):
     """
     with fileDM(filename, verbose) as f1:  # open the file and init the class
         im1 = f1.getDataset(dSetNum)  # get the requested dataset (first by default)
+
+    coords = []
+    for pixel_size, pixel_origin, sh in zip(im1['pixelSize'], im1['pixelOrigin'], im1['data'].shape):
+        origin = pixel_size * pixel_origin
+        coords.append(np.linspace(origin, origin + pixel_size*(sh - 1), sh))
+    im1['coords'] = coords
 
     return im1  # return the dataset and metadata as a dictionary
 
