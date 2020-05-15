@@ -103,28 +103,3 @@ def moment_angle(mc):
 
     th = 0.5 * np.arctan2(2 * mu_11, mu_20 - mu_02)
     return th
-
-
-if __name__ == '__main__':
-    """Test on a rotated line"""
-    from scipy import ndimage
-    from matplotlib import pyplot as plt
-
-    X2D, Y2D = np.mgrid[0:15, 0:15]
-
-    ang = 25  # degrees
-
-    # Create a a simple line
-    aa = np.zeros((11, 11))
-    aa[5, 1:-1] = 1
-    aa = ndimage.rotate(aa, ang, order=3, reshape=False)
-    aa = ndimage.shift(aa, (2, -2))
-
-    M = moments(aa)
-    mc = moments_central(aa)
-
-    c = centroid(M)  # the center
-    print('centroid = {}'.format(c))
-
-    th = moment_angle(mc)
-    print('angle = {} degrees'.format(th * 180 / np.pi))
