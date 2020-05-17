@@ -276,7 +276,7 @@ class fileMRC:
         return 1
 
     def getDataset(self):
-        """Read in the full data block and reshape to a matrix
+        """Read in the full data block and reshape to an ndarray
         with C-style ordering.
 
         """
