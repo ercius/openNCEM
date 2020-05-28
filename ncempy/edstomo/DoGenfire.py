@@ -1,4 +1,5 @@
-import genfire as gf
+# import genfire as gf
+from genfire import reconstruct, fileio
 import sys, os, shutil
 import argparse
 
@@ -10,7 +11,7 @@ parser.add_argument("-o", "--oversamplingRatio", help="How many times bigger to 
 args = parser.parse_args()
 
 # Make a reconstruction using paramaters from default or from the command line.
-GF = gf.reconstruct.GenfireReconstructor(
+GF = reconstruct.GenfireReconstructor(
         projections = args.fileroot+"_aligned.npy",
         eulerAngles = "tilts.txt",
         resultsFilename = args.fileroot+"_reconstruction.mrc",
@@ -24,4 +25,4 @@ GF = gf.reconstruct.GenfireReconstructor(
 results = GF.reconstruct()
 
 # Save results.
-gf.fileio.saveResults(results, GF.params.resultsFilename)
+fileio.saveResults(results, GF.params.resultsFilename)
