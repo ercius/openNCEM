@@ -28,7 +28,7 @@ The package is given the following structure:
     Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
 
 * test
-    Unittests for all modules, functions, lines of code.
+    Tests for all modules, functions, and classes.
 
 
 Requirements
@@ -42,7 +42,7 @@ It relies on the following packages:
 * matplotlib (for plotting)
 * h5py (for EMD files)
 
-edstomo has addtional optional packages:
+edstomo has additional optional packages:
 * glob2
 * genfire
 * hyperspy
