@@ -692,7 +692,7 @@ class fileSER:
                 Name of the EMD file.
 
         """
-        
+        # Todo: Update this to be much simpler. Can write this in a couple of lines now using the fileEMD class
         from ncempy.io import emd
         
         # create the EMD file and set version attributes
