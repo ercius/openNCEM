@@ -6,18 +6,22 @@ import pytest
 
 import time
 import inspect
-import ncempy.io.dm
 import os
+from pathlib import Path
 
-class test_dm3():
+import ncempy.io.dm
+
+
+class Testdm3:
     """
     Test the DM3 io module
     """
     
     # Auxiliary attributes and method to facilitate the location of the test images
+    # Todo: Update data path to match other tests
     _current_file = os.path.dirname(os.path.abspath(
                     inspect.getfile(inspect.currentframe())))
-    _images_folder="{}/resources".format(_current_file)
+    _images_folder = Path(r'C:\Users\linol\scripting\openNCEMgh\ncempy\data')
 
     def _get_image_route(self, file_name):
         return os.path.join(self._images_folder, file_name)
@@ -41,22 +45,16 @@ class test_dm3():
             ds = f.getDataset(0)
             img = ds['data']
 
-            if img.ndim == 3:
-                img = img[:, :, img.shape[2]//2, ]
-            elif img.ndim == 4:
-                img = img[:, :, img.shape[2]//2, img.shape[3]//2]
-            elif img.ndim > 4:
+            if img.ndim > 4:
                 raise ValueError("Images with more than four dimensions not supported.")
-            metadata = dict(dimensions=img.ndim,
-                            header=f.allTags,
+            metadata = dict(dimensions=img.ndim, header=f.allTags,
                             metadata={x: ds[x] for x in ds.keys() if x != "data"})
 
         return metadata, img
     
     def test_read_dm3(self):
         
-        metadata, img = self._read_dm3_data(self._get_image_route(
-                            "dmTest_3D_float32_nonSquare_diffPixelSize.dm3"))
+        metadata, img = self._read_dm3_data(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'))
 
         assert metadata["dimensions"] == 3
         assert metadata["metadata"]["pixelOrigin"] == [0.0, 0.0, 0.0]
@@ -67,12 +65,13 @@ class test_dm3():
         metadata, img = self._read_dm3_data(self._get_image_route("08_Carbon.dm3"))
 
         assert metadata["dimensions"] == 2
-        assert metadata["metadata"]["pixelOrigin"] == [0.0, 200.0]
-        assert img.shape == 2048
+        assert metadata["metadata"]["pixelOrigin"] == [0.0, -2400.0]
+        # Todo: Update this test for v1.6.0 when singular dimensions are removed
+        assert img.shape == (1, 2048)
 
     def test_read_dm3_on_memory(self):
         
-        metadata, img = self._read_dm3_data(self._get_image_route("dmTest_3D_float32_nonSquare_diffPixelSize.dm3"),
+        metadata, img = self._read_dm3_data(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'),
                                             on_memory=True)
         assert metadata["dimensions"] == 3
         assert metadata["metadata"]["pixelOrigin"] == [0.0, 0.0, 0.0]
@@ -84,25 +83,24 @@ class test_dm3():
         """
         m0 = time.time()
         for i in range(10):
-            _ = self._read_dm3_data(self._get_image_route("Si-SiGe-test-01-31x12x448x480.dm4"))
-            delta0 = m0 - time.time()
+            _ = self._read_dm3_data(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'))
+            delta0 = time.time() - m0
             
             m1 = time.time()
-            _ = self._read_dm3_data(self._get_image_route("Si-SiGe-test-01-31x12x448x480_copy.dm4"),
+            _ = self._read_dm3_data(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'),
                                     on_memory=True)
-            delta1 = m1 - time.time()
+            delta1 = time.time() - m1
 
             assert delta0 > delta1
 
     def test_extract_on_memory(self):
-        with ncempy.io.dm.fileDM(self._get_image_route("Si-SiGe-test-01-31x12x448x480.dm4"),
-                                 on_memory=False) as f:
+        fPath = self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3')
+        with ncempy.io.dm.fileDM(fPath, on_memory=False) as f:
             ds = f.getDataset(0)
             img3D_no_on_mem = ds['data']
 
-        with ncempy.io.dm.fileDM(self._get_image_route("Si-SiGe-test-01-31x12x448x480.dm4"),
-                                 on_memory=True) as f:
+        with ncempy.io.dm.fileDM(fPath, on_memory=True) as f:
             ds = f.getDataset(0)
             img3D_on_mem = ds['data']
 
-        assert img3D_on_mem[0:25] == img3D_no_on_mem[0:25]
+        assert img3D_on_mem[0, 0, 0] == img3D_no_on_mem[0, 0, 0]
