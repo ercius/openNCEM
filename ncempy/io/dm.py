@@ -961,6 +961,8 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
+        # Remove singular dimensions if present
+        outputDict['data'] = np.squeeze(outputDict['data'])
         return outputDict
 
     def getSlice(self, index, sliceZ, sliceZ2=0):
