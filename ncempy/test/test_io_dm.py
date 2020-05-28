@@ -104,3 +104,26 @@ class Testdm3:
             img3D_on_mem = ds['data']
 
         assert img3D_on_mem[0, 0, 0] == img3D_no_on_mem[0, 0, 0]
+
+    def test_on_memory(self):
+        """ Ensure that data loaded is available in memory after the file is closed. This test might crash
+        python if the memory is no longer available. See also test_dmReader
+        """
+        with ncempy.io.dm.fileDM(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=True) as f:
+            dv = f.getDataset(0)
+            ds = f.getSlice(0, 0)
+
+            # Test Data is in memory with file open
+            assert dv['data'][0, 0, 0] == 0
+            assert ds['data'][0, 0] == 0
+
+        # Ensure it is still available after closing the file
+        assert dv['data'][0, 0, 0] == 0
+        assert ds['data'][0, 0] == 0
+
+    def test_dmReader(self):
+        """Test that the simplified dmReader function works and loads the data into memory. If test_on_memory
+        fails then this will likely fail for the same reason."""
+        dm0 = ncempy.io.dm.dmReader(self._images_folder / Path('dmTest_3D_int16_64,65,66.dm3'))
+
+        assert dm0['data'][0, 0, 0] == 0
