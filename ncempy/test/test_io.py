@@ -1,3 +1,7 @@
+"""General tests for io module. More in depth testing is done in sepearte test_.py files for more advanced
+capabilities.
+"""
+
 import pytest
 
 from pathlib import Path
@@ -5,8 +9,6 @@ import numpy as np
 import ncempy.io as nio
 
 # Todo: Add emd velox (small file needed)
-# Todo: Add ser tests and small file
-
 
 @pytest.fixture
 def data_location():
