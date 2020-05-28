@@ -3,8 +3,9 @@ capabilities.
 """
 
 import pytest
-
+import tempfile
 from pathlib import Path
+
 import numpy as np
 import ncempy.io as nio
 
@@ -18,12 +19,11 @@ def data_location():
     return root_path / Path('data')
 
 @pytest.fixture
-def write_mrc(data_location):
-    """Write out a small MRC data set. No need for data in repo
-    and this also tests the writing capability."""
-    nio.mrc.mrcWriter(data_location / Path('temp.mrc'),
-                      np.ones((10,11,12),dtype=np.float32),
-                      (1, 2, 3))
+def temp_file():
+    tt = tempfile.NamedTemporaryFile(mode='wb')
+    tt.close() # need to close the file to use it later
+    return Path(tt.name)
+
 
 def test_emd_berkeley(data_location):
     emd_path = data_location / Path('Acquisition_18.emd')
@@ -66,10 +66,15 @@ def test_dm3_spectrum_1d(data_location):
         dd['data'].shape = 2048
 
 
-def test_mrc(data_location, write_mrc):
+def test_mrc(temp_file):
 
-    assert (data_location / Path('temp.mrc')).exists() is True
+    # Write out a temporary mrc file
+    nio.mrc.mrcWriter(temp_file,
+                      np.ones((10, 11, 12), dtype=np.float32),
+                      (1, 2, 3))
 
-    with nio.mrc.fileMRC(data_location / Path('temp.mrc')) as mrc0:
+    assert temp_file.exists() is True
+
+    with nio.mrc.fileMRC(temp_file) as mrc0:
         dd = mrc0.getDataset()
         assert dd['data'].shape == (10, 11, 12)
