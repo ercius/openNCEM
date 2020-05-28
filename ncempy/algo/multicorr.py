@@ -10,7 +10,7 @@ TODO
 import numpy as np
 
 
-def multicorr(g1, g2, method='cross', upsample_factor=1, verbose=True):
+def multicorr(g1, g2, method='cross', upsample_factor=1, verbose=False):
     """Align a template to an image by cross correlation. The template
     and the image must have the same size.
 
