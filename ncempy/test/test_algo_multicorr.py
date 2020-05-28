@@ -1,6 +1,6 @@
-'''
+"""
 Tests for the algo.multicorr module.
-'''
+"""
 
 import unittest
 import numpy as np
@@ -11,14 +11,14 @@ from io import StringIO
 
 import ncempy.algo.multicorr as mc
 
+
 class test_shiftedimages(unittest.TestCase):
     """Test the multicorr module on two shifted images"""
 
     def test_parse_input(self):
-        '''
+        """
         Test to make sure inputs are properly accounted for.
-        '''
-
+        """
 
         g1 = 1
         g2 = np.zeros([4,4])
@@ -63,9 +63,9 @@ class test_shiftedimages(unittest.TestCase):
             mc.initial_correlation_image(g2, g2, 'tester', 1)
 
     def test_multicorr(self):
-        '''
+        """
         Test to check if the correlation is working.
-        '''
+        """
         g2 = np.zeros((3,3))
         test = mc.multicorr(np.fft.fft2(g2), np.fft.fft2(g2), 'phase', 3)
         print(test)
@@ -106,11 +106,10 @@ class test_shiftedimages(unittest.TestCase):
         # plt.imshow(np.subtract(G1, np.real(np.fft.ifft2(out.G2shift))))
         # plt.show(block = True)
 
-
     def test_different_shifts(self):
-        '''
+        """
         Tests to check if mod is working correctly
-        '''
+        """
         # filename = '/Users/Tom/Downloads/matt_beard.jpg'
         # G1 = cv2.imread(filename, 0)
         # G1 = G1[0:501, 0:501]
@@ -149,6 +148,7 @@ class test_shiftedimages(unittest.TestCase):
                 out_cross = mc.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'cross', 10)
                 out_cross = list(out_cross)
                 np.testing.assert_almost_equal(out_cross, i, decimal = 2)
+
 
 if __name__ == "__main__":
     unittest.main()

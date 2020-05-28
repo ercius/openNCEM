@@ -1,6 +1,6 @@
-'''
+"""
 Tests for the algo.local_max module.
-'''
+"""
 
 import unittest
 import numpy as np
@@ -13,9 +13,9 @@ import ncempy.viz
 
 
 class test_localmax(unittest.TestCase):
-    '''
+    """
     Test the localmax module on diffraction patterns.
-    '''
+    """
     
     def test_local_max(self):
         '''

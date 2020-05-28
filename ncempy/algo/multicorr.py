@@ -9,8 +9,6 @@ TODO
 
 import numpy as np
 
-from ncempy.eval.stack_align import stack_align
-
 
 def multicorr(g1, g2, method='cross', upsample_factor=1, verbose=True):
     """Align a template to an image by cross correlation. The template
@@ -320,24 +318,3 @@ def imageShifter(g1, xy_shift):
     G2shift = np.multiply(g1, np.outer(np.exp(-2j * np.pi * qx * xy_shift[0]), np.exp(-2j * np.pi * qy * xy_shift[1])))
 
     return G2shift
-
-
-if __name__ == '__main__':
-    import ncempy.io as nio
-    import multicorr
-    from scipy import ndimage
-
-    up = 2
-    sh0 = (4.5, 5.5)
-    method0 = 'hybrid'
-
-    print('Upsample factor = {}'.format(up))
-    print('Applied shift = {}'.format(sh0))
-
-    with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
-        dd, md = f0.get_emdgroup(f0.list_emds[0])
-    dd2 = ndimage.shift(dd, sh0, mode='mirror')
-    sh1 = multicorr.multicorr(np.fft.fft2(dd), np.fft.fft2(dd2), method=method0, upsample_factor=up)
-    print('Final shift = {}'.format(sh1))
-
-

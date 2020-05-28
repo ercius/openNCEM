@@ -604,7 +604,10 @@ class fileSER:
             _emi: dict
                 Dictionary of experimental metadata stored in the EMI file.
         """
-        
+
+        # Todo: Change read_emi to not require a filename. It should just be the same name as the ser file.
+        # Todo: Move this function outside the main function so it can be used without a ser file.
+        # Todo: Use pathlib in read_emi
         # check for string
         if not isinstance(filename, str):
             raise TypeError('Filename is supposed to be a string')
