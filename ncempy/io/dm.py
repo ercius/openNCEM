@@ -961,6 +961,10 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
+        # Ensure the data is loaded into memory from the buffer
+        if self._on_memory:
+            outputDict['data'] = np.array(outputDict['data'])
+
         return outputDict
 
     def getSlice(self, index, sliceZ, sliceZ2=0):
@@ -1045,6 +1049,9 @@ class fileDM:
             outputDict['pixelSize'] = self.scale[jj:jj + 2][::-1]
             outputDict['pixelOrigin'] = self.origin[jj:jj + 2][::-1]
 
+        if self._on_memory:
+            outputDict['data'] = np.array(outputDict['data'])
+
         return outputDict
 
     def _readRGB(self, xSizeRGB, ySizeRGB):
@@ -1092,7 +1099,8 @@ class fileDM:
         except:
             raise
 
-        data = np.memmap(self.fid, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r', offset=self.dataOffset[ii],
+        data = np.memmap(self.filename, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r',
+                         offset=self.dataOffset[ii],
                          shape=(self.zSize2[ii], self.zSize[ii], self.ySize[ii], self.xSize[ii]))
 
         return data
@@ -1142,4 +1150,6 @@ def dmReader(filename, dSetNum=0, verbose=False):
 if __name__ == '__main__':
     fPath = Path(r'C:\Users\linol\Data') / Path('06_45x8 ss=5nm_spot11_CL=195 0p1s_alpha=0p48mrad_bin=4_300kV.dm4')
 
-    dm0 = dmReader(fPath)
+    dm0 = fileDM(fPath)
+    mm = dm0.getMemmap(0)
+    print(mm)
