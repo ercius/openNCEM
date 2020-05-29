@@ -74,7 +74,7 @@ class fileEMDVelox:
 
         # try opening the file
         try:
-            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes = 10485760) # rdcc_nbytes = 10*1024**2
+            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760) # rdcc_nbytes = 10*1024**2
         except:
             print('Error opening file for readonly: "{}"'.format(filename))
             raise
@@ -91,12 +91,12 @@ class fileEMDVelox:
         self.file_hdl.close()
 
     def __enter__(self):
-        """ Implement python's with staement
+        """ Implement python's with statement
 
         """
         return self
         
-    def __exit__(self,type,value,traceback):
+    def __exit__(self, exception_type, exception_value, traceback):
         """ Implement python's with statement
         and close the file using  __del__()
 

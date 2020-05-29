@@ -52,14 +52,14 @@ class fileDM:
             >>> import matplotlib.pyplot as plt
             >>> from ncempy.io import dm
             >>> with dm.fileDM('filename.dm4') as dmFile1:
-                dataSet = dmFile1.getDataset(0)
+            >>>     dataSet = dmFile1.getDataset(0)
             >>> plt.imshow(dataSet['data'])
 
         Example of reading a full multi-image DM3 file into memory:
 
             >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
-                series = dmFile2.getDataset(0)
-            >>> plt.imshow(series['data'][0,:,:]) #show the first image in the series
+            >>>     series = dmFile2.getDataset(0)
+            >>> plt.imshow(series['data'][0, :, :]) #show the first image in the series
     """
 
     __slots__ = ('filename', 'fid', '_on_memory', 'v', 'xSize', 'ySize',
@@ -200,15 +200,12 @@ class fileDM:
         """
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exception_type, exception_value, traceback):
         """Implement python's with statement
         and close the file via __del__()
         """
         self.__del__()
         return None
-
-    #def __str__(self):
-    #    return 'ncempy DM dataset'
 
     def tell(self):
         """ Return the current position in the file. Switches mode based
@@ -242,9 +239,8 @@ class fileDM:
 
         Returns
         -------
-            vals : list
-                A list of the requested dtype elements.
-
+            : ndarray
+                Data read from the file as a 1d ndarray.
         """
 
         if self._on_memory:
@@ -302,11 +298,11 @@ class fileDM:
         """
         output = True  # output will stay == 1 if the file is a true DM4 file
 
-        self.dmType = self.fromfile(self.fid, dtype=np.dtype('>u4'), count=1)[
-            0]  # file type: == 3 for DM3 or == 4 for DM4
+        # file type: == 3 for DM3 or == 4 for DM4
+        self.dmType = self.fromfile(self.fid, dtype=np.dtype('>u4'), count=1)[0]
 
         if self.v:
-            print('validDM: DM file type numer = {}'.format(self.dmType))
+            print('validDM: DM file type number = {}'.format(self.dmType))
 
         if self.dmType == 3:
             self.specialType = np.dtype('>u4')  # uint32
@@ -314,21 +310,16 @@ class fileDM:
             self.specialType = np.dtype('>u8')  # uint64
         else:
             raise IOError('File is not a valid DM3 or DM4')
-            output = False
 
         aa = self.fromfile(self.fid, dtype=np.dtype([('fileSize', self.specialType),
-                                                     ('endianType', '>u4')]),
-                           count=1)  # file type: == 3 for DM3 or == 4 for DM4
+                                                     ('endianType', '>u4')]), count=1)
 
         self.fileSize = aa['fileSize']
         self.endianType = aa['endianType']
-        # self.fileSize = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #file size: real size - 24 bytes
-        # self.endianType = self.fromfile(self.fid,dtype=np.dtype('>u4'),count=1)[0] #endian type: 1 == little endian (Intel), 2 == big endian (old powerPC Mac)
 
         if self.endianType != 1:
             # print('File is not written Little Endian (PC) format and can not be read by this program.')
             raise IOError('File is not written Little Endian (PC) format and can not be read by this program.')
-            output = False
 
         return output
 
@@ -346,8 +337,8 @@ class fileDM:
         self._readTagGroup()
 
         # Check for thumbnail
-        if (len(self.dataType) > 0):  # check that any data set was found
-            if ((self.dataType[0] == 23) & (self.dataShape[0] == 2)):
+        if len(self.dataType) > 0:  # check that any data set was found
+            if (self.dataType[0] == 23) & (self.dataShape[0] == 2):
                 self.thumbnail = True
             else:
                 self.thumbnail = False
@@ -400,8 +391,6 @@ class fileDM:
         self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
         self.curTagAtLevelX[self.curGroupLevel] = 0
 
-        # self.fromfile(self.fid,dtype='<i1',count=2) #is open and is sorted?
-        # nTags = self.fromfile(self.fid,dtype=self.specialType,count=1)[0] #needs to be read as Big Endian (.byteswap() could also work)
         aa = self.fromfile(self.fid, dtype=[('IsOpenSorted', '2<i1'), ('nTags', self.specialType)], count=1)
         nTags = aa['nTags'][0]
 
@@ -453,7 +442,7 @@ class fileDM:
 
             # An unknown part of the DM4 tags
             if self.dmType == 4:
-                temp1 = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
+                _ = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
 
             self._readTagGroup()
 
@@ -463,7 +452,7 @@ class fileDM:
         """Determine the type of tag: Regular data, string, struct, or array.
 
         """
-        # Need to read 8 bytes before %%%% delimiater. Unknown part of DM4 tag structure
+        # Need to read 8 bytes before %%%% delimiter. Unknown part of DM4 tag structure
         if self.dmType == 4:
             temp1 = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
 
@@ -856,9 +845,8 @@ class fileDM:
 
         # check whether in range
         if i < 0 or i > self.numObjects:
-            raise IndexError('Index out of range, trying to access element {} of {} valid elements'.format(i + 1,
-                                                                                                           self.head[
-                                                                                                               'ValidNumberElements']))
+            raise IndexError('Index out of range, '
+                             'trying to access element {} of {} valid elements'.format(i + 1, self.numObjects))
 
         return
 
@@ -1009,7 +997,7 @@ class fileDM:
         except:
             raise
 
-        # Check sliceZ and sliceZ2 are within the data arrray size bounds
+        # Check sliceZ and sliceZ2 are within the data array size bounds
         if sliceZ > (self.zSize[ii] - 1):
             raise IndexError(
                 'Index out of range, trying to access element {} of {} valid elements'.format(sliceZ, self.zSize))
@@ -1148,8 +1136,5 @@ def dmReader(filename, dSetNum=0, verbose=False):
 
     return im1  # return the dataset and metadata as a dictionary
 
-
 if __name__ == '__main__':
-    fPath = Path(r'C:\Users\linol\Data') / Path('06_45x8 ss=5nm_spot11_CL=195 0p1s_alpha=0p48mrad_bin=4_300kV.dm4')
-
-    dm0 = dmReader(fPath)
+    dm0 = fileDM(r'C:\Users\linol\Data\5_Te_15x83_ss=3nm_CL=245_alpha=p48_p06sec_no beamstop_bin4_300kV.dm4')

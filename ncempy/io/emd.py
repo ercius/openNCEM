@@ -155,15 +155,15 @@ class fileEMD:
         self.file_hdl.close()
 
     def __enter__(self):
-        '''Implement python's with staement
-        
-        '''
+        """Implement python's with statement
+
+        """
         return self
 
-    def __exit__(self, type, value, traceback):
-        '''Implement python's with statment
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Implement python's with statement
         and close the file via __del__()
-        '''
+        """
         self.__del__()
         return None
 
