@@ -961,6 +961,10 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
+        # Ensure the data is loaded into memory from the buffer
+        if self._on_memory:
+            outputDict['data'] = np.array(outputDict['data'])
+
         # Remove singular dimensions if present
         outputDict['data'] = np.squeeze(outputDict['data'])
         return outputDict
