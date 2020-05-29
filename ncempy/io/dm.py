@@ -1051,6 +1051,10 @@ class fileDM:
             outputDict['pixelSize'] = self.scale[jj:jj + 2][::-1]
             outputDict['pixelOrigin'] = self.origin[jj:jj + 2][::-1]
 
+        # Ensure the data is loaded into memory from the buffer
+        if self._on_memory:
+            outputDict['data'] = np.array(outputDict['data'])
+
         return outputDict
 
     def _readRGB(self, xSizeRGB, ySizeRGB):
