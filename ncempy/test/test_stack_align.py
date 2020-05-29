@@ -1,5 +1,7 @@
 import pytest
 
+from pathlib import Path
+
 from scipy import ndimage
 import numpy as np
 
@@ -8,15 +10,18 @@ from ncempy.eval.stack_align import stack_align
 
 
 @pytest.fixture
-def emd_path():
-    return 'C:/Users/linol/Data/Acquisition_18.emd'
+def data_location():
+    # Get the location of the test data files
+    test_path = Path(__file__).resolve()
+    root_path = test_path.parents[1]
+    return root_path / Path('data')
 
 
-def test_stack_align(emd_path):
+def test_stack_align(data_location):
     up = 2
     method0 = 'hybrid'
 
-    with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
+    with nio.emd.fileEMD(data_location / Path('Acquisition_18.emd')) as f0:
         dd, md = f0.get_emdgroup(f0.list_emds[0])
 
     stack0 = np.zeros((3, *dd.shape), dtype=dd.dtype)
@@ -25,8 +30,7 @@ def test_stack_align(emd_path):
         stack0[ii, :, :] = ndimage.shift(dd, s, mode='mirror')
     out_stack, out_stack_shifts = stack_align(stack0, align_type='static',
                                               upsample_factor=up, method=method0)
-    #print('shifts0 = {}'.format(shifts0))
-    #print('stack shifts = {}'.format(out_stack_shifts))
+
     for s0, s1 in zip(shifts0, out_stack_shifts):
         assert s0[0] == -s1[0]
         assert s0[1] == -s1[1]
