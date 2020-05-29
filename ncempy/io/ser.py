@@ -42,10 +42,7 @@ class fileSER:
     ----------
         filename: str
             Name of the SER file.
-        emifile: str or bool, optional
-            Name of an optional emi file to read metadata. If True then the
-            name will be automatically generated from the filename input. The
-            metadata is available as self._emi.
+
         verbose: bool, optional
             True to get extensive output while reading the file.
 
@@ -56,7 +53,7 @@ class fileSER:
         >>> import matplotlib.pyplot as plt
         >>> import ncempy.io as nio
         >>> with nio.ser.fileSER('filename.ser') as ser1:
-                data, metadata = ser1.getDataset(0)
+        >>>    data, metadata = ser1.getDataset(0)
         >>> plt.imshow(data)
 
         SER files are structured such that each image in a series is a
@@ -64,8 +61,8 @@ class fileSER:
         following:
 
         >>> with ser.fileSER('filename_1.ser') as ser1:
-                image0, metadata0 = ser1.getDataset(0)
-                image1, metadata1 = ser1.getDataset(1)
+        >>>     image0, metadata0 = ser1.getDataset(0)
+        >>>     image1, metadata1 = ser1.getDataset(1)
         >>> plt.imshow(image0)
         >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     """
@@ -85,19 +82,20 @@ class fileSER:
     _dictDataType = {1:'<u1', 2:'<u2', 3:'<u4', 4:'<i1', 5:'<i2', 6:'<i4', 7:'<f4', 8:'<f8', 9:'<c8', 10:'<c16'}
     '''(dict):    Information on data format.'''
 
-    def __init__(self, filename, emifile = None, verbose=False):
+    def __init__(self, filename, verbose=False):
         """Init opening the file and reading in the header.
 
         """
         # necessary declarations, if something fails
         self._file_hdl = None
         self._emi = None
+        self.filename = filename
 
         # check filename type
-        if isinstance(filename, str):
+        if isinstance(self.filename, str):
             pass
-        elif isinstance(filename, Path):
-            filename = str(filename)
+        elif isinstance(self.filename, Path):
+            self.filename = str(self.filename)
         else:
             raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
@@ -112,16 +110,9 @@ class fileSER:
 
         # read header
         self.head = self.readHeader(verbose)
-        
-        # Generate emifile string if needed
-        # and test for file existence.
-        if emifile is True:
-            emifile = filename[:-6] + '.emi'
-            if not os.path.exists(emifile):
-                emifile = None
-        # read emifile, if provided
-        if emifile:
-            self._emi = self.read_emi(emifile)
+
+        # read emi file if exists
+        self._read_emi()
         
     def __del__(self):
         """ Close the file stream in destructor.
@@ -138,7 +129,7 @@ class fileSER:
         """
         return self
         
-    def __exit__(self,type,value,traceback):
+    def __exit__(self, exception_type, exception_value, traceback):
         """Implement python's with statement
         and close the file via __del__()
 
@@ -563,125 +554,16 @@ class fileSER:
         
         return dim
 
-    def _parseEntry_emi(self, value):
-        """Auxiliary function to parse string entry to int, float or np.string_().
+    def _read_emi(self):
+        # Generate emi file string
+        # and test for file existence.
 
-        Parameters
-        ----------
-            value: str
-                String containing an int, float or string.
-
-        Returns
-        -------
-            p: int or float or str
-                Entry value as int, float or string.
-
-        """
-        
-        # try to parse as int
-        try:
-            p = int(value)
-        except:
-            # if not int, then try float
-            try:
-                p = float(value)
-            except:
-                # if neither int nor float, stay with string
-                p = np.string_(str(value))
-        
-        return p
-
-    def read_emi(self, filename):
-        """Read the meta data from an _emi file.
-
-        Parameters
-        ----------
-            filename: str
-                Name of the _emi file.
-
-        Returns
-        -------
-            _emi: dict
-                Dictionary of experimental metadata stored in the EMI file.
-        """
-
-        # Todo: Change read_emi to not require a filename. It should just be the same name as the ser file.
-        # Todo: Move this function outside the main function so it can be used without a ser file.
-        # Todo: Use pathlib in read_emi
-        # check for string
-        if not isinstance(filename, str):
-            raise TypeError('Filename is supposed to be a string')
-
-        # try opening the file
-        try:
-            # open file for reading bytes, as binary and text are intermixed
-            f_emi = open(filename, 'rb')
-        except IOError:
-            print('Error reading file: "{}"'.format(filename))
-            raise
-        except:
-            raise
-        
-        # dict to store _emi stuff
-        _emi = {}
-        
-        # need anything readable from <ObjectInfo> to </ObjectInfo>
-        collect = False
-        data = b''
-        for line in f_emi:
-            if b'<ObjectInfo>' in line:
-                collect = True
-            if collect:
-                data += line.strip()
-            if b'</ObjectInfo>' in line:
-                collect = False
-
-        # close the file
-        f_emi.close()
-            
-        # strip of binary stuff still around
-        data = data.decode('ascii', errors='ignore')
-        matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
-        try:
-            data = matchObj.group(1)
-        except:
-            raise RuntimeError('Could not find _emi metadata in specified file.')
-
-        # parse metadata as xml
-        root = ET.fromstring('<_emi>'+data+'</_emi>')
-        
-        # single items
-        _emi['Uuid'] = root.findtext('Uuid')
-        _emi['AcquireDate'] = root.findtext('AcquireDate')
-        _emi['Manufacturer'] = root.findtext('Manufacturer')
-        _emi['DetectorPixelHeigth'] = root.findtext('DetectorPixelHeight')
-        _emi['DetectorPixelWidth'] = root.findtext('DetectorPixelWidth')
-
-        # Microscope Conditions
-        grp = root.find('ExperimentalConditions/MicroscopeConditions')
-        
-        for elem in grp:
-            _emi[elem.tag] = self._parseEntry_emi(elem.text)
-
-        # Experimental Description
-        grp = root.find('ExperimentalDescription/Root')
-        
-        for elem in grp:
-            _emi['{} [{}]'.format(elem.findtext('Label'), elem.findtext('Unit'))] = self._parseEntry_emi(elem.findtext('Value'))
-
-        # AcquireInfo
-        grp = root.find('AcquireInfo')
-        
-        for elem in grp:
-            _emi[elem.tag] = self._parseEntry_emi(elem.text)
-            
-        # DetectorRange
-        grp = root.find('DetectorRange')
-        
-        for elem in grp:
-            _emi['DetectorRange_'+elem.tag] = self._parseEntry_emi(elem.text)
-
-        return _emi
+        emi_file = self.filename[:-6] + '.emi'
+        if not os.path.exists(emi_file):
+            emi_file = None
+            self._emi = None
+        else:
+            self._emi = read_emi(emi_file)
 
     def writeEMD(self, filename):
         """ Write SER data to an EMD file.
@@ -943,6 +825,130 @@ class fileSER:
         f.put_comment('Converted SER file "{}" to EMD using the openNCEM tools.'.format(self._file_hdl.name))
 
 
+def read_emi(filename):
+    """Read the meta data from an emi file.
+
+    Parameters
+    ----------
+        filename: str or pathlib.Path
+            Path to the emi file.
+
+    Returns
+    -------
+        : dict
+            Dictionary of experimental metadata stored in the EMI file.
+    """
+
+    # check filename type
+    if isinstance(filename, str):
+        pass
+    elif isinstance(filename, Path):
+        filename = str(filename)
+    else:
+        raise TypeError('Filename is supposed to be a string or pathlib.Path')
+
+    # try opening the file
+    try:
+        # open file for reading bytes, as binary and text are intermixed
+        f_emi = open(filename, 'rb')
+    except IOError:
+        print('Error reading file: "{}"'.format(filename))
+        raise
+    except:
+        raise
+
+    # dict to store _emi stuff
+    _emi = {}
+
+    # need anything readable from <ObjectInfo> to </ObjectInfo>
+    collect = False
+    data = b''
+    for line in f_emi:
+        if b'<ObjectInfo>' in line:
+            collect = True
+        if collect:
+            data += line.strip()
+        if b'</ObjectInfo>' in line:
+            collect = False
+
+    # close the file
+    f_emi.close()
+
+    # strip of binary stuff still around
+    data = data.decode('ascii', errors='ignore')
+    matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
+    try:
+        data = matchObj.group(1)
+    except:
+        raise RuntimeError('Could not find _emi metadata in specified file.')
+
+    # parse metadata as xml
+    root = ET.fromstring('<_emi>' + data + '</_emi>')
+
+    # single items
+    _emi['Uuid'] = root.findtext('Uuid')
+    _emi['AcquireDate'] = root.findtext('AcquireDate')
+    _emi['Manufacturer'] = root.findtext('Manufacturer')
+    _emi['DetectorPixelHeight'] = root.findtext('DetectorPixelHeight')
+    _emi['DetectorPixelWidth'] = root.findtext('DetectorPixelWidth')
+
+    # Microscope Conditions
+    grp = root.find('ExperimentalConditions/MicroscopeConditions')
+
+    for elem in grp:
+        _emi[elem.tag] = _parseEntry_emi(elem.text)
+
+    # Experimental Description
+    grp = root.find('ExperimentalDescription/Root')
+
+    for elem in grp:
+        _emi['{} [{}]'.format(elem.findtext('Label'), elem.findtext('Unit'))] = _parseEntry_emi(
+            elem.findtext('Value'))
+
+    # AcquireInfo
+    grp = root.find('AcquireInfo')
+
+    for elem in grp:
+        _emi[elem.tag] = _parseEntry_emi(elem.text)
+
+    # DetectorRange
+    grp = root.find('DetectorRange')
+
+    for elem in grp:
+        _emi['DetectorRange_' + elem.tag] = _parseEntry_emi(elem.text)
+
+    return _emi
+
+
+def _parseEntry_emi(value):
+    """Auxiliary function to parse string entry to int, float or np.string_().
+
+    Parameters
+    ----------
+        value : str
+            String containing an int, float or string.
+
+    Returns
+    -------
+        : int or float or str
+            Entry value as int, float or string.
+
+    """
+
+    # try to parse as int
+    try:
+        p = int(value)
+    except:
+        # if not int, then try float
+        try:
+            p = float(value)
+        except:
+            # if neither int nor float, stay with string
+            p = np.string_(str(value))
+
+    return p
+
+
 def serReader(filename):
     """Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
 
@@ -967,7 +973,7 @@ def serReader(filename):
             >>> plt.imshow(ser1['data']) #show the single image from the data file
     """
     # Open the file and init the class
-    with fileSER(filename,emifile = True) as f1:
+    with fileSER(filename) as f1:
         if f1.head['ValidNumberElements'] > 0:
             # Get the first data set to setup the arrays
             data, metaData = f1.getDataset(0) 

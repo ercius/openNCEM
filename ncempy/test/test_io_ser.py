@@ -51,6 +51,13 @@ class Testser():
         
         # ser file for this testing
         with ncempy.io.ser.fileSER(data_location / Path('16_STOimage_1.ser')) as ser0:
-            emi = ser0.read_emi(str(data_location / Path('16_STOimage.emi')))
+            assert ser0._emi['AcceleratingVoltage'] == 80000
 
-            assert emi['AcceleratingVoltage'] == 80000
+        # Test reading emi file without ser file
+        emi = ncempy.io.ser.read_emi(str(data_location / Path('16_STOimage.emi')))
+        assert emi['AcceleratingVoltage'] == 80000
+
+    def test_serReader(self, data_location):
+        dd = ncempy.io.ser.serReader(data_location / Path('16_STOimage_1.ser'))
+
+        assert dd['data'][0, 0] == 18024
