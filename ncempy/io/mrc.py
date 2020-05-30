@@ -169,14 +169,27 @@ class fileMRC:
             print('mrc defined volumeSize = {}'.format(self.volumeSize))
 
         # calculate the voxel size based on volume and grid sizes
-        if self.volumeSize.any() == 0 or self.gridSize.any() == 0:
+        # account for zero values which are often stored in volume and grid size values
+        self.voxelSize = np.ones(3)
+        for ii in range(0, 3):
+            if self.volumeSize[ii] == 0:
+                v = 1
+            else:
+                v = self.volumeSize[ii]
+            if self.gridSize[ii] == 0:
+                gs = 1
+            else:
+                gs = self.gridSize[ii]
+            self.voxelSize[ii] = v / gs
+
+        """if self.volumeSize.any() == 0 or self.gridSize.any() == 0:
             if self.v:
                 print('Detected 0 volume or grid size. Setting voxel size to 1 (Ang).')
             self.voxelSize = np.ones(3)  # use 1 as a voxel size if its not set in the file
         else:
             self.voxelSize = (self.volumeSize / np.float32(self.gridSize))
             if self.v:
-                print('voxelSize (Ang) = {}'.format(self.voxelSize))
+                print('voxelSize (Ang) = {}'.format(self.voxelSize))"""
 
         # Pixel (cell) angles
         self.cellAngles = head2[3:6]
@@ -255,9 +268,9 @@ class fileMRC:
                             'unknown': FEIinfoValues[14]}
 
             self.voxelSize[0] = 1.  # set this to 1 but it should be the tilt angles. These can be non-uniform though.
-            self.voxelSize[1] = self.FEIinfo[
-                                    'pixel_size'] * 1e10  # convert [m] to Angstroms as is the standard for MRCs
-            self.voxelSize[2] = self.FEIinfo['pixel_size'] * 1e10
+            if self.FEIinfo['pixel_size'] != 0:
+                self.voxelSize[1] = self.FEIinfo['pixel_size'] * 1e10  # convert meter to Angstroms, standard for MRCs
+                self.voxelSize[2] = self.FEIinfo['pixel_size'] * 1e10
 
             if self.v:
                 print('Extended header data')
@@ -730,7 +743,7 @@ def emd2mrc(filename, dsetPath):
 
 if __name__ == '__main__':
 
-    fPath = Path(r'C:\Users\linol\Data') / Path('AgNWweld_tomo2_1wire_115kx_160mmCL.mrc')
+    fPath = Path(r'C:\Users\linol\Downloads') / Path('Collapsed_3.mrc')
 
     mrc0 = mrcReader(fPath)
 
