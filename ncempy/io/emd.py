@@ -19,19 +19,15 @@ class fileEMD:
 
     Implemented for spec 0.2 using the recommended layout for metadata.
 
-    Meant to provide convenience functions for commonly occuring tasks. This means that you will still want to acces fileEMD.file_hdl to manipulate the HDF5 file for not so commonly occuring tasks.
+    Meant to provide convenience functions for commonly occurring tasks. This means that you will still want to access
+     fileEMD.file_hdl to manipulate the HDF5 file for not so commonly occurring tasks.
 
     Parameters
     ----------
         filename : str
             Name of the EMD file.
-        readonly : bool
-            Set to open in read only mode.
-
-    Note
-    ----
-        The EMD module does not currently have a simplified "emdReader" like
-        MRC, SER and DM. This will be offered in a future update.
+        readonly : bool, default True
+            Set to False to allow writing to the file.
 
     Example
     -------
@@ -64,10 +60,6 @@ class fileEMD:
         self.user = None
         self.comments = None
         self.list_emds = []  # list of HDF5 groups with emd_data_type type
-
-        # check for string
-        #if not isinstance(filename, str):
-        #    raise TypeError('Filename is supposed to be a string!')
 
         # check filename type
         if isinstance(filename, str):

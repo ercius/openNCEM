@@ -34,7 +34,7 @@ class TestRingdiff():
         return root_path / Path('data')
 
     def test_eval_minimum(self, temp_file):
-        with ncempy.io.emd.fileEMD(temp_file) as emd0:
+        with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd0:
 
             # minimum settings necessary, with many nones
             settings_minimum = {'lmax_r': 10,
