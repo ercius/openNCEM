@@ -35,7 +35,7 @@ class Testdm3:
             on_memory : bool
                 if True, the dm file will be opened in on memory mode.
         """
-        
+
         with ncempy.io.dm.fileDM(file_path, on_memory=on_memory) as f:
             if on_memory:
                 assert f._on_memory
@@ -49,7 +49,7 @@ class Testdm3:
                             metadata={x: ds[x] for x in ds.keys() if x != "data"})
 
         return metadata, img
-    
+
     def test_read_dm3(self, data_location):
         
         metadata, img = self._read_dm3_data(data_location / Path('dmTest_3D_int16_64,65,66.dm3'))
@@ -60,7 +60,7 @@ class Testdm3:
 
     def test_read_dm3_1d(self, data_location):
         
-        metadata, img = self._read_dm3_data(data_location / Path('08_Carbon.dm3'))
+        metadata, img = self._read_dm3_data(data_location / Path('08_carbon.dm3'))
 
         assert metadata["dimensions"] == 1
         assert metadata["metadata"]["pixelOrigin"] == [0.0, -2400.0]
