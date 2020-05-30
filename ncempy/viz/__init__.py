@@ -19,11 +19,9 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
 
         Parameters
         ----------
-            im : ndarray
+            im : np.ndarray
                 The image to show.
 
-        Keywords
-        --------
             vmin, vmax : float, defulat = -2, 2
                 The vmin and vmax values to pass to imshow.
 
@@ -38,6 +36,7 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     ax.imshow(im3, vmin=vmin, vmax=vmax, **kwargs)
     return fg
 
+
 def imfft(im, d=1.0, ax=None):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
@@ -49,7 +48,7 @@ def imfft(im, d=1.0, ax=None):
 
     Parameters
     ----------
-        im: ndarray
+        im: np.ndarray
             The 2D fft of the diffraction pattern to display as a diffractogram
         d: float, optional, default = 1.0
             The real space pixel size of the image used to get the FFT
@@ -65,8 +64,8 @@ def imfft(im, d=1.0, ax=None):
         This example shows how to display a 2D ndarray (image) as a
         diffractogram. The image has a real space pixel size of 0.1 nanometer.
 
-        >>> imageFFT = np.fft.fft2(image)
-        >>> impy.imfft(imageFFT, d = 0.1)
+        >>> imageFFT = np.fft.fft2(im)
+        >>> ncempy.viz.imfft(imageFFT, d = 0.1)
 
     """
 
@@ -85,26 +84,31 @@ def imrfft(im, d=1.0, ax=None):
 
     Parameters
     ----------
-        im: ndarray
+        im : ndarray
             The 2D fft of the diffraction pattern to display as a diffractogram
-        d: float, optional, default = 1.0
+        d : float, optional, default = 1.0
             The real space pixel size of the image used to get the FFT
-        ax: pyplot axis, optional
+        ax : pyplot axis, optional
             An axis to plot into.
     Returns
     -------
         : pyplot Figure
             The figure used to plot the diffractogram.
     """
+    fg = None
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     fftFreq0 = np.fft.rfftfreq(im.shape[0], d)
     if ax is None:
         fg, ax = plt.subplots(1, 1)
     ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2), axes=0),
               extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
-    return fg
+    if fg:
+        return fg
+    else:
+        return
 
-class stack_view():
+
+class stack_view:
     """
     Class to allow a volume to be scrubbed through with a matplotlib slider widget.
     The first axis of the volume is the slicing axis. Other keyword args are passed
@@ -112,7 +116,7 @@ class stack_view():
 
     Parameters
     ----------
-        stack : ndimage, 3D stack
+        stack : numpy.ndarray, 3D stack
             The stack of to show as images
 
     Keywords
@@ -124,7 +128,7 @@ class stack_view():
 
     def __init__(self, stack, **kwargs):
         from matplotlib.widgets import Slider
-        
+
         if stack.ndim != 3:
             raise Exception('Must be three-dimensional stack of images.')
 
@@ -152,24 +156,30 @@ class stack_view():
 
 
 def plot_ringpolar(points, dims, show=False):
-    '''Plot points in polar coordinate system.
+    """Plot points in polar coordinate system.
 
-    Parameters:
-        points (np.ndarray):    Positions in polar coords.
-        dims (tuple):    Dimension information to plot labels.
-        show (bool):    Set to directly show plot in interactive mode.
+    Parameters
+    ----------
+        points : np.ndarray
+            Positions in polar coords.
+        dims : tuple
+            Dimension information to plot labels.
+        show : bool
+            Set to directly show plot in interactive mode.
 
-    Returns:
-        (np.ndarray):    Image of the plot.
+    Returns
+    -------
+        : numpy.ndarray
+            Image of the plot.
 
-    '''
+    """
 
     try:
         # try to convert input to np.ndarray with 2 columns (necessary if only one entry provided)
-        points = np.reshape(np.array(points), (-1,2))
+        points = np.reshape(np.array(points), (-1, 2))
         # check if enough dims available
-        assert(len(dims)>=2)
-        assert(len(dims[0])==3)
+        assert (len(dims) >= 2)
+        assert (len(dims[0]) == 3)
     except:
         raise TypeError('Something wrong with the input!')
 
@@ -177,14 +187,14 @@ def plot_ringpolar(points, dims, show=False):
     ax = fig.add_subplot(111)
 
     # mean value as line
-    ax.axhline(np.mean(points[:,0]), ls='--', c='k')
+    ax.axhline(np.mean(points[:, 0]), ls='--', c='k')
 
     # points
-    ax.plot(points[:,1], points[:,0], 'rx')
+    ax.plot(points[:, 1], points[:, 0], 'rx')
 
     # labels
     ax.set_xlabel('theta /[rad]')
-    ax.set_xlim( (-np.pi, np.pi) )
+    ax.set_xlim((-np.pi, np.pi))
     ax.set_ylabel('r /{}'.format(dims[0][2]))
 
     if show:
@@ -199,34 +209,46 @@ def plot_ringpolar(points, dims, show=False):
 
 
 def plot_distpolar(points, dims, dists, ns, show=False):
-    '''Plot the results of distortion fitting in polar coordinates.
+    """Plot the results of distortion fitting in polar coordinates.
 
-    Parameters:
-        points (np.ndarray):    Points in polar coords.
-        dims (tuple):    Dimensions, necessary to have unit information.
-        dists (np.ndarray):    Results of dist fitting, length according to ns.
-        ns (list):    List of used orders.
-        show (bool):    Set to directly show the plot in interactive mode.
+    Parameters
+    ----------
+        points : np.ndarray
+            Points in polar coords.
 
-    Returns:
-        (np.ndarray):    Image of the plot.
+        dims : tuple
+            Dimensions, necessary to have unit information.
 
-    '''
+        dists : np.ndarray
+            Results of dist fitting, length according to ns.
+
+        ns : list
+            List of used orders.
+
+        show : bool
+            Set to directly show the plot in interactive mode.
+
+    Returns
+    -------
+        : np.ndarray
+            Image of the plot.
+
+    """
 
     try:
         # check points
-        assert(isinstance(points, np.ndarray))
-        assert(points.shape[1] == 2)
+        assert (isinstance(points, np.ndarray))
+        assert (points.shape[1] == 2)
 
-        # check if enough dims availabel
-        assert(len(dims)>=2)
-        assert(len(dims[0])==3)
+        # check if enough dims available
+        assert (len(dims) >= 2)
+        assert (len(dims[0]) == 3)
 
         # check orders
-        assert(len(ns)>=1)
+        assert (len(ns) >= 1)
 
         # check dists
-        assert(dists.shape[0] == len(ns)*2+1)
+        assert (dists.shape[0] == len(ns) * 2 + 1)
     except:
         raise TypeError('Something wrong with the input!')
 
@@ -237,26 +259,26 @@ def plot_distpolar(points, dims, dists, ns, show=False):
     ax.axhline(dists[0], ls='--', c='k')
     xpl_ell = np.linspace(-np.pi, np.pi, 100)
     for i in range(len(ns)):
-        plt.plot( xpl_ell, dists[0]*rad_dis(xpl_ell, dists[i*2+1], dists[i*2+2], ns[i]), 'm--')
+        plt.plot(xpl_ell, dists[0] * rad_dis(xpl_ell, dists[i * 2 + 1], dists[i * 2 + 2], ns[i]), 'm--')
 
     # points before
-    ax.plot(points[:,1], points[:,0], 'rx')
+    ax.plot(points[:, 1], points[:, 0], 'rx')
 
     # sum of all distorts
-    sum_dists = np.ones(xpl_ell.shape)*dists[0]
+    sum_dists = np.ones(xpl_ell.shape) * dists[0]
     for i in range(len(ns)):
-        sum_dists *= rad_dis(xpl_ell, dists[i*2+1], dists[i*2+2], ns[i])
-    plt.plot( xpl_ell, sum_dists, 'b-' )
+        sum_dists *= rad_dis(xpl_ell, dists[i * 2 + 1], dists[i * 2 + 2], ns[i])
+    plt.plot(xpl_ell, sum_dists, 'b-')
 
     # points after
     points_corr = np.copy(points)
     for i in range(len(ns)):
-        points_corr[:,0] /= rad_dis(points[:,1], dists[i*2+1], dists[i*2+2], ns[i])
-    plt.plot( points_corr[:,1], points_corr[:,0], 'gx')
+        points_corr[:, 0] /= rad_dis(points[:, 1], dists[i * 2 + 1], dists[i * 2 + 2], ns[i])
+    plt.plot(points_corr[:, 1], points_corr[:, 0], 'gx')
 
     # labels
     ax.set_xlabel('theta /[rad]')
-    ax.set_xlim( (-np.pi, np.pi) )
+    ax.set_xlim((-np.pi, np.pi))
     ax.set_ylabel('r /{}'.format(dims[0][2]))
 
     if show:
@@ -270,28 +292,37 @@ def plot_distpolar(points, dims, dists, ns, show=False):
     return plot
 
 
-def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False):
+def plot_points(img, points, vminmax=(0, 1), dims=None, invert=False, show=False):
     """Plot the detected points on the input image for checking.
 
-    Parameters:
-        img (np.ndarray):    Image.
-        points (np.ndarray):    Array containing the points.
-        vminmax (tuple):    Tuple of two values for relative lower and upper cut off to display image.
-        dims (tuple):    Tuple of dims to plot in dimensions.
-        invert (bool):    Set to invert the image.
-        show (bool):    Set to directly show the plot interactively.
+    Parameters
+    ----------
+        img : np.ndarray
+            Image.
+        points : np.ndarray
+            Array containing the points.
+        vminmax : tuple
+            Tuple of two values for relative lower and upper cut off to display image.
+        dims : tuple
+            Tuple of dims to plot in dimensions.
+        invert : bool
+            Set to invert the image.
+        show : bool
+            Set to directly show the plot interactively.
 
-    Returns:
-        (np.ndarray):    Image of the plot.
+    Returns
+    -------
+        : np.ndarray
+            Image of the plot.
 
     """
 
     try:
-        assert(isinstance(img, np.ndarray))
+        assert (isinstance(img, np.ndarray))
 
-        assert(isinstance(points, np.ndarray))
-        assert(points.shape[1] == 2)
-        assert(len(points.shape) == 2)
+        assert (isinstance(points, np.ndarray))
+        assert (points.shape[1] == 2)
+        assert (len(points.shape) == 2)
     except:
         raise TypeError('Something wrong with the input!')
 
@@ -304,17 +335,18 @@ def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False)
         cmap = "gray"
 
     if dims:
-        ax.imshow(img, cmap=cmap, vmin=np.min(img)+vminmax[0]*(np.max(img)-np.min(img)),
-                  vmax=np.min(img)+vminmax[1]*(np.max(img)-np.min(img)),
+        ax.imshow(img, cmap=cmap, vmin=np.min(img) + vminmax[0] * (np.max(img) - np.min(img)),
+                  vmax=np.min(img) + vminmax[1] * (np.max(img) - np.min(img)),
                   extent=(np.min(dims[0][0]), np.max(dims[0][0]), np.max(dims[1][0]), np.min(dims[1][0])))
         ax.set_xlabel('{} {}'.format(dims[0][1], dims[0][2]))
         ax.set_ylabel('{} {}'.format(dims[1][1], dims[1][2]))
         ax.set_xlim((np.min(dims[0][0]), np.max(dims[0][0])))
         ax.set_ylim((np.max(dims[1][0]), np.min(dims[1][0])))
     else:
-        ax.imshow(img, cmap=cmap, vmin=np.min(img)+vminmax[0]*(np.max(img)-np.min(img)), vmax=np.min(img)+vminmax[1]*(np.max(img)-np.min(img)) )
-        ax.set_xlim((0,img.shape[1]-1))
-        ax.set_ylim((img.shape[0]-1,0))
+        ax.imshow(img, cmap=cmap, vmin=np.min(img) + vminmax[0] * (np.max(img) - np.min(img)),
+                  vmax=np.min(img) + vminmax[1] * (np.max(img) - np.min(img)))
+        ax.set_xlim((0, img.shape[1] - 1))
+        ax.set_ylim((img.shape[0] - 1, 0))
 
     ax.scatter(points[:, 1], points[:, 0], color='r', marker='o', facecolors='none')
 
@@ -332,29 +364,35 @@ def plot_points(img, points, vminmax=(0,1), dims=None, invert=False, show=False)
     return plot
 
 
-def plot_radialprofile( r, intens, dims, show=False ):
+def plot_radialprofile(r, intens, dims, show=False):
     """Plot radial profile.
 
-    Parameters:
-        r (np.ndarray):    r-axis of radial profile.
-        intens (np.ndarray):    Intensity-axis of radial profile.
-        dims (tuple):    Dimensions of original image to read out units.
-        show (bool):    Set to directly show plot interactively.
+    Parameters
+    ----------
+        r : np.ndarray
+            r-axis of radial profile.
+        intens : np.ndarray
+            Intensity-axis of radial profile.
+        dims : tuple
+            Dimensions of original image to read out units.
+        show : bool
+            Set to directly show plot interactively.
 
-    Returns:
-        (np.ndarray):    Image of the plot.
-
+    Returns
+    -------
+        : np.ndarray
+            Image of the plot.
     """
 
     try:
         # check data
-        assert(isinstance(r, np.ndarray))
-        assert(isinstance(intens, np.ndarray))
-        assert(np.array_equal(r.shape, intens.shape))
+        assert (isinstance(r, np.ndarray))
+        assert (isinstance(intens, np.ndarray))
+        assert (np.array_equal(r.shape, intens.shape))
 
-        # check if dims availabel
-        assert(len(dims)>=1)
-        assert(len(dims[0])==3)
+        # check if dims available
+        assert (len(dims) >= 1)
+        assert (len(dims[0]) == 3)
 
     except:
         raise TypeError('Something wrong with the input!')
@@ -379,36 +417,45 @@ def plot_radialprofile( r, intens, dims, show=False ):
     return plot
 
 
-def plot_fit( r, intens, dims, funcs, param, show=False ):
+def plot_fit(r, intens, dims, funcs, param, show=False):
     """Plot the fit results to the radial profile.
 
-    Parameters:
-        r (np.ndarray):    r-axis of radial profile.
-        intens (np.ndarray):    Intensity-axis of radial profile.
-        dims (tuple):    Dimensions of original image to read out units.
-        funcs (tuple):    List of functions.
-        param (np.ndarray):    Parameters for functions in funcs.
-        show (bool):    Set to directly show plot interactively.
+    Parameters
+    ----------
+        r : np.ndarray
+            r-axis of radial profile.
+        intens : np.ndarray
+            Intensity-axis of radial profile.
+        dims : tuple
+            Dimensions of original image to read out units.
+        funcs : tuple
+            List of functions.
+        param : np.ndarray
+            Parameters for functions in funcs.
+        show : bool
+            Set to directly show plot interactively.
 
-    Returns:
-        (np.ndarray):    Image of the plot.
+    Returns
+    -------
+        : np.ndarray
+            Image of the plot.
 
     """
 
     try:
         # check data
-        assert(isinstance(r, np.ndarray))
-        assert(isinstance(intens, np.ndarray))
-        assert(np.array_equal(r.shape, intens.shape))
+        assert (isinstance(r, np.ndarray))
+        assert (isinstance(intens, np.ndarray))
+        assert (np.array_equal(r.shape, intens.shape))
 
-        # check if dims availabel
-        assert(len(dims)>=1)
-        assert(len(dims[0])==3)
+        # check if dims available
+        assert (len(dims) >= 1)
+        assert (len(dims[0]) == 3)
 
         # funcs and params
-        assert(len(funcs)>=1)
+        assert (len(funcs) >= 1)
         for i in range(len(funcs)):
-            assert(funcs[i] in ncempy.algo.math.lkp_funcs)
+            assert (funcs[i] in ncempy.algo.math.lkp_funcs)
 
         param = np.array(param)
         param = np.reshape(param, sum(map(lambda x: ncempy.algo.math.lkp_funcs[x][1], funcs)))
@@ -425,10 +472,11 @@ def plot_fit( r, intens, dims, funcs, param, show=False ):
     # plot single
     n = 0
     for i in range(len(funcs)):
-        ax.plot(r, ncempy.algo.math.lkp_funcs[funcs[i]][0]( r, param[n:n+ncempy.algo.math.lkp_funcs[funcs[i]][1]]), 'g-' )
+        ax.plot(r, ncempy.algo.math.lkp_funcs[funcs[i]][0](r, param[n:n + ncempy.algo.math.lkp_funcs[funcs[i]][1]]),
+                'g-')
         n += ncempy.algo.math.lkp_funcs[funcs[i]][1]
     # sum of functions
-    sum_funcs = ncempy.algo.math.sum_functions( r, funcs, param )
+    sum_funcs = ncempy.algo.math.sum_functions(r, funcs, param)
     ax.plot(r, sum_funcs, 'b-')
 
     # labels

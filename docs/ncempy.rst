@@ -5,16 +5,19 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 1
 
-    ncempy.io
-    ncempy.algo
-    ncempy.eval
-    ncempy.tools
+   ncempy.algo
+   ncempy.command_line
+   ncempy.edstomo
+   ncempy.eval
+   ncempy.io
+   ncempy.viz
 
 Module contents
 ---------------
 
 .. automodule:: ncempy
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
