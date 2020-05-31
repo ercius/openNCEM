@@ -468,10 +468,12 @@ def defaultDims(data, pixel_size=None):
 
     Returns
     -------
-        dims: tuple
+        dims: list
             A properly formatted tuple of dim vectors used as input
             to emd.emdFile.put_emdgroup()
     """
+    if isinstance(pixel_size, np.ndarray):
+        raise Exception('pixel_size must be a tuple')
 
     num = data.ndim
 
@@ -483,14 +485,14 @@ def defaultDims(data, pixel_size=None):
 
     dims = []
     for ii in range(num):
-        curDim = (np.linspace(0, data.shape[ii] - 1, data.shape[ii]) * pixel_size[ii],
-                  'dim{}'.format(ii+1), 'unit{}'.format(ii+1))
+        curDim = [np.linspace(0, data.shape[ii] - 1, data.shape[ii]) * pixel_size[ii],
+                  'dim{}'.format(ii+1), 'unit{}'.format(ii+1)]
         dims.append(curDim)
 
     return dims
 
 
-def emdReader(filename, dsetNum = 0):
+def emdReader(filename, dsetNum=0):
     """ A simple helper function to read in the data and metadata 
     in a structured format similar to the other ncempy readers.
 
