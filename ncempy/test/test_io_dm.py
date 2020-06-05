@@ -69,7 +69,7 @@ class Testdm3:
 
     def test_read_dm3_on_memory(self, data_location):
 
-        metadata, img = self._read_dm3_data(data_location / Path('dmTest_3D_int16_64,65,66.dm3'))
+        metadata, img = self._read_dm3_data(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=True)
 
         assert metadata["dimensions"] == 3
         assert metadata["metadata"]["pixelOrigin"] == [0.0, 0.0, 0.0]
@@ -119,9 +119,40 @@ class Testdm3:
         assert dv['data'][0, 0, 0] == 0
         assert ds['data'][0, 0] == 0
 
+    def test_memmap(self, data_location):
+        import numpy as np
+        with ncempy.io.dm.fileDM(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=True) as f:
+            m = f.getMemmap(0)
+            assert isinstance(m, np.ndarray)
+            assert isinstance(m, np.memmap)
+            assert m[0, 0, 0] == 0  # test while file open
+
+        assert m[0, 0, 0] == 0  # test when file closed
+        del m  # close the memmap
+
+        with ncempy.io.dm.fileDM(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=False) as f:
+            m = f.getMemmap(0)
+            assert isinstance(m, np.ndarray)
+            assert isinstance(m, np.memmap)
+            assert m[0, 0, 0] == 0
+
+        assert m[0, 0, 0] == 0
+        del m
+
+        with ncempy.io.dm.fileDM(data_location / Path('08_carbon.dm3'), on_memory=False) as f:
+            m = f.getMemmap(0)
+            assert isinstance(m, np.ndarray)
+            assert isinstance(m, np.memmap)
+            assert int(m[0]) == 21281
+
     def test_dmReader(self, data_location):
         """Test that the simplified dmReader function works and loads the data into memory. If test_on_memory
         fails then this will likely fail for the same reason."""
         dm0 = ncempy.io.dm.dmReader(data_location / Path('dmTest_3D_int16_64,65,66.dm3'))
 
         assert dm0['data'][0, 0, 0] == 0
+
+        dm1 = ncempy.io.dm.dmReader(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=True)
+        assert dm1['data'][0, 0, 0] == 0
+        dm2 = ncempy.io.dm.dmReader(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=False)
+        assert dm2['data'][0, 0, 0] == 0

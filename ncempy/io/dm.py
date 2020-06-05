@@ -1075,8 +1075,9 @@ class fileDM:
 
         Returns
         -------
-            : numpy.core.memmap
-                A read-only numpy memmap object with access to the data.
+            : numpy.memmap
+                A read-only numpy memmap object with access to the data. The file will continue to be open as long
+                as the memmap is open. Delete the memmap to close the file.
         """
         # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         if self.numObjects == 1:
@@ -1090,13 +1091,18 @@ class fileDM:
         except:
             raise
 
-        data = np.memmap(self.fid, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r', offset=self.dataOffset[ii],
-                         shape=(self.zSize2[ii], self.zSize[ii], self.ySize[ii], self.xSize[ii]))
+        # Create a memmap
+        # Remove singular dimensions
+        sh0 = (self.zSize2[ii], self.zSize[ii], self.ySize[ii], self.xSize[ii])
+        sh1 = tuple([ii for ii in sh0 if ii > 1])  # shape must be a tuple
 
-        return data
+        mm = np.memmap(self.filename, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r',
+                       offset=self.dataOffset[ii], shape=sh1)
+
+        return mm
 
 
-def dmReader(filename, dSetNum=0, verbose=False):
+def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     """A simple function to parse the file and read the requested dataset.
     Most users will want to use this function to simplify reading data
     directly into memory.
@@ -1109,7 +1115,8 @@ def dmReader(filename, dSetNum=0, verbose=False):
             The number of the data set to read. Almost always should be = 0. Default = 0
         verbose : bool
             Allow extra printing to see file internals. Default = False
-
+        on_memory : bool, default True
+            Whether to use the on_memory option of fileDM. Usually provides much faster data reading.
     Returns
     -------
         : dict
@@ -1125,7 +1132,7 @@ def dmReader(filename, dSetNum=0, verbose=False):
             >>> im0 = dm.dmReader('filename.dm3')
             >>> plt.imshow(im0['data']) #show the single image from the data file
     """
-    with fileDM(filename, verbose) as f1:  # open the file and init the class
+    with fileDM(filename, verbose, on_memory=on_memory) as f1:  # open the file and init the class
         im1 = f1.getDataset(dSetNum)  # get the requested dataset (first by default)
 
     coords = []
@@ -1135,6 +1142,3 @@ def dmReader(filename, dSetNum=0, verbose=False):
     im1['coords'] = coords
 
     return im1  # return the dataset and metadata as a dictionary
-
-if __name__ == '__main__':
-    dm0 = fileDM(r'C:\Users\linol\Data\5_Te_15x83_ss=3nm_CL=245_alpha=p48_p06sec_no beamstop_bin4_300kV.dm4')
