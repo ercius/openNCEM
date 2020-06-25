@@ -57,6 +57,8 @@ class Testser():
         emi = ncempy.io.ser.read_emi(str(data_location / Path('16_STOimage.emi')))
         assert emi['AcceleratingVoltage'] == 80000
 
+        print(emi.keys())
+
     def test_serReader(self, data_location):
         dd = ncempy.io.ser.serReader(data_location / Path('16_STOimage_1.ser'))
 

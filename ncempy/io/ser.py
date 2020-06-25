@@ -850,7 +850,8 @@ def read_emi(filename):
     # try opening the file
     try:
         # open file for reading bytes, as binary and text are intermixed
-        f_emi = open(filename, 'rb')
+        with open(filename, 'rb') as f_emi:
+            emi_data = f_emi.read()
     except IOError:
         print('Error reading file: "{}"'.format(filename))
         raise
@@ -861,29 +862,34 @@ def read_emi(filename):
     _emi = {}
 
     # need anything readable from <ObjectInfo> to </ObjectInfo>
-    collect = False
-    data = b''
-    for line in f_emi:
-        if b'<ObjectInfo>' in line:
-            collect = True
-        if collect:
-            data += line.strip()
-        if b'</ObjectInfo>' in line:
-            collect = False
+    #collect = False
+    #data = b''
+    #for line in f_emi:
+    #    if b'<ObjectInfo>' in line:
+    #        collect = True
+    #    if collect:
+    #        data += line.strip()
+    #    if b'</ObjectInfo>' in line:
+    #        collect = False
 
     # close the file
-    f_emi.close()
+    # f_emi.close()
+
+    metaStart = emi_data.find(b'<ObjectInfo>')
+    metaEnd = emi_data.find(b'</ObjectInfo>')  # need to add len('</ObjectInfo>') = 13 to encompass this final tag
+
+    root = ET.fromstring(emi_data[metaStart:metaEnd + 13])
 
     # strip of binary stuff still around
-    data = data.decode('ascii', errors='ignore')
-    matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
-    try:
-        data = matchObj.group(1)
-    except:
-        raise RuntimeError('Could not find _emi metadata in specified file.')
+    #data = data.decode('ascii', errors='ignore')
+    #matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
+    #try:
+    #    data = matchObj.group(1)
+    #except:
+    #    raise RuntimeError('Could not find _emi metadata in specified file.')
 
     # parse metadata as xml
-    root = ET.fromstring('<_emi>' + data + '</_emi>')
+    #root = ET.fromstring('<_emi>' + data + '</_emi>')
 
     # single items
     _emi['Uuid'] = root.findtext('Uuid')
