@@ -805,30 +805,39 @@ class fileDM:
             pass
 
     def writeTags(self, new_folder_path_for_tags=None):
-        """Write  out all tags as human readable text to a text file
-        in the same directory and with a the same name as the DM file.
+        """Write out all tags as human readable text to a text file
+        in the same directory (or a user definable directory) and with a the same name as the DM file.
+
+        Parameters
+        ----------
+            new_folder_path_for_tags : str or pathlib.Path, Optional
+                Allow user to define a different path than the directory of the current file.
 
         """
-        if('.dm3' in self.filename): # in case different file formats are used and for generality
-            fnameOutPrefix = self.filename.split('.dm3')[0]
-        elif('.dm4' in self.filename):
-            fnameOutPrefix = self.filename.split('.dm4')[0]
-        
-        if(new_path_for_tags): # to allow someone to write the tags in a different place than the dm file
-            fnameOutPrefix = new_folder_path_for_tags + '/' + self.filename.split('/')[-1]
-        
+        file_name = Path(self.filename)
+        new_file_name = Path(file_name.stem + '_tags').with_suffix('.txt')
+
+        # Change output path
+        if new_folder_path_for_tags:
+            print('chooseing different path')
+            out_directory = Path(new_folder_path_for_tags)
+        else:
+            out_directory = file_name.parent
+
+        print(out_directory)
+
         try:
             # open a text file to write out the tags
-            with open(fnameOutPrefix + '_tags.txt', 'w') as fidOut:
+            with open(out_directory / new_file_name, 'w') as fid_out:
                 for nn in sorted(self.allTags):
                     try:
-                        oo = '{} = {}'.format(nn, str(self.allTags[nn]))
-                        fidOut.write(oo)
+                        combined_tag = '{} = {}'.format(nn, self.allTags[nn])
+                        fid_out.write(combined_tag)
                     except:
-                        fidOut.write('{} = dm.py error'.format(nn))
-                    fidOut.write('\n')
-        except NameError:
-            print("Issue opening tags output file.")
+                        fid_out.write('{} = dm.py write error'.format(nn))
+                    fid_out.write('\n')
+        except IOError:
+            print("ncempy: Issue opening DM tags output file.")
             raise
         except:
             raise

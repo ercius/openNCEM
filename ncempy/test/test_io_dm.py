@@ -156,3 +156,14 @@ class Testdm3:
         assert dm1['data'][0, 0, 0] == 0
         dm2 = ncempy.io.dm.dmReader(data_location / Path('dmTest_3D_int16_64,65,66.dm3'), on_memory=False)
         assert dm2['data'][0, 0, 0] == 0
+
+    def test_writeTags(self, data_location):
+        file_name = data_location / Path('08_carbon.dm3')
+        with ncempy.io.dm.fileDM(file_name) as dm0:
+            dm0.writeTags()
+            new_loc = data_location / Path(file_name.stem + '_tags.txt')
+            assert new_loc.exists()
+            new_loc.unlink()
+            dm0.writeTags(new_folder_path_for_tags=data_location)
+            assert new_loc.exists()
+            new_loc.unlink()
