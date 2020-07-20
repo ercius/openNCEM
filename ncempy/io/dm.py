@@ -804,12 +804,19 @@ class fileDM:
         else:
             pass
 
-    def writeTags(self):
+    def writeTags(self, new_folder_path_for_tags=None):
         """Write  out all tags as human readable text to a text file
         in the same directory and with a the same name as the DM file.
 
         """
-        fnameOutPrefix = self.filename.split('.dm3')[0]
+        if('.dm3' in self.filename): # in case different file formats are used and for generality
+            fnameOutPrefix = self.filename.split('.dm3')[0]
+        elif('.dm4' in self.filename):
+            fnameOutPrefix = self.filename.split('.dm4')[0]
+        
+        if(new_path_for_tags): # to allow someone to write the tags in a different place than the dm file
+            fnameOutPrefix = new_folder_path_for_tags + '/' + self.filename.split('/')[-1]
+        
         try:
             # open a text file to write out the tags
             with open(fnameOutPrefix + '_tags.txt', 'w') as fidOut:
