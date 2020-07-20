@@ -276,6 +276,8 @@ class fileMRC:
                 print('Extended header data')
                 for aa, bb in self.FEIinfo.items():
                     print('{} = {}'.format(aa, bb))
+        else:
+            self.FEIinfo = {}
 
         self.dataOffset = 1024 + self.extra[1]  # offset of the data from the start of the file
 
