@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import ndimage
 
 
 def image_cross_corr(image, reference, real_filter=1, k_filter=1):
