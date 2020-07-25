@@ -227,12 +227,14 @@ def stack_align(stack, align_type='static', real_filter=1, k_filter=1, shift_fun
 
     # Align positive angles
     jj = 0
+    ref_sh = np.zeros((2,))
     for ii in range(1, stack.shape[0]):
-        if align_type is 'dynamic':
-            jj = ii - 1
-        output, sh = image_correlate(stack[ii, :, :], stack[jj, :, :], real_filter, k_filter, shift_func=shift_func)
+        output, sh = image_correlate(stack[ii, :, :], stack[ii-1, :, :], real_filter, k_filter, shift_func=shift_func)
+        sh += ref_sh
         aligned[ii, :, :] = output
         shifts[ii, :] = sh
+        if align_type is 'dynamic':
+            ref_sh = sh
 
     return aligned, shifts
 
