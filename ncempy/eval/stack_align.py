@@ -46,7 +46,6 @@ def stack_align(stack, align_type='static', **kwargs):
         shifts[ii, :] = sh
 
         if align_type is 'dynamic':
-            jj = ii - 1
             ref_fft = cur_fft
             ref_sh = sh
 
@@ -70,8 +69,8 @@ if __name__ == '__main__':
 
     stack0 = np.zeros((5, *dd.shape), dtype=dd.dtype)
     shifts0 = np.asarray(((range(4, -6, -2)), (range(6, -8, -3)))).T
-    for ii, s in enumerate(shifts0):
-        stack0[ii, :, :] = ndimage.shift(dd, s, mode='mirror')
+    for ii0, s in enumerate(shifts0):
+        stack0[ii0, :, :] = ndimage.shift(dd, s, mode='mirror')
     out_stack, out_stack_shifts = stack_align(stack0, align_type='static',
                                               upsample_factor=up, method='hybrid')
     print('shifts0 = {}'.format(shifts0))
