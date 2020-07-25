@@ -50,28 +50,3 @@ def stack_align(stack, align_type='static', **kwargs):
             ref_sh = sh
 
     return aligned, shifts
-
-
-if __name__ == '__main__':
-
-    import ncempy.io as nio
-    from scipy import ndimage
-
-    up = 2
-    sh0 = (4.5, 5.5)
-    method0 = 'hybrid'
-
-    print('Upsample factor = {}'.format(up))
-    print('Applied shift = {}'.format(sh0))
-
-    with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
-        dd, md = f0.get_emdgroup(f0.list_emds[0])
-
-    stack0 = np.zeros((5, *dd.shape), dtype=dd.dtype)
-    shifts0 = np.asarray(((range(4, -6, -2)), (range(6, -8, -3)))).T
-    for ii0, s in enumerate(shifts0):
-        stack0[ii0, :, :] = ndimage.shift(dd, s, mode='mirror')
-    out_stack, out_stack_shifts = stack_align(stack0, align_type='static',
-                                              upsample_factor=up, method='hybrid')
-    print('shifts0 = {}'.format(shifts0))
-    print('stack shifts = {}'.format(out_stack_shifts))

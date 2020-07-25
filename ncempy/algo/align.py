@@ -225,41 +225,15 @@ def stack_align(stack, align_type='static', real_filter=1, k_filter=1, shift_fun
 
     aligned[0, :, :] = stack[0, :, :]
 
-    # Align positive angles
     jj = 0
     ref_sh = np.zeros((2,))
     for ii in range(1, stack.shape[0]):
-        output, sh = image_correlate(stack[ii, :, :], stack[ii-1, :, :], real_filter, k_filter, shift_func=shift_func)
+        output, sh = image_correlate(stack[ii, :, :], stack[jj, :, :], real_filter, k_filter, shift_func=shift_func)
         sh += ref_sh
         aligned[ii, :, :] = output
         shifts[ii, :] = sh
         if align_type is 'dynamic':
             ref_sh = sh
+            jj = ii
 
     return aligned, shifts
-
-
-if __name__ == '__main__':
-    import ncempy.io as nio
-    from scipy import ndimage
-
-    sh0 = [14, 15]
-
-    print('Applied shift = {}'.format(sh0))
-
-    with nio.emd.fileEMD('C:/Users/linol/Data/Acquisition_18.emd') as f0:
-        dd, md = f0.get_emdgroup(f0.list_emds[0])
-    dd2 = ndimage.shift(dd, sh0, mode='mirror')
-
-    xcor2 = image_cross_corr(dd, dd2)
-
-    outShift = image_correlate(dd, dd2)
-    assert sh0 == outShift[1]
-
-    stack0 = np.zeros((5, *dd.shape), dtype=dd.dtype)
-    shifts0 = np.asarray(((range(4, -6, -2)), (range(6, -8, -3)))).T
-    for ii2, sh1 in enumerate(shifts0):
-        stack0[ii2, :, :] = ndimage.shift(dd, sh1, mode='mirror')
-    out_stack, out_stack_shifts = stack_align(stack0, align_type='static')
-    print(shifts0)
-    print(out_stack_shifts)
