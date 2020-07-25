@@ -36,9 +36,11 @@ def stack_align(stack, align_type='static', **kwargs):
 
     # Align positive angles
     ref_fft = np.fft.fft2(stack[0, :, :])
+    ref_sh = np.zeros((2,))
     for ii in range(1, stack.shape[0]):
         cur_fft = np.fft.fft2(stack[ii, :, :])
         sh = multicorr.multicorr(cur_fft, ref_fft, **kwargs)
+        sh += ref_sh
         image_shifted = np.real(np.fft.ifft2(multicorr.imageShifter(cur_fft, sh)))
         aligned[ii, :, :] = image_shifted
         shifts[ii, :] = sh
@@ -46,6 +48,7 @@ def stack_align(stack, align_type='static', **kwargs):
         if align_type is 'dynamic':
             jj = ii - 1
             ref_fft = cur_fft
+            ref_sh = sh
 
     return aligned, shifts
 
