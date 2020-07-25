@@ -194,29 +194,40 @@ class fileEMDVelox:
             raise IndexError('EMDVelox group #{} does not exist.'.format(group))
         
         md = {}
-        tempMetaData = group['Metadata'][:,0]
+        tempMetaData = group['Metadata'][:, 0]
         # Reduce to valid metadata
         validMetaDataIndex = np.where(tempMetaData > 0) 
         metaData = tempMetaData[validMetaDataIndex].tostring()
         # Interpret as UTF-8 encoded characters and load as JSON
-        self.metaDataJSON = json.loads(metaData.decode('utf-8','ignore'))
+        self.metaDataJSON = json.loads(metaData.decode('utf-8', 'ignore'))
         # Pull out basic meta data about the images
-        detectorName = self.metaDataJSON['BinaryResult']['Detector']
-        pixelSizeX = float(self.metaDataJSON['BinaryResult']['PixelSize']['width'])*1e9 #change to nm
-        pixelSizeY = float(self.metaDataJSON['BinaryResult']['PixelSize']['height'])*1e9 #change to nm
-        # Construct meta data dictionary
-        md['pixelSize'] = (pixelSizeX,pixelSizeY)
-        md['pixelSizeUnit'] = ('nm','nm')
-        md['detectorName'] = detectorName
-        md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime']
-        md['Stage'] = self.metaDataJSON['Stage']
+        md['pixelSizeUnit'] = [self.metaDataJSON['BinaryResult']['PixelUnitX'],
+                               self.metaDataJSON['BinaryResult']['PixelUnitY']]
+        convert_pixel_sizeX = 1
+        convert_pixel_sizeY = 1
+        if md['pixelSizeUnit'][0] == 'm':
+            convert_pixel_sizeX = 1e9
+            md['pixelSizeUnit'][0] = 'nm'
+        if md['pixelSizeUnit'][1] == 'm':
+            convert_pixel_sizeY = 1e9
+            md['pixelSizeUnit'][1] = 'nm'
+        pixelSizeX = float(self.metaDataJSON['BinaryResult']['PixelSize']['width'])*convert_pixel_sizeX  # convert
+        pixelSizeY = float(self.metaDataJSON['BinaryResult']['PixelSize']['height'])*convert_pixel_sizeY  # change to nm
+        # Construct meta data dictionary with most useful metadata
+        md['pixelSize'] = (pixelSizeX, pixelSizeY)
         md['AcquisitionTime'] = datetime.datetime.fromtimestamp(int(
             self.metaDataJSON['Acquisition']['AcquisitionStartDatetime']['DateTime']))
-        #md['metadata'] = self.metaDataJSON # return all other metdata
+        md['Stage'] = self.metaDataJSON['Stage']
+        md['detectorName'] = self.metaDataJSON['BinaryResult']['Detector']
+        try:
+            md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime'] # only for STEM
+        except KeyError:
+            md['dwellTime'] = 0
+
         return md
 
 
-def emdVeloxReader(filename, dsetNum = 0):
+def emdVeloxReader(filename, dsetNum=0):
     """ A simple helper function to read in the data and metadata in a 
     structured format similar to the other ncempy readers.
 
