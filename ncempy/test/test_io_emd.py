@@ -5,8 +5,6 @@ Tests for the emd io module.
 import pytest
 
 from pathlib import Path
-import os
-import os.path
 import tempfile
 
 import numpy as np
@@ -14,7 +12,7 @@ import numpy as np
 import ncempy.io.emd
 
 
-class Testemd():
+class TestEMD:
     """
     Test the EMD io module
     """
