@@ -27,7 +27,7 @@ def shearImage(im, dim, shear_factor):
         return
 
     fftF = np.fft.fftshift(np.fft.fftfreq(im.shape[dim], d=1 / im.shape[dim]))
-    xx, yy = np.meshgrid(fftF, fftF)
+    yy, xx = np.meshgrid(fftF, fftF, indexing='ij')
     f = np.fft.fftshift(np.fft.fftn(im, axes=(dim,)), axes=(dim,))
     ff = f * np.exp(-2.0j * np.pi / im.shape[dim] * xx * yy * shear_factor)
 
