@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 import h5py
 
+
 class fileEMDVelox:
     """ Class to represent Velox EMD files. It uses the h5py caching functionality
     to increase the default cache size from 1MB to 10MB. This significantly
@@ -38,13 +39,13 @@ class fileEMDVelox:
 
     Example
     -------
-        Open an EMD Velox file of 1 image.
+        Open an EMD Velox file containing 1 image.
 
         >>> import ncempy.io as nio
         >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
         >>> print(emd1) # print information about the file
-        >>> im0, metadata0 = emd1.get_dataset(emd1.list_data[0])
-        >>> plt.imshow(im0, extent = (0,md1['pixelSize'][0],0,md1['pixelSize'][1]))
+        >>> im0, metadata0 = emd1.get_dataset(0)
+        >>> del emd1 # close the file
     """
     
     def __init__(self, filename):
@@ -53,8 +54,8 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            filename : str
-                The file path to load as a string.
+            filename : str or pathlib.Path
+                The file path to load as a string or a pathlib.Path object.
 
         """
         
@@ -62,7 +63,7 @@ class fileEMDVelox:
         self.file_hdl = None
         self.metaDataJSON = None
         self.list_data = None
-        self.list_emds = None # this will be identical to list_data
+        self.list_emds = None  # this will be identical to list_data
 
         # check filename type
         if isinstance(filename, str):
