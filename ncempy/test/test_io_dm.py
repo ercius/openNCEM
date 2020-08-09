@@ -62,10 +62,9 @@ class Testdm3:
         
         metadata, img = self._read_dm3_data(data_location / Path('08_carbon.dm3'))
 
-        assert metadata["dimensions"] == 1
+        assert metadata["dimensions"] == 2
         assert metadata["metadata"]["pixelOrigin"] == [0.0, -2400.0]
-        # Todo: Update this test for v1.6.0 when singular dimensions are removed
-        assert img.shape == (2048,)
+        assert img.shape == (1, 2048)
 
     def test_read_dm3_on_memory(self, data_location):
 
@@ -167,3 +166,11 @@ class Testdm3:
             dm0.writeTags(new_folder_path_for_tags=data_location)
             assert new_loc.exists()
             new_loc.unlink()
+
+    def test_dmReader_spectra(self, data_location):
+        # Ensure that the coordinates in DM spectra files are correct
+        file_name = data_location / Path('08_carbon.dm3')
+        dm0 = ncempy.io.dm.dmReader(file_name)
+        assert dm0['data'].ndim == 2
+        assert round(dm0['coords'][1][0]) == 240
+        assert round(dm0['coords'][1][-1], ndigits=1) == round(444.7, ndigits=1)

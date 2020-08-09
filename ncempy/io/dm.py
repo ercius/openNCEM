@@ -892,20 +892,21 @@ class fileDM:
     def getDataset(self, index):
         """Retrieve a dataset from the DM file.
 
-        Note
-        ----
-            Most DM3 and DM4 files contain a small "thumbnail"
-            as the first dataset written as RGB data. This
-            function ignores that dataset if it exists. To
-            retrieve the thumbnail use the getThumbnail()
-            function
+        Notes
+        -----
+            Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This
+            function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
+
+            The pixelOrigin returned is not actually the start of the coordinates. The start of the energy axis
+            for EELS (for example) will be pixelSize * pixelOrigin. dmReader() returns the correct coordinates.
+            The correct origin is: pixelSize * pixelOrigin and be careful about the sign as it seems some datasets
+            might use -pixelOrigin in the previous equation.
 
         Parameters
         ----------
             index : int
-                The number of the data set to retrieve ignoring the thumbnail.
-                If a thumbnail exists then inedx = 0 corresponds to second data
-                set in a DM file.
+                The number of the data set to retrieve ignoring the thumbnail. If a thumbnail exists then index = 0
+                actually corresponds to the second data set in a DM file.
 
         Returns
         -------
@@ -940,28 +941,34 @@ class fileDM:
                 jj += nn  # sum up all number of dimensions for previous datasets
             # if self.dataType == 23: #RGB image(s)
             #    temp = self.fromfile(self.fid,count=pixelCount,dtype=np.uint8).reshape(self.ysize[ii],self.xsize[ii])
-            if self.zSize[ii] == 1:  # 2D data
+            if self.zSize[ii] == 1:
+                # 2D data and 1D spectra
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
-                    (self.ySize[ii], self.xSize[ii]))
-                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][
-                                          ::-1]  # need to reverse the order to match the C-ordering of the data
+                                                   (self.ySize[ii], self.xSize[ii]))
+
+                # Reverse the order to match the C-ordering of the data
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
+
+                # Match size of meta data if necessary
+                if outputDict['data'].ndim > len(outputDict['pixelOrigin']):
+                    outputDict['data'] = np.squeeze(outputDict['data'])
             elif self.zSize2[ii] > 1:  # 4D data
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
                     (self.zSize2[ii], self.zSize[ii], self.ySize[ii], self.xSize[ii]))
-                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][
-                                          ::-1]  # need to reverse the order to match the C-ordering of the data
+                # Reverse the order to match the C-ordering of the data
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
             else:  # 3D array
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
                     (self.zSize[ii], self.ySize[ii], self.xSize[ii]))
-                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][
-                                          ::-1]  # need to reverse the order to match the C-ordering of the data
+                # Reverse the order to match the C-ordering of the data
+                outputDict['pixelUnit'] = self.scaleUnit[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
@@ -969,8 +976,8 @@ class fileDM:
         if self._on_memory:
             outputDict['data'] = np.array(outputDict['data'])
 
-        # Remove singular dimensions if present
-        outputDict['data'] = np.squeeze(outputDict['data'])
+        # Remove singular dimensions if needed
+        #outputDict['data'] = np.squeeze(outputDict['data'])
         return outputDict
 
     def getSlice(self, index, sliceZ, sliceZ2=0):
@@ -990,9 +997,6 @@ class fileDM:
             sliceZ : int
                 The slice to get along the first dimension (C-ordering)
                 for 3D datasets or 4D datasets.
-
-        Keywords
-        --------
             sliceZ2 : int
                 For 4D dataset
 
@@ -1037,21 +1041,21 @@ class fileDM:
             if self.zSize[ii] == 1:  # 2D data
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
-                    (self.ySize[ii], self.xSize[ii]))
+                                                   (self.ySize[ii], self.xSize[ii]))
             elif self.zSize2[ii] > 1:  # 4D data
                 self.seek(self.fid, sliceZ * sliceZ2 * byteCount, 1)  # skip ahead from current position
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
-                    (self.ySize[ii], self.xSize[ii]))
+                                                   (self.ySize[ii], self.xSize[ii]))
             else:  # 3D array
                 self.seek(self.fid, sliceZ * byteCount, 1)  # skip ahead from current position
                 outputDict['data'] = self.fromfile(self.fid, count=pixelCount,
                                                    dtype=self._DM2NPDataType(self.dataType[ii])).reshape(
-                    (self.ySize[ii], self.xSize[ii]))
+                                                   (self.ySize[ii], self.xSize[ii]))
 
             # Return the proper meta data for this one image
-            outputDict['pixelUnit'] = self.scaleUnit[jj:jj + 2][
-                                      ::-1]  # need to reverse the order to match the C-ordering of the data
+            # need to reverse the order to match the C-ordering of the data
+            outputDict['pixelUnit'] = self.scaleUnit[jj:jj + 2][::-1]
             outputDict['pixelSize'] = self.scale[jj:jj + 2][::-1]
             outputDict['pixelOrigin'] = self.origin[jj:jj + 2][::-1]
 
@@ -1121,7 +1125,7 @@ class fileDM:
 def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     """A simple function to parse the file and read the requested dataset.
     Most users will want to use this function to simplify reading data
-    directly into memory.
+    directly into memory and to retriece the spatial axes (i.e. energy axis).
 
     Parameters
     ----------
@@ -1133,6 +1137,11 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
             Allow extra printing to see file internals. Default = False
         on_memory : bool, default True
             Whether to use the on_memory option of fileDM. Usually provides much faster data reading.
+
+    Notes
+    -----
+        Use the coords key for spatial axes (i.e. energy loss for spectra).
+
     Returns
     -------
         : dict
@@ -1148,13 +1157,33 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
             >>> im0 = dm.dmReader('filename.dm3')
             >>> plt.imshow(im0['data']) #show the single image from the data file
     """
-    with fileDM(filename, verbose, on_memory=on_memory) as f1:  # open the file and init the class
-        im1 = f1.getDataset(dSetNum)  # get the requested dataset (first by default)
+    # Open the file
+    with fileDM(filename, verbose, on_memory=on_memory) as f1:
+        # Get the requested dataset
+        im1 = f1.getDataset(dSetNum)
 
+    # Now prepare nice coordinates (like energy loss axis for spectra)
     coords = []
-    for pixel_size, pixel_origin, sh in zip(im1['pixelSize'], im1['pixelOrigin'], im1['data'].shape):
-        origin = pixel_size * pixel_origin
-        coords.append(np.linspace(origin, origin + pixel_size*(sh - 1), sh))
+    for pixel_size, pixel_origin, pixel_unit, sh in zip(im1['pixelSize'], im1['pixelOrigin'], im1['pixelUnit'],
+                                                        im1['data'].shape):
+        if sh == 1:
+            coords.append(0)
+        else:
+            pixel_origin = np.abs(round(pixel_origin * pixel_size, ndigits=4))  # Multiply by pixelSize to get the correct origin
+            eLoss = np.round(np.linspace(0, pixel_size * (sh - 1), sh) + pixel_origin, decimals=4)
+            coords.append(eLoss)
     im1['coords'] = coords
 
+    # Remove confusing pixelOrigin. Use coords instead
+    del im1['pixelOrigin']
+
     return im1  # return the dataset and metadata as a dictionary
+
+
+if __name__ == '__main__':
+    #im0 = dmReader('c:/users/linol/scripting/openNCEMgh/ncempy/data/08_carbon.dm3')
+    im0 = dmReader('c:/users/linol/Downloads/Spectrum of EELS Spectrum Image.dm4')
+    print(im0['data'].shape)
+    print(im0['coords'])
+    print(im0['pixelSize'])
+    print(im0)
