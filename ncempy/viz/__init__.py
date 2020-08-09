@@ -21,19 +21,19 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
             im : np.ndarray
                 The image to show.
 
-            vmin, vmax : float, defulat = -2, 2
+            vmin, vmax : float, default = -2, 2
                 The vmin and vmax values to pass to imshow.
 
         Returns
         -------
-            : matplotlib.pyplt.Figure
+            : matplotlib.pyplot.Figure
                 The handle to the created figure
     """
     fg, ax = plt.subplots(1, 1)
     im2 = im - im.mean()
     im3 = im2 / np.std(im2)
-    ax.imshow(im3, vmin=vmin, vmax=vmax, **kwargs)
-    return fg
+    imax = ax.imshow(im3, vmin=vmin, vmax=vmax, **kwargs)
+    return imax
 
 
 def imfft(im, d=1.0, ax=None):
@@ -55,8 +55,8 @@ def imfft(im, d=1.0, ax=None):
             An axis to plot into.
     Returns
     -------
-        : pyplot Figure
-            The figure used to plot the diffractogram.
+        : matplotlib.image.AxesImage
+            The AxesImage that contains the image displayed.
 
     Example
     -------
@@ -72,14 +72,14 @@ def imfft(im, d=1.0, ax=None):
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2)),
-              extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
-    return fg
+    imax = ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2)),
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
+    return imax
 
 
 def imrfft(im, d=1.0, ax=None):
     """Show a 2D rFFT (real FFT) as a diffractogram with log scaling applied
-    and fftshifted along axis 0. See imfft for full details.
+    and fftshift-ed along axis 0. See imfft for full details.
 
     Parameters
     ----------
@@ -91,20 +91,18 @@ def imrfft(im, d=1.0, ax=None):
             An axis to plot into.
     Returns
     -------
-        : pyplot Figure
-            The figure used to plot the diffractogram.
+        : matplotlib.image.AxesImage
+            The AxesImage that contains the image displayed.
     """
-    fg = None
+
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     fftFreq0 = np.fft.rfftfreq(im.shape[0], d)
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2), axes=0),
+    axim = ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2), axes=0),
               extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
-    if fg:
-        return fg
-    else:
-        return
+
+    return axim
 
 
 class stack_view:
