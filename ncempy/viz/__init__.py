@@ -6,7 +6,6 @@ useful for S/TEM data visualization.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import pyplot as plt
 
 import ncempy.algo
 from ncempy.algo.distortion import rad_dis
