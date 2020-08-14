@@ -1,12 +1,12 @@
-""" A module with gaussian functions for creating gaussian distributions
+""" A module with Gaussian functions for creating Gaussian distributions
 in 1D, 2D and 3D. There are also functions with the same name and _FIT
 which can be used to fit an intensity distribution in a ndarray with the
-corresponding gaussian distribution.
+corresponding Gaussian distribution using scipy's curve_fit.
 
 A 1D Lorentz and a 1D gaussLorentz function is also included for fitting
 zero loss peaks in EELS spectra.
 
-These functions were written assuming you use np.mehsgrid() with indexing = 'xy'. If
+These functions were written assuming you use np.meshgrid() with indexing = 'xy'. If
 you use 'ij' indexing then be careful about how you pass in the x and y coordinates.
 
 """
@@ -30,14 +30,15 @@ def gauss1D(x, x0, sigma):
     Returns
     -------
         g: ndarray
-            A vector of size (N,) of the Guassian distribution evaluated 
+            A vector of size (N,) of the Gaussian distribution evaluated
             at the input x values.
             
     Note
     ----
         Calculate the Half width at half maximum as
-        HWHM = sqrt(2*log(2))*stDev ~ 1.18*stDev or
-        0.5*size(x)*stDev if x goes from -1 to 1
+        >> HWHM = sqrt(2*log(2))*stDev ~ 1.18*stDev
+        or if x goes from -1 to 1
+        >> 0.5*size(x)*stDev
         
     """
     return np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
@@ -62,29 +63,11 @@ def lorentz1D(x, x0, w):
             at the input x values.
             
     """
-    return w ** 2 / ((x - x0) ** 2 + (w) ** 2)
-
-
-def poisson1D(x, l, k):
-    """ Returns the probability density function of the Poisson distribution.
-    Uses the numerically stable version
-
-    exp(k * ln(l) - l - ln( lgamma(k + 1)))
-
-    Parameters
-    ----------
-        l: float
-            The expected value and variance
-        k: float
-            Inputi nto lgamma
-
-    """
-    print('Not implemented yet')
-    pass
+    return w ** 2 / ((x - x0) ** 2 + w ** 2)
 
 
 def gaussLorentz1D(x, x0, w):
-    """ A Gaussian-Lorentizian function in one dimension.
+    """ A Gaussian-Lorentzian function in one dimension.
 
     Parameters
     ----------
@@ -128,13 +111,13 @@ def gauss2D(x, y, x0, y0, sigma_x, sigma_y):
     Returns
     -------
         g : ndarray
-            A ndarray of size (N,M) of the Guassian distribution evaluated 
+            A ndarray of size (N, M) of the Gaussian distribution evaluated
             at the input x values.
             
-    Notes
-    -----
+    Note
+    ----
         The Gaussian is normalized such that the peak == 1. To normalize the
-        integral divide by $$2*\pi*\sigma_x*\sigma_y$$
+        integral divide by 2 * np.pi * sigma_x * sigma_y
         
     """
     x0 = float(x0)
@@ -148,7 +131,7 @@ def gauss2D_FIT(xy, x0, y0, sigma_x, sigma_y):
     """ Version of gauss2D used for fitting (1 x_data input (xy)
     and flattened output). Returns the value of a gaussian at a 2D set of points for the given
     standard deviation with maximum normalized to 1.
-    The Guassian axes are assumed to be 90 degrees from each other.
+    The Gaussian axes are assumed to be 90 degrees from each other.
     
     Parameters
     ----------
@@ -167,8 +150,8 @@ def gauss2D_FIT(xy, x0, y0, sigma_x, sigma_y):
     Returns
     -------
         g2_norm: ndarray
-            The Guassian distribution with maximum value normalized to 1. The
-            2D ndarray is reshpaed into a (N*M,) array for use in fitting
+            The Gaussian distribution with maximum value normalized to 1. The
+            2D ndarray is reshaped into a (N*M,) array for use in fitting
             functions in numpy and scipy.
         
     """
@@ -176,8 +159,8 @@ def gauss2D_FIT(xy, x0, y0, sigma_x, sigma_y):
     y0 = float(y0)
     x = xy[0]
     y = xy[1]
-    g2 = np.exp(-((x - x0) ** 2 / (2 * sigma_x ** 2) + (y - y0) ** 2 / (2 * sigma_y ** 2)));
-    g2_norm = g2 / np.max(g2.flatten());
+    g2 = np.exp(-((x - x0) ** 2 / (2 * sigma_x ** 2) + (y - y0) ** 2 / (2 * sigma_y ** 2)))
+    g2_norm = g2 / np.max(g2.flatten())
     return g2_norm.reshape(-1)
 
 
@@ -208,7 +191,7 @@ def gauss2D_theta(x, y, x0, y0, sigma_x, sigma_y, theta):
     Returns
     -------
         g2_norm: ndarray
-            A (N, M) sized 2D ndarray with a Gaussaian distribution rotated.
+            A (N, M) sized 2D ndarray with a Gaussian distribution rotated.
             
     """
 
@@ -218,16 +201,16 @@ def gauss2D_theta(x, y, x0, y0, sigma_x, sigma_y, theta):
     b = -(np.sin(2 * theta)) / (4 * sigma_x ** 2) + (np.sin(2 * theta)) / (4 * sigma_y ** 2)
     c = (np.sin(theta) ** 2) / (2 * sigma_x ** 2) + (np.cos(theta) ** 2) / (2 * sigma_y ** 2)
     g2 = np.exp(- (a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2)))
-    g2_norm = g2 / np.max(g2.flatten());
+    g2_norm = g2 / np.max(g2.flatten())
     return g2_norm  # return a 2D array
 
 
 def gauss2D_theta_FIT(xy, x0, y0, sigma_x, sigma_y, theta):
     """ Version of gauss2D_theta used for fitting (1 x_data input and
-    flattened output). Returns the value of a gaussian at a 2D set of points for the given standard deviation with maximum normalized to 1.
-    The Gaussian axes can be oriented at different angles (theta) in radians.
+    flattened output). Returns the value of a gaussian at a 2D set of points for the given standard deviation with
+    maximum normalized to 1. The Gaussian axes can be oriented at different angles (theta) in radians.
     
-    Paremeters
+    Parameters
     ----------
         xy: tuple
             Evaluation points along x and y of shape (N,M)
@@ -257,8 +240,8 @@ def gauss2D_theta_FIT(xy, x0, y0, sigma_x, sigma_y, theta):
     b = -(np.sin(2 * theta)) / (4 * sigma_x ** 2) + (np.sin(2 * theta)) / (4 * sigma_y ** 2)
     c = (np.sin(theta) ** 2) / (2 * sigma_x ** 2) + (np.cos(theta) ** 2) / (2 * sigma_y ** 2)
     g2 = np.exp(- (a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2)))
-    g2_norm = g2 / np.max(g2.flatten());
-    return g2_norm.reshape(-1)  # return a 1D vector
+    g2_norm = g2 / np.max(g2.flatten())
+    return g2_norm.ravel()  # return a 1D vector
 
 
 def gauss2D_poly_FIT(xy, x0, y0, A, B, C):
@@ -294,9 +277,9 @@ def gauss2D_poly_FIT(xy, x0, y0, A, B, C):
     y0 = float(y0)
     x = xy[0]  # retrieve the array from the tuple
     y = xy[1]
-    g2 = np.exp(-(A * (x - x0) ** 2 + 2 * B * (x - x0) * (y - y0) + C * (y - y0) ** 2));
-    g2_norm = g2 / np.max(g2.flatten());
-    return g2_norm.reshape(-1)
+    g2 = np.exp(-(A * (x - x0) ** 2 + 2 * B * (x - x0) * (y - y0) + C * (y - y0) ** 2))
+    g2_norm = g2 / np.max(g2.flatten())
+    return g2_norm.ravel()
 
 
 def gauss3D(x, y, z, x0, y0, z0, sigma_x, sigma_y, sigma_z):
@@ -373,7 +356,7 @@ def gauss3D_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z):
     g3 = np.exp(-((x - x0) ** 2 / (2 * sigma_x ** 2) + (y - y0) ** 2 / (2 * sigma_y ** 2) + (z - z0) ** 2 / (
                 2 * sigma_z ** 2)))
     g3_norm = g3 / np.max(g3.flatten())
-    return g3_norm.reshape(-1)
+    return g3_norm.ravel()
 
 
 def gauss3D_poly(x, y, z, x0, y0, z0, A, B, C, D, E, F):
@@ -440,7 +423,7 @@ def gauss3D_poly_FIT(xyz, x0, y0, z0, A, B, C, D, E, F):
     g3 = np.exp(-(A * (x - x0) ** 2 + B * (y - y0) ** 2 + C * (z - z0) ** 2 + 2 * D * (x - x0) * (y - y0) + 2 * E * (
                 x - x0) * (z - z0) + 2 * F * (y - y0) * (z - z0)))
     g3_norm = g3 / np.max(g3.flatten())
-    return g3_norm.reshape(-1)
+    return g3_norm.ravel()
 
 
 def gauss3DGEN_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z, Angle1, Angle2, Angle3, BG, Height):
@@ -452,9 +435,13 @@ def gauss3DGEN_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z, Angle1, Angle2, A
 
     adapted from code by Yongsoo Yang, yongsoo.ysyang@gmail.com
 
+    Note
+    ----
+        This is a work in progress. Needs more testing.
+
     Parameters
     ----------
-        xyz : tuple of ndarrays
+        xyz : tuple of 3 np.ndarray
             3D arrays of points (from meshgrid) combined in a tuple
 
         x0, y0, z0 : float
@@ -475,8 +462,10 @@ def gauss3DGEN_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z, Angle1, Angle2, A
     """
     # 3D vectors for each sampled positions
     print('Warning: this function is using Fortran ordered array for use in tomviz. Need to test this')
-    v = np.array(
-        [xyz[0].reshape(-1, order='F') - x0, xyz[1].reshape(-1, order='F') - y0, xyz[2].reshape(-1, order='F') - z0])
+    # Todo: Remove Fortran ordering
+    v = np.array([xyz[0].reshape(-1, order='F') - x0,
+                  xyz[1].reshape(-1, order='F') - y0,
+                  xyz[2].reshape(-1, order='F') - z0])
 
     # rotation axes for Tait-Bryan angles
     vector1 = np.array([0, 0, 1])
@@ -489,6 +478,7 @@ def gauss3DGEN_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z, Angle1, Angle2, A
     rotmat3 = MatrixQuaternionRot(vector3, Angle3)
 
     # full rotation matrix
+    # Todo : Remove dependency on np.matrix()
     rotMAT = np.matrix(rotmat3) * np.matrix(rotmat2) * np.matrix(rotmat1)
 
     # 3x3 matrix for applying sigmas
