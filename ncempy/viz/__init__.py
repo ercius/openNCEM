@@ -36,6 +36,32 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     return imax
 
 
+def im_calibrated(im, d):
+    """ Plot an image calibrated using the pixel size d. The centers of the pixels will be the
+    the center of each measurement. So, if you plot positions in real coordinates the points
+    will be plotted in the center of the pixel.
+
+    Parameters
+    ---------
+        im : np.ndarray
+            The image to show using imshow
+        d : float
+            The pixel size in both directions. The pixel size must be isotropic.
+
+    Returns
+    -------
+        : pyplot.figure
+            The figure containing the plot
+    """
+    # The default extent is calculated like this:
+    ext = [-0.5, im.shape[1] - 0.5, im.shape[0] - 0.5, -0.5]
+    # Calibrate the extent
+    ext = [ii * d for ii in ext]
+
+    fg, ax = plt.subplots(1, 1)
+    ax.imshow(im, extent=ext)
+    return fg
+
 def imfft(im, d=1.0, ax=None):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
@@ -103,6 +129,31 @@ def imrfft(im, d=1.0, ax=None):
               extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
 
     return axim
+
+
+def im_and_fft(im, d=1.0, fft=None):
+    """ Show the image and its fft side by side. Uses imfft to show the fft.
+
+    Parameters
+    ----------
+        im : np.ndarray
+            The image to show in both real and FFT space
+        d : float
+            The pixel spacing
+        fft : np.ndarray, optional
+            The FFT to display. If not provided then np.fft.fft2 is used.
+
+    Returns
+    -------
+        : plt.figure
+            The matplotlib.pyplot figure
+    """
+    fg, ax = plt.subplots(1, 2)
+    ax[0].imshow(im)
+
+    if not fft:
+        fft = np.fft.fft2(im)
+    imfft(fft, d=d, ax=ax[1])
 
 
 class stack_view:
