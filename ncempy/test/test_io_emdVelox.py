@@ -21,7 +21,7 @@ class TestEMDVelox:
         root_path = test_path.parents[1]
         return root_path / Path('data')
 
-    def test_readEMDVelox(selfself, data_location):
+    def test_readEMDVelox(self, data_location):
         dd0 = ncempy.io.emdVelox.emdVeloxReader(data_location / Path('STEM HAADF-DF4-DF2-BF Diffraction Micro.emd'),
                                                 dsetNum=0)
         print(dd0['data'].ndim)
