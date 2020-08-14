@@ -14,7 +14,7 @@ import numpy as np
 import ncempy.io.emd
 
 
-class Testemd():
+class Testemd:
     """
     Test the EMD io module
     """
