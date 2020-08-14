@@ -35,7 +35,7 @@ def gauss1D(x, x0, sigma):
             
     Note
     ----
-        Calculate the Half width at half maximum as
+        Calculate the half width at half maximum (HWHM) as
         >> HWHM = sqrt(2*log(2))*stDev ~ 1.18*stDev
         or if x goes from -1 to 1
         >> 0.5*size(x)*stDev
