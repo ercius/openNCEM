@@ -1,6 +1,6 @@
 import numpy as np
 
-import ncempy.algo.multicorr as multicorr
+from ncempy.eval import multicorr
 
 
 def stack_align(stack, align_type='static', **kwargs):
