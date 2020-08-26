@@ -17,15 +17,13 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'ncempy/long_description.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-
-
 setup(
     name='ncempy',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.6.0',
+    version='1.7.0',
 
     description='openNCEM\'s Python Package',
     long_description=long_description,

@@ -52,10 +52,10 @@ ncempy.algo.moments module
    :undoc-members:
    :show-inheritance:
 
-ncempy.algo.multicorr module
+ncempy.algo.multicorr_funcs module
 ----------------------------
 
-.. automodule:: ncempy.algo.multicorr
+.. automodule:: ncempy.algo.multicorr_funcs
    :members:
    :undoc-members:
    :show-inheritance:

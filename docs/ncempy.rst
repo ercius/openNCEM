@@ -13,11 +13,3 @@ Subpackages
    ncempy.eval
    ncempy.io
    ncempy.viz
-
-Module contents
----------------
-
-.. automodule:: ncempy
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -19,7 +19,7 @@ Examples
 --------
 Simple file loading
 ^^^^^^^^^^^^^^^^^^^
-For simple file loading use the convenient Reader functions
+For simple file loading use the convenient Reader functions. An example of reading a DM file is below.
 
 DM files
 ^^^^^^^^
