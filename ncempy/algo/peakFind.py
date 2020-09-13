@@ -1022,10 +1022,12 @@ def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True
             curIm_norm = curIm - curIm.min()  # subtract the min
             curIm_norm = curIm_norm / curIm_norm.max()  # normalize to 1
 
-            optP2D, optCov2D = opt.curve_fit(gaussND.gauss2D_FIT, (X2D, Y2D),
-                                             curIm_norm.ravel(),
-                                             p0=(0, 0, init[0], init[1]),
-                                             bounds=bounds)
+            # Calculate error for each point based on intensity
+            y_error = 1 / np.sqrt(curIm_norm + 0.00001)  # add a small offset to remove divide by zero
+
+            optP2D, optCov2D = opt.curve_fit(gaussND.gauss2D_FIT, (X2D, Y2D), curIm_norm.ravel(),
+                                             p0=(0, 0, init[0], init[1]), bounds=bounds,
+                                             sigma=y_error)
 
             fittingValues[ii, :] = optP2D
 
