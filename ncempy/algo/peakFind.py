@@ -1057,3 +1057,109 @@ def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True
         fittingValues = fittingValues
 
     return optPoints, optI, fittingValues
+
+
+def fit_peaks_gauss3d(volume, peaks, cutOut, init, bounds, remove_edge_peaks=True):
+    """ Fit peaks to a 2D Gaussian. The Gaussian function is gaussND.gauss2D()
+
+    Todo: Write tests. This function is copied from test_peakFind_3d.ipynb
+
+    Parameters
+    ----------
+        volume : np.ndarray
+            The 3D image with the intensities to fit to.
+
+        peaks : np.ndarray
+            The peaks in a ndarray of shape (N, 3) where N is the number
+            of peaks. Should match output of peakFind.peakFind3D.
+
+        cutOut : int
+            The size (+/-) of the region around each peak to fit.
+
+        init : tuple
+            A 3-tuple of initial sigma values in x and y. (sigma_x, sigma_y, sigma_z)
+
+        bounds : tuple
+            A 2-tuple of 6-tuples indicating the upper and lower bounds for the fitting.
+            See scipy.optimize.curve_fit for more information. Ordered as
+            ( (center_x_low, center_y_low, center_z_low, sigma_x_low, sigma_y_low, sigma_z_low),
+            (center_x_high, center_y_high, center_z_high, sigma_x_high, sigma_y_high, sigma_z_high))
+
+        remove_edge_peaks : bool, default = True
+            Peak positions at the edge of the image are set to NaN and are removed.
+            If you want to have those positions returned as nan set this to False.
+
+    Note
+    ----
+        This function uses np.meshgrid and indexing='ij' internally.
+
+    Returns
+    -------
+        : tuple
+            Returns a tuple of 3 arrays:
+                [0] optimized peak positions as a (M, 3) ndarray. M <= N. Peaks on the edge of the image are removed
+                unless otherwise specified. Then the edge peaks are returned as NAN values.
+                [1] peak intensity value interpolated at the optimized peak position.
+                [2] the local fitting values for each peak.
+    """
+    # Sort from highest to lowest intensity
+    validPeaks_sort_values = np.argsort(volume[peaks[:, 0], peaks[:, 1], peaks[:, 2]])
+
+    # X,Y,Z,sig_x,sig_y,sig_z
+    # NAN means peak near an edge and can not be fit
+    optPointsNaN = np.zeros((len(validPeaks_sort_values), 6))
+    fittingValues = np.zeros_like(optPointsNaN)
+
+    # Set up fitting static variables
+    local_region = np.arange(-cutOut, cutOut + 1, 1)
+    Y3D, X3D, Z3D = np.meshgrid(local_region, local_region, local_region, indexing=default_indexing)
+    bad_point = (np.nan, np.nan, np.nan, np.nan, np.nan, np.nan)
+
+    for ii, index in enumerate(validPeaks_sort_values):
+        curX = int(peaks[index, 0])
+        curY = int(peaks[index, 1])
+        curZ = int(peaks[index, 2])
+
+        # Check if current point + fit region is within the bounds of the volume
+        if (curX > cutOut + 1) & (curY > cutOut + 1) & (curZ > cutOut + 1) & (curX < volume.shape[0] - cutOut) \
+                & (curY < volume.shape[1] - cutOut) & (curZ < volume.shape[2] - cutOut):
+
+            curVol = np.float32(volume[curX - cutOut:curX + cutOut + 1,
+                                curY - cutOut:curY + cutOut + 1,
+                                curZ - cutOut:curZ + cutOut + 1])
+            curVol_norm = curVol - curVol.min()  # subtract the min
+            curVol_norm = curVol_norm / curVol_norm.max()  # normalize maximum to 1
+
+            # Fit to a 3D Gaussian to the area around the peak
+            y_error = 1 / np.sqrt(curVol_norm.ravel() + 0.00001)  # add error
+            optP3D, optCov3D = opt.curve_fit(gaussND.gauss3D_FIT, (X3D, Y3D, Z3D), curVol_norm.ravel(),
+                                             p0=init, bounds=bounds, sigma=y_error)
+            fittingValues[ii, :] = optP3D
+
+            # Enter values into output array as X,Y,Z,sigma_x,sigma_y,sigma_z
+            optPointsNaN[ii, :] = np.array((float(curX) + optP3D[0], float(curY) + optP3D[1], float(curZ) + optP3D[2],
+                                            optP3D[3], optP3D[4], optP3D[5]))
+
+        else:
+            # if the peak is near an edge then ignore it and set its values to NAN
+            optPointsNaN[ii, :] = np.array(bad_point)
+            fittingValues[ii, :] = np.array(bad_point)
+
+    # Get the intensity of each optimize peak position
+    optINaN = ndimage.map_coordinates(volume.astype('f'),
+                                      ((optPointsNaN[:, 0]),
+                                       (optPointsNaN[:, 1]),
+                                       (optPointsNaN[:, 2])),
+                                      cval=np.nan)
+
+    # Remove NANs where peak is at the edge if desired
+    if remove_edge_peaks:
+        optPoints = optPointsNaN[~np.isnan(optPointsNaN[:, 0]), :]
+        optI = optINaN[~np.isnan(optINaN)]
+        fittingValues = fittingValues[~np.isnan(optINaN)]
+    else:
+        optPoints = optPointsNaN
+        optI = optINaN
+        fittingValues = fittingValues
+
+    return optPoints, optI, fittingValues
