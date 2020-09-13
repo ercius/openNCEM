@@ -256,7 +256,7 @@ def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
         gaussSigma : tuple
             3 element tuple with that sigma parameters passed to the gaussND.gauss3D() function (sigX,sigY,sigZ)
         
-        gaussSize : int
+        gaussSize : tuple
             3 element tuple describing the 3D size of the simulated gaussian box. Must be odd.
 
         indexing : str
@@ -271,22 +271,26 @@ def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
 
     sim_volume = np.zeros(volShape, dtype=np.float32)
 
-    if gaussSize % 2 == 0:
+    if np.any(np.array(gaussSize) % 2 == 0):
         raise ValueError('gaussSize must be odd.')
 
-    s = (gaussSize - 1) // 2
-    temp = np.arange(-s, s + 1)
-    Y3D, X3D, Z3D = np.meshgrid(temp, temp, temp, indexing=indexing)
+    sz = [int((g - 1) // 2) for g in gaussSize]
+    temp0 = np.arange(-sz[0], sz[0]+1)
+    temp1 = np.arange(-sz[1], sz[1]+1)
+    temp2 = np.arange(-sz[2], sz[2]+1)
+    Y3D, X3D, Z3D = np.meshgrid(temp0, temp1, temp2, indexing=indexing)
 
     for pos in peakList:
         pos_loc = (pos // 1).astype(int)
+
         pos_remain = pos % 1
         gg3 = gaussND.gauss3D(Y3D, X3D, Z3D,
                               pos_remain[0], pos_remain[1], pos_remain[2],
                               gaussSigma[0], gaussSigma[1], gaussSigma[2])
-        sim_volume[pos_loc[0] - s:pos_loc[0] + s + 1,
-                   pos_loc[1] - s:pos_loc[1] + s + 1,
-                   pos_loc[2] - s:pos_loc[2] + s + 1] += gg3
+
+        sim_volume[pos_loc[0] - sz[0]:pos_loc[0] + sz[0] + 1,
+                   pos_loc[1] - sz[1]:pos_loc[1] + sz[1] + 1,
+                   pos_loc[2] - sz[2]:pos_loc[2] + sz[2] + 1] += gg3
     return sim_volume
 
 
@@ -376,7 +380,7 @@ def peaksToImage(peakList, imShape, gaussSigma, gaussSize, indexing='ij'):
                               pos_remain[0], pos_remain[1],
                               gaussSigma[0], gaussSigma[1])
         sim_image[pos_loc[0] - sz[0]:pos_loc[0] + sz[0] + 1,
-        pos_loc[1] - sz[1]:pos_loc[1] + sz[1] + 1] += gg2
+                  pos_loc[1] - sz[1]:pos_loc[1] + sz[1] + 1] += gg2
     return sim_image
 
 
@@ -461,6 +465,46 @@ def lattice2D(u, v, a, b, xy0, num_points):
     return xy
 
 
+def lattice3D(u, v, w, a, b, c, origin, num_points):
+    """
+    Returns a set of points in a lattice according to the u, v, w vectors
+    and lengths a,b centered at xy0. The lattice has num_points along each u,v,w
+    vector.
+
+    Parameters
+    ----------
+        u, v, w : tuple or np.ndarray
+            3 element vectors defining the lattice directions
+        a, b, c : float
+            Values to multiply each vector by (if u,v,w are not normalized then set these to 1)
+        origin : tuple
+            The origin in the format (x0,y0,z0)
+        num_points : tuple
+            3 element tuple of the number of repeats of the lattice along each direction
+
+    Returns
+    -------
+        xyz : ndarray
+            A (N,3) shaped set of coordinates
+    """
+
+    totalNumPoints = np.prod(num_points)
+
+    Y3D, X3D, Z3D = np.meshgrid(range(num_points[1]), range(num_points[0]), range(num_points[2]),
+                                indexing=default_indexing)
+
+    X = X3D.reshape(totalNumPoints)
+    Y = Y3D.reshape(totalNumPoints)
+    Z = Z3D.reshape(totalNumPoints)
+
+    xyz = np.zeros((np.prod(num_points), 3))
+    xyz[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0] + c * Z * w[0]
+    xyz[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1] + c * Z * w[1]
+    xyz[:, 2] = origin[2] + a * X * u[2] + b * Y * v[2] + c * Z * w[2]
+
+    return xyz
+
+
 def applyLatticeLimit(lattice, bounds):
     """Remove lattice points outside the data bounds. For 2D and 3D data.
     
@@ -491,42 +535,6 @@ def applyLatticeLimit(lattice, bounds):
         print('Bounds needs be be either 4 or 6 value tuple.')
         return None
     return lattice[goodUVs, :]
-
-
-def lattice3D(u, v, w, a, b, c, origin, num_points):
-    """
-    lattice3D(u,v,w,a,b,c,xy0,num_points)
-    Returns a set of points in a lattice according to the u, v, w vectors
-    and lengths a,b centered at xy0. The lattice has num_points along each u,v,w
-    vector.
-    
-    Parameters
-    ----------
-        u, v, w : tuple or np.ndarray
-            3 element vectors defining the lattice directions
-        a, b, c : float
-            Values to multiply each vector by (if u,v,w are not normalized then set these to 1)
-        origin : tuple
-            The origin in the format (x0,y0,z0)
-        num_points : tuple
-            3 element tuple of the number of repeats of the lattice along each direction
-    """
-
-    totalNumPoints = np.prod(num_points)
-
-    Z3D, Y3D, X3D = np.meshgrid(range(num_points[1]), range(num_points[0]), range(num_points[0]),
-                                indexing=default_indexing)
-
-    X = X3D.reshape(totalNumPoints)
-    Y = Y3D.reshape(totalNumPoints)
-    Z = Z3D.reshape(totalNumPoints)
-
-    xyz = np.zeros((np.prod(num_points), 3))
-    xyz[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0] + c * Z * w[0]
-    xyz[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1] + c * Z * w[1]
-    xyz[:, 2] = origin[2] + a * X * u[2] + b * Y * v[2] + c * Z * w[2]
-
-    return xyz
 
 
 def peakPlot3D(X, Y, Z, mkr, myAxes3D):
