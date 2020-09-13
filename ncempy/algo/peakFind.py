@@ -19,16 +19,16 @@ def doubleRoll(image, vec):
     
         Parameters
         ----------
-            image : ndarray (2D)
-                The 2D array to roll
+            image : np.ndarray
+                The 2D array to roll.
             
-            vec : 2-tuple, int
+            vec : tuple
                 The number of time to apply the roll to the rows and columns where
-                the tuple has the structure (row, col). 
+                the tuple has the structure (row, col). Values in tuple must be int.
                 
         Returns
         -------
-            : ndarray
+            : np.ndarray
                 The rolled image.
     """
     return np.roll(np.roll(image, vec[0], axis=0), vec[1], axis=1)
@@ -39,11 +39,12 @@ def tripleRoll(vol, vec):
     
         Parameters
         ----------
-            vol : ndarray (3D)
+            vol : np.ndarray
                 The 3D array to roll
             
-            vec : 3-tuple, int
-                The number of time to apply the roll the tuple has the structure (axis0, axis1, axis2). 
+            vec : tuple
+                The number of time to apply the roll the tuple has the structure (axis0, axis1, axis2).
+                Values in tuple must be int.
                 
         Returns
         -------
@@ -539,25 +540,26 @@ def applyLatticeLimit(lattice, bounds):
 
 def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     """
-    Plot a set of peaks in a 3D plot using matplotlib.
+    Plot a set of peaks in a 3D plot using matplotlib. See the example below for how to set up a figure as input
+    to this function using matplotlib Axes3D.
     
     Parameters
     -----------
-        X : ndarray (1D)
-            The x positions.
+        X : np.ndarray
+            The x positions as a 1D array.
 
-        Y : ndarray (1D)
-            The y positions.
+        Y : np.ndarray
+            The y positions as a 1D array.
 
-        Z : ndarray (1D)
-            The Z positions.
+        Z : np.ndarray
+            The Z positions as a 1D array.
 
         mkr : string
             String indicating the marks type and color. Passed directly to pyplot.plt
             command (ex. 'go' for green circles)
 
-        myAxes3D : Axes3d object
-            An Axes3D object. (see example)
+        myAxes3D : mpl_toolkits.mplot3d.Axes3d
+            An Axes3D object. (see example below)
         
     Returns
     -------
@@ -565,12 +567,14 @@ def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     
     Example
     -------
-        >>> import matplotlib.pyplot as plt
-        >>> from mpl_toolkits.mplot3d import Axes3D
-        >>> from ncempy.algo import peakFind
-        >>> fg1 = plt.figure()
-        >>> ax1 = Axes3D(fg1)
-        >>> peakFind.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
+    This function requires the input of a Axes3D to plot a set of peaks. See below how to import
+    and set up a figure for use with this function.
+    >>> import matplotlib.pyplot as plt
+    >>> import mpl_toolkits.mplot3d
+    >>> from ncempy.algo import peakFind
+    >>> fg1 = plt.figure()
+    >>> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
+    >>> peakFind.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
     """
 
     import matplotlib.pyplot as plt
@@ -655,12 +659,12 @@ def remove_xrays(imageOriginal, threshold, size_median_filter=(3, 3)):
     """
     # Find x-ray pixels
     image_med_filter = ndimage.filters.median_filter(imageOriginal, size_median_filter)
-    subXrays = np.where(imageOriginal > (image_med_filter + threshold))
+    sub_xrays = np.where(imageOriginal > (image_med_filter + threshold))
 
     # Replace x-ray pixels with median filtered values.
     image_filtered = imageOriginal.copy()
-    image_filtered[subXrays[0], subXrays[1]] = image_med_filter[subXrays[0], subXrays[1]]
-    return image_filtered, subXrays
+    image_filtered[sub_xrays[0], sub_xrays[1]] = image_med_filter[sub_xrays[0], sub_xrays[1]]
+    return image_filtered, sub_xrays
 
 
 def writeXYZ(filename, XYZ, element, comment):
@@ -675,10 +679,10 @@ def writeXYZ(filename, XYZ, element, comment):
         XYZ : np.ndarray
             Atom coordinates in a 2D ndarray with axes [atom number, position]. Should be shape [N, 3]
 
-        element : list
+        element : tuple
             Element symbol of each coordinate as a string (e.g. 'C'). Should be length N.
 
-        comment : string
+        comment : str
             A comment to add to the file.
 
     Example
@@ -707,34 +711,35 @@ def refineLattice2D(or0, u0, v0, pos, fraction=(1, 1), max_iter=30,
     
     Parameters
     ----------
-        or0 : 2-element array 
-            Initial guess of origin.
-        u0 : 2-tuple
+        or0 : tuple
+            Initial guess of origin. 2-tuple
+        u0 : tuple
             Initial u vector. Use num_unit_cells to average over several lengths of the lattice vector in this
-            direction.
-        v0 : 2-tuple
+            direction. 2-tuple
+        v0 : tuple
             Initial v vector. Use num_unit_cells to average over several lengths of the lattice vector in this
-            direction.
-        pos : array (number, position) (M, 2)
-            The set of positions to fit the lattice to.
+            direction. 2-tuple
+        pos : np.ndarray
+            The set of positions to fit the lattice to. (number, position) (M, 2)
         refine_locally : bool
             Refine locally near the origin before using all positions
             Locally is considered 2 time the larger vector of u0 or v0.
         fraction : tuple
             Site fraction to take into account peak positions inside the unit cell. FCC imaged along [100] for\
             example would need site_fraction = (2, 2).
-        max_iter : int, default = 30
-            The maximum number of iterations to run to refine. This usually converges in a few iterations.
-        num_unit_cells : 2-tuple, default (1, 1)
-            The number of unit cells the initial guess of u0 and v0 extend over. (num_u0, num_v0)
+        max_iter : int
+            The maximum number of iterations to run to refine. This usually converges in a few iterations. Default is
+            30.
+        num_unit_cells : tuple
+            The number of unit cells the initial guess of u0 and v0 extend over. 2-tuple (num_u0, num_v0) with default
         verbose : bool
             Print out helpful information.
             
     Returns
     -------
-        : tuple of 4 np.ndarray (origin, u, v, ab)
-            Tuple of origin, u, v optimized values as np.ndarray and the
-            sites positions in fractions of u and v.
+        : tuple
+            Tuple of of 4 np.ndarray (origin, u, v, ab) where ab is the
+            site positions in fractions of u and v.
     
     """
 
@@ -878,30 +883,30 @@ def generateLatticeFromRefinement(origin, u, v, ab, fraction=(1, 1)):
     
     Parameters
     ----------
-        origin : 2-element array 
-            Origin.
-        u : 2-element array
-            Initial u vector.    
-        v : 2-element array 
-            Initial v vector
-        fraction : 2-element vector
-            The fraction used in refineLattice2D
-        ab : array (number, position) (M, 2)
-            The set of positions on terms of u and v lattice vectors.
-        fraction : 2-element array
-            The fractional coordinates for the unit cell.
+        origin : tuple
+            Origin. 2-tuple
+        u : tuple
+            Initial u vector. 2-tuple
+        v : tuple
+            Initial v vector. 2-tuple
+        fraction : tuple
+            The fraction used in refineLattice2D. 2-tuple
+        ab : np.ndarray
+            The set of positions on terms of u and v lattice vectors. (number, position) (M, 2)
+        fraction : tuple
+            The fractional coordinates for the unit cell. 2-tuple
     
     Returns
     -------
-        : ndarray (M, 2)
-            The lattice site positions of the given lattice vectors.
+        : np.ndarray
+            The lattice site positions of the given lattice vectors of shape (M, 2)
     """
 
     lat = np.zeros_like(ab)
 
-    lat[:, 0] = origin[0] + np.round(ab[:, 0] * fraction[0]) * u[0] / fraction[0] + \
+    lat[:, 0] = origin[0] + np.round(ab[:, 0] * fraction[0]) * (u[0] / fraction[0]) + \
                 np.round(ab[:, 1] * fraction[1]) * v[0] / fraction[1]
-    lat[:, 1] = origin[1] + np.round(ab[:, 0] * fraction[0]) * u[1] / fraction[0] + \
+    lat[:, 1] = origin[1] + np.round(ab[:, 0] * fraction[0]) * (u[1] / fraction[0]) + \
                 np.round(ab[:, 1] * fraction[1]) * v[1] / fraction[1]
 
     return lat
@@ -944,7 +949,7 @@ def lattice3D_2(u, v, w, a, b, c, xyz0, numPoints):
     return xyz
 
 
-def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True):
+def fit_peaks_gauss2d(image, peaks, cutOut, init, bounds, remove_edge_peaks=True):
     """ Fit peaks to a 2D Gaussian. The Gaussian function is gaussND.gauss2D()
     
     Todo: Write tests. This function is copied from test_peakFind.ipynb
@@ -952,12 +957,12 @@ def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True
     
     Parameters
     ----------
-        image : ndarray (2D)
-            The image with the intensities to fit to
+        image : np.ndarray
+            The 2D image with the intensities to fit to
             
-        peaks : ndarray (N, 2)
+        peaks : np.ndarray
             The peaks in a ndarray of shape (N,2) where N is the number
-            of peaks. Same as output of peakFind.peakFind2D.
+            of peaks. Should match output of peakFind.peakFind2D.
             
         cutOut : int
             The size (+/-) of the region around each peak to fit.
@@ -991,12 +996,10 @@ def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True
     # Indexes that sort intensity high to low
     peaks_sort_values = np.argsort(image[peaks[:, 0], peaks[:, 1]])
 
-    # X,Y,sig_x,sig_y; NAN means peak near an edge and cant be fit
+    # X,Y,sig_x,sig_y
+    # NAN means peak near an edge and can not be fit
     optPointsNaN = np.zeros((peaks_sort_values.shape[0], 4))
     fittingValues = np.zeros_like(optPointsNaN)
-    #  Keep the original peak positions in the correct order for convenience.
-    #  Could be gotten as validPeaks[validPeaks_sort_values]
-    initialPeakPosition = np.zeros((peaks_sort_values.shape[0], 2))
 
     optINaN = np.zeros((optPointsNaN.shape[0]))  # holds the optimized intensity
     optI_meanNaN = np.zeros_like(optINaN)
@@ -1009,8 +1012,6 @@ def fit_peaks_gauss2D(image, peaks, cutOut, init, bounds, remove_edge_peaks=True
 
         curX = int(peaks[index, 0])
         curY = int(peaks[index, 1])
-
-        initialPeakPosition[ii, :] = [curX, curY]  # save this for convenience later
 
         # Check if current point + fit region is within the bounds of the volume
         if (curX >= cutOut) & (curY >= cutOut) & \
