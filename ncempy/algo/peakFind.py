@@ -1134,7 +1134,7 @@ def fit_peaks_gauss3d(volume, peaks, cutOut, init, bounds, remove_edge_peaks=Tru
             # Fit to a 3D Gaussian to the area around the peak
             y_error = 1 / np.sqrt(curVol_norm.ravel() + 0.00001)  # add error
             optP3D, optCov3D = opt.curve_fit(gaussND.gauss3D_FIT, (X3D, Y3D, Z3D), curVol_norm.ravel(),
-                                             p0=init, bounds=bounds, sigma=y_error)
+                                             p0=(0,0,0,*init), bounds=bounds, sigma=y_error)
             fittingValues[ii, :] = optP3D
 
             # Enter values into output array as X,Y,Z,sigma_x,sigma_y,sigma_z
