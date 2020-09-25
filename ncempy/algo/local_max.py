@@ -12,13 +12,19 @@ def local_max(img, r, thresh):
     Calculates images with maximum and minimum within given radius. If the difference is larger than the threshold, the
     original pixel position with max value is detected as local maximum.
 
-    Parameters:
-        img (np.ndarray):    Input image.
-        r (int):    Radius for locality.
-        thresh (int/float):    Intensity difference threshold.
+    Parameters
+    ----------
+        img : np.ndarray
+            Input image.
+        r : int
+            Radius for locality.
+        thresh : int or float
+            Intensity difference threshold.
 
-    Returns:
-        (np.ndarray):    Array of points.
+    Returns
+    -------
+        : np.ndarray
+            Array of points.
 
     """
     
@@ -28,8 +34,7 @@ def local_max(img, r, thresh):
         assert(isinstance(img, np.ndarray))
     except:
         raise TypeError('Bad input!')
-    
-    
+
     # prepare circular kernel
     y, x = np.ogrid[-r:r+1, -r:r+1]
     kernel = x**2 + y**2 <= r**2
@@ -56,25 +61,30 @@ def points_todim(points, dims):
 
     Points are expected to be array indices for the first two dimensions in dims.
 
-    Parameters:
-        points (np.ndarray):    Points to convert.
-        dims (tuple):    Tuple of dimensions.
+    Parameters
+    ----------
+        points : np.ndarray
+            Points to convert.
+        dims : tuple
+            Tuple of dimensions.
 
-    Returns:
-        (np.ndarray):   Converted points.
+    Returns
+    -------
+        : np.ndarray
+           Converted points.
 
     """
     
     try:
         # try to convert input to np.ndarray with 2 columns (necessary if only one entry provided)
         points = np.reshape(np.array(points), (-1,2))
-        # check if enough dims availabel
-        assert(len(dims)>=2)
-        assert(len(dims[0])==3)
+        # check if enough dims available
+        assert(len(dims) >= 2)
+        assert(len(dims[0]) == 3)
     except:
         raise TypeError('Something wrong with the input!')
     
     # do the conversion by looking up thing in dimension vectors
-    points_d = np.array( [ dims[0][0][points[:,0]], dims[1][0][points[:,1]] ] ).transpose()
+    points_d = np.array([dims[0][0][points[:, 0]], dims[1][0][points[:, 1]]]).transpose()
     
     return points_d
