@@ -3,7 +3,7 @@ This module provides an interface to the Berkeley EMD file format.
 
 See https://emdatasets.com/ for more details.
 
-
+* It fully supports v0.2 for reading and writing
 
 """
 
@@ -164,13 +164,13 @@ class fileEMD:
 
         Parameters
         ----------
-            parent: h5py._hl.group.Group
+            parent: h5py.Group
                 Handle to the parent group.
 
         Returns
         -------
             : list
-                A list of h5py._hl.group.Group handles to children groups
+                A list of h5py.Group handles to children groups
                 being emd_data_type groups.
 
         """
@@ -182,7 +182,7 @@ class fileEMD:
             # take a look at each item in the group
             for item in group:
                 # check if group
-                if group.get(item, getclass=True) == h5py._hl.group.Group:
+                if group.get(item, getclass=True) == h5py.Group:
                     item = group.get(item)
                     # check if emd_group_type
                     if 'emd_group_type' in item.attrs:
@@ -201,7 +201,7 @@ class fileEMD:
 
         Parameters
         ----------
-            group: h5py._hl.group.Group
+            group: h5py.Group
                 Reference to the emdtype HDF5 group.
 
         Returns
@@ -244,19 +244,16 @@ class fileEMD:
 
         Returns
         -------
-            : tuple/None
+            : tuple or None
                 None or tuple containing:
-
-                : np.ndarray
-                    The data of the emdtype group.
-
-                : list
-                    List of [0] dimension vectors, [1] labels and [2] units.
-
+                    : np.ndarray
+                        The data of the emdtype group.
+                    : list
+                        List of [0] dimension vectors, [1] labels and [2] units.
         """
 
         # check input
-        if not isinstance(group, h5py._hl.group.Group):
+        if not isinstance(group, h5py.Group):
             if isinstance(group, int):
                 try:
                     group = self.list_emds[group]
@@ -301,12 +298,12 @@ class fileEMD:
                 Label for dataset, usually dim1, dim2, dimN.
             dim: tuple
                 Tuple containing (data, name, units).
-            parent: h5py._hl.group.Group
+            parent: h5py.Group
                 HDF5 handle to parent group.
 
         Returns
         -------
-            : h5py._hl.group.Group
+            : h5py.Group
                 HDF5 dataset handle referencing this dim.
 
         """
@@ -331,7 +328,7 @@ class fileEMD:
                 Numpy array containing the data.
             dims: tuple
                 Tuple containing the necessary dims as ((vec, name, units), (vec, name, units), ...)
-            parent: h5py._hl.group.Group/None
+            parent: h5py.Group or None
                 Parent for the emdtype group, if None it will be written to /data.
             overwrite: bool
                 Set to force overwriting entry in EMD file.
@@ -340,7 +337,7 @@ class fileEMD:
 
         Returns
         -------
-            : h5py._hl.group.Group/None
+            : h5py.Group or None
                 Group referencing this emdtype dataset or None if failed.
         """
 
