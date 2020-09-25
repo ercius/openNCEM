@@ -42,14 +42,21 @@ def calc_polarcoords(center, dims, ns=None, dists=None):
     Center is assumed to be in real coordinates (if not just fake the dims).
     Distortions are corrected if ns and corresponding dists are given.
 
-    Parameters:
-        center (np.ndarray/tuple):    Center of polar coordinate system.
-        dims (tuple):    Tuple of dimensions.
-        ns (tuple):    List of distortion orders to correct for.
-        dists (np.ndarray):    Parameters for distortions.
+    Parameters
+    ----------
+        center : np.ndarray/tuple
+            Center of polar coordinate system.
+        dims : tuple
+            Tuple of dimensions.
+        ns : tuple
+            List of distortion orders to correct for.
+        dists : np.ndarray
+            Parameters for distortions.
 
-    Returns:
-        (tuple):    Polarcoordinates (r, theta) of polar coordinate system as two np.ndarrays with same dimensions as original image.
+    Returns
+    --------
+        : tuple
+            Polar coordinates (r, theta) as two np.ndarrays with same dimensions as original image.
 
     """
 
@@ -88,17 +95,25 @@ def calc_polarcoords(center, dims, ns=None, dists=None):
 
 
 def correct_distortion(img, dims, center, ns, dists):
-    """Give corrected version of img with respect to distortions.
+    """Give corrected version of diffraction pattern with respect to distortions.
 
-    Parameters:
-        img (np.ndarray):    Image (2D).
-        dims (tuple):    Dimensions tuple.
-        center (np.ndarray/tuple):    Center to be used.
-        ns (tuple):    List of distortion orders.
-        dists (np.ndarray):    Distortion parameters.
+    Parameters
+    -----------
+        img : np.ndarray
+            Image (2D).
+        dims : tuple
+            Dimensions tuple.
+        center : np.ndarray or tuple
+            Center to be used.
+        ns : tuple
+            List of distortion orders.
+        dists : np.ndarray
+            Distortion parameters.
 
-    Returns:
-        (np.ndarray):   Corrected image.
+    Returns
+    --------
+        : np.ndarray
+           Corrected diffraction pattern.
 
     """
 
@@ -141,16 +156,25 @@ def calc_radialprofile(img, rs, rMax, dr, rsigma, mask=None):
 
     It is suggested to use an rMax such that all directions are still in the image, otherwise outer areas will contribute differently and lead to different signal-to-noise. A value of dr corresponding to 1/10 px and rsigma corresponding to 1 px are good parameters.
 
-    Parameters:
-        img (np.ndarray):    Image to take radial profile of intensity from.
-        rs (np.ndarray):    Array containing the radial distance, same shape as img.
-        rMax (float):      Maximum radial distance used for the radial profile.
-        dr (float):    Stepsize for r-axis of radial distance.
-        rsigma (float):    Sigma for Gaussian used as kernel density estimator.
-        mask (np.ndarray):    Mask image, values at 0 are excluded from radial profile.
+    Parameters
+    -----------
+        img : np.ndarray
+            Image to take radial profile of intensity from.
+        rs : np.ndarray
+            Array containing the radial distance, same shape as img.
+        rMax : float
+              Maximum radial distance used for the radial profile.
+        dr : float
+            Step size for r-axis of radial distance.
+        rsigma : float
+            Sigma for Gaussian used as kernel density estimator.
+        mask : np.ndarray
+            Mask image, values at 0 are excluded from radial profile.
 
-    Returns:
-        (tuple):    Tuple of radial and intensity axes.
+    Returns
+    --------
+        : tuple
+            Tuple of radial and intensity axes.
 
     """
 
@@ -206,14 +230,21 @@ def residuals_fit(param, r, intens, funcs):
 
     The arguments for the single functions are automatically cut from the fit parameters.
 
-    Parameters:
-        param (np.ndarray):    Fit parameters.
-        r (np.ndarray):    r-axis.
-        intens (np.ndarray):    Intensity-axis.
-        funcs (tuple):    List of functions to include.
+    Parameters
+    -----------
+        param : np.ndarray
+            Fit parameters.
+        r : np.ndarray
+            r-axis.
+        intens : np.ndarray
+            Intensity-axis.
+        funcs : tuple
+            List of functions to include.
 
-    Returns:
-        (np.ndarray):    Residuals.
+    Returns
+    --------
+        : np.ndarray
+            Residuals.
 
     """
 
@@ -225,15 +256,23 @@ def fit_radialprofile(r, intens, funcs, init_guess, maxfev=None):
 
     Convenience wrapper for fitting.
 
-    Parameters:
-        r (np.ndarray):    r-axis of radial profile.
-        intens (np.ndarray):    Intensity-axis of radial profile.
-        funcs (tuple):    List of functions.
-        init_guess (np.ndarray):    Initial guess for parameters of functions in funcs.
-        maxfev (int):   maximum function calls (for scipy.optimize.leastsq)
+    Parameters
+    -----------
+        r : np.ndarray
+            r-axis of radial profile.
+        intens : np.ndarray
+            Intensity-axis of radial profile.
+        funcs : tuple
+            List of functions.
+        init_guess : np.ndarray
+            Initial guess for parameters of functions in funcs.
+        maxfev : int
+           maximum function calls (for scipy.optimize.leastsq)
 
-    Returns:
-        (np.ndarray):    Optimized parameters.
+    Returns
+    --------
+        : np.ndarray
+            Optimized parameters.
 
     """
 
@@ -268,13 +307,19 @@ def fit_radialprofile(r, intens, funcs, init_guess, maxfev=None):
 def run_singleImage(img, dims, settings, show=False):
     """Evaluate a single ring diffraction pattern with given settings.
 
-    Parameters:
-        img (np.ndarray):    Image.
-        dims (tuple):    Corresponding dim vectors.
-        settings (dict):    Dict of settings necessary for the evaluation.
-        show (bool):    Set to directly show plots interactively.
+    Parameters
+    -----------
+        img : np.ndarray
+            Image.
+        dims : tuple
+            Corresponding dim vectors.
+        settings : dict
+            Dict of settings necessary for the evaluation.
+        show : bool
+            Set to directly show plots interactively.
 
-    Returns:
+    Returns
+    --------
         (np.ndarray):    Optimized parameters of fitting the radial profile according to the settings.
 
     """
