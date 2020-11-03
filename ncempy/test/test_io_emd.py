@@ -5,8 +5,6 @@ Tests for the emd io module.
 import pytest
 
 from pathlib import Path
-import os
-import os.path
 import tempfile
 
 import numpy as np
@@ -65,3 +63,12 @@ class Testemd:
         with ncempy.io.emd.fileEMD(temp_file, readonly=True) as emd1:
             dd2, dims2 = emd1.get_emdgroup(0)
         assert dd2.shape == (10, 11, 12)
+
+    def test_dim_string(self, data_location):
+        """Test for dims with string attributes as name and units"""
+        with ncempy.io.emd.fileEMD(data_location / Path('emd_type1_shortDims.h5')) as emd0:
+            dims = emd0.get_emddims(emd0.list_emds[0])
+        assert len(dims) == 4
+
+        out = ncempy.io.emd.emdReader(data_location / Path('emd_type1_shortDims.h5'))
+        assert out['data'].ndim == 4
