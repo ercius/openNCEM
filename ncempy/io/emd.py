@@ -23,19 +23,19 @@ class fileEMD:
     ----------
         file_hdl : h5py.File
             The h5py file handle which provides direct access to the underlying h5py file structure.
-        self.version : tuple
+        version : tuple
             A 2-tuple of the major and minor EMD version as ints.
-        self.data : h5py.Group
+        data : h5py.Group
             A link to the data group in the EMD file.
-        self.microscope : h5py.Group
+        microscope : h5py.Group
             A link to the microsocpe EMD group with metadata.
-        self.sample : h5py.Group
+        sample : h5py.Group
             A link to the sample EMD group with metadata.
-        self.user : h5py.Group
+        user : h5py.Group
             A link to the user EMD group with metadata.
-        self.comments : h5py.Group
+        comments : h5py.Group
             A link to the comments in this EMD file. A time stamp is included with the comment.
-        self.list_emds : list
+        list_emds : list
             A list of the EMD groups in the file.
 
     Methods
