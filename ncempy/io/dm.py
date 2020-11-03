@@ -31,23 +31,63 @@ import numpy as np
 class fileDM:
     """Init opening the file and reading in the header.
 
-    Parameters
+    Attributes
     ----------
+        xSize, ySize, zSize : list
+            The shape of the data for each data set in the file. Each value is the same as the shape attribute for an
+            ndarray.
+        zSize2 : list
+            The shape of the 4th dimension for a 4D file (i.e. 4D-STEM data)
+        dataSize : list
+            The total number of bytes in each dataset. Similar to numpy's nbytes attribute for an ndarray.
+        dataOffset : list
+            The starting byte number for each dataset. This can provide fast access directly to the data if needed
+            by seeking to this byte number.
+        dataShape : list
+            The total number of dimensions in eahc dataset. Similar to numpy's ndims attribute for an ndarray.
         filename : str
-            String pointing to the filesystem location of the file.
-
-        verbose : bool, optional, default False
-            If True, debug information is printed.
-
-        on_memory : bool, optional, default True
-            If True, file data is pre-loaded in memory and all data
-            parsing is performed against memory. This mode is necessary
-            for network based or parallel file systems but seems to
-            improve reading in all cases.
+            The path to the file as a string
+        fid : file
+            The file handle.
+        numObjects : list
+            The number of datasets in the file. Often (but not always) the file contains a thumbnail and the raw data.
+            The thumbnail will always be the first object. See thumbnail attribute.
+        thumbnail : bool
+            Tells whether the first object or dataset in the file is a thumbnail. If true then this object is always
+            skipped in methods and it is assumed that the user wants to skip this. Can retrive this thumbnail using
+            a built-in method if desired.
+        scale : list
+            The real size of the pixel. Real and reciprical space are supported.
+        scaleUnit : list
+            The unit name as a string for each dimension of each dataset.
+        origin : list
+            The origin for the real or reciprocal space scaling for each dimension. Be careful, this value is actually
+            meant to be *scaled* by the scale before being used. See ncempy.io.dmReader() for proper handling of this
+            especially for spectroscopy data.
+        allTags : dictionary
+            Contains *all* tags in the DM file as key value pairs.
+    Methods
+    -------
+        parseHeader()
+            Parses the header of the DM file. DM files have the data and the metadata interspersed so you have to
+            parse the entire file to find the raw data. However, this method skips any raw data found which is then
+            loaded separately using get_dataset() or get_memmap methods. This is automatically run at class init.
+        writeTags()
+            Write out the allTags attribute as a text file in the directory of the file. Provides a convenient
+            way to inspect and search trhough useful metadata as text.
+        getDataset()
+            Load the full data set into memory as an ndarray properly shaped with the original dtype.
+        getSlice()
+            Load a slice of the data where slice is meant to be a full image. This is useful for large time series data
+            where you might only want 1 image from the file. Slicing other dimensions is not supported. See getMemmap()
+            for more complex slicing capabilities without loading the data into memory.
+        getMemmap()
+            Return a memmap object allowing the data to be accessed directly from disk. This is very useful for large
+            datasets which do not fit into memory and for fancy slicing operations.
 
     Example
     -------
-        Read data from a single image into memory:
+        Read data from a file containing a single image into memory:
 
             >>> import matplotlib.pyplot as plt
             >>> from ncempy.io import dm
@@ -75,7 +115,25 @@ class fileDM:
                  '_EncodedTypeDTypes')
 
     def __init__(self, filename, verbose=False, on_memory=True):
+        """
 
+        Parameters
+        ----------
+            filename : str or pathlib.Path
+                String pointing to the filesystem location of the file.
+
+            verbose : bool, optional, default False
+                If True, debug information is printed.
+
+            on_memory : bool, optional, default True
+                If True, file data is pre-loaded in memory and all data
+                parsing is performed against memory. This mode is necessary
+                for network based or parallel file systems but seems to
+                improve reading in all cases.
+
+
+
+        """
         self.filename = filename
 
         # necessary declarations, if something fails
@@ -819,7 +877,7 @@ class fileDM:
 
         # Change output path
         if new_folder_path_for_tags:
-            print('chooseing different path')
+            print('choosing different path')
             out_directory = Path(new_folder_path_for_tags)
         else:
             out_directory = file_name.parent
