@@ -266,7 +266,7 @@ class fileEMD:
         dims = tuple(dims)
         return (dims)
 
-    def get_emdgroup(self, group, memmap = False):
+    def get_emdgroup(self, group, memmap=False):
         """Get the emd data saved in the requested group.
 
         Parameters
