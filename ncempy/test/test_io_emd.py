@@ -66,9 +66,9 @@ class Testemd:
 
     def test_dim_string(self, data_location):
         """Test for dims with string attributes as name and units"""
-        with ncempy.io.emd.fileEMD(data_location / Path('emd_type1_shortDims.h5')) as emd0:
+        with ncempy.io.emd.fileEMD(data_location / Path('emd_type1_stringDims.h5')) as emd0:
             dims = emd0.get_emddims(emd0.list_emds[0])
         assert len(dims) == 4
 
-        out = ncempy.io.emd.emdReader(data_location / Path('emd_type1_shortDims.h5'))
+        out = ncempy.io.emd.emdReader(data_location / Path('emd_type1_stringDims.h5'))
         assert out['data'].ndim == 4
