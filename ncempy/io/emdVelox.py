@@ -20,15 +20,12 @@ class fileEMDVelox:
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and an inefficient choice of chunking.
 
-    Parameters
-    ----------
-        filename : str
-            Name of the EMD file.
+    For simmple use cases please see the emdVeloxReader() function.
 
     Attributes
     ----------
         list_data : list
-            A list containing each h5py data group.
+            A list containing each h5py data group that can be loaded.
 
         file_hdl : h5py.File
             The File handle from h5py.File.
@@ -36,6 +33,15 @@ class fileEMDVelox:
         metaDataJSON : dict
             The metadata for the most recently loaded data set.
 
+    Methods
+    -------
+        get_dataset(group, memmap=False)
+            Get a dataset from the EMDvelox file. You can indicate the dataset using the list_data attribute or
+            an integer corresponding to the entry in the the list_data attribute. If memmap is True then the data is
+            returned as a h5py dataset on disk instead of loading fully into memory.
+        parseMetaData(group)
+            Parse the metadata in the file for the indicated group which can be indicated either using the list_data
+            attribute or the corresponding integer to the entry in the list_data attribute.
 
     Example
     -------

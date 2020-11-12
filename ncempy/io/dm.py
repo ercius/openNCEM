@@ -66,6 +66,7 @@ class fileDM:
             especially for spectroscopy data.
         allTags : dictionary
             Contains *all* tags in the DM file as key value pairs.
+
     Methods
     -------
         parseHeader()
