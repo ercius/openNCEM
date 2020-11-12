@@ -132,8 +132,6 @@ class fileDM:
                 for network based or parallel file systems but seems to
                 improve reading in all cases.
 
-
-
         """
         self.filename = filename
 

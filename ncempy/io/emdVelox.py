@@ -81,7 +81,7 @@ class fileEMDVelox:
 
         # try opening the file
         try:
-            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760) # rdcc_nbytes = 10*1024**2
+            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760)  # rdcc_nbytes = 10*1024**2
         except:
             print('Error opening file for readonly: "{}"'.format(filename))
             raise
@@ -117,9 +117,10 @@ class fileEMDVelox:
 
         """
         out = 'EMD file contains {} data sets\n'.format(len(self.list_data))
+        md = {'pixelSize': 1, 'detectorName': 'unknown'}
         for ii, group in enumerate(self.list_data):
             md = self.parseMetaData(group)
-            out += 'Dataset #{} from detector: {}\n'.format(ii,md['detectorName'])
+            out += 'Dataset #{} from detector: {}\n'.format(ii, md['detectorName'])
         out += 'pixel size = ({0[0]:0.4f}, {0[1]:0.4f}) nm'.format(md['pixelSize'])
         return out
     
@@ -137,7 +138,7 @@ class fileEMDVelox:
             self.list_data = []
             raise
         
-        self.list_emds = self.list_data # make a copy to match the Berkeley EMD attribute
+        self.list_emds = self.list_data  # make a copy to match the Berkeley EMD attribute
     
     def get_dataset(self, group, memmap=False):
         """ Get the data from a group and the associated metadata.
@@ -166,13 +167,13 @@ class fileEMDVelox:
         except IndexError:
             raise IndexError('EMDVelox group #{} does not exist.'.format(group))
         
-        if not isinstance(group, h5py._hl.group.Group):
+        if not isinstance(group, h5py.Group):
             raise TypeError('group needs to refer to a valid HDF5 group!')
 
         if memmap:
-            data = group['Data'] # return the HDF5 dataset object
+            data = group['Data']  # return the HDF5 dataset object
         else:
-            data = np.squeeze(group['Data'][:]) # load the full data set
+            data = np.squeeze(group['Data'][:])  # load the full data set
         metaData = self.parseMetaData(group)
         return data, metaData
     
@@ -183,15 +184,16 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            group : h5py group or int
-                The h5py group to load the metadata from. If int then the
-                group corresponding to list_data is used. The string is loaded
+            group : h5py.Group or int
+                The h5py group to load the metadata from which is easily retrived from the list_data attribute.
+                If input is an int then the
+                group corresponding to list_data attribute is used. The string metadata is loaded
                 and parsed by the json module into a dictionary.
 
         Returns
         -------
             md : dict
-                The JSON information returned as a python dictionary.
+                The JSON information in the file returned as a python dictionary.
 
         """
         try:
@@ -227,7 +229,7 @@ class fileEMDVelox:
         md['Stage'] = self.metaDataJSON['Stage']
         md['detectorName'] = self.metaDataJSON['BinaryResult']['Detector']
         try:
-            md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime'] # only for STEM
+            md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime']  # only for STEM
         except KeyError:
             md['dwellTime'] = 0
 
