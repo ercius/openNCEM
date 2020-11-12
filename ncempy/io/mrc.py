@@ -14,16 +14,27 @@ class fileMRC:
     """Init opening the file and reading in the header.
     Read in the data in MRC format and other useful information.
 
-    Parameters
-    -----------
-        filename: str or pathlib.Path
-            String or pathlib.Path object pointing to the filesystem location of the file.
-        verbose : bool
-            If True, debug information is printed.
-    Returns
-    --------
-       out: dict
-            A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
+    Attributes
+    ---------
+        fid = None
+        mrcType = None
+        dataType = None
+        dataSize = None
+        gridSize = None
+        volumeSize = None
+        voxelSize = None
+        cellAngles = None
+        axisOrientations = None
+        minMaxMean = None
+        extra = None
+        FEIinfo = None
+        dataOffset = None
+        dataOut = {}  # will hold the data and metadata to output to the user after getDataset() call
+        v = verbose
+
+    Methods
+    -------
+
 
     Note
     ----
@@ -43,7 +54,19 @@ class fileMRC:
     """
 
     def __init__(self, filename, verbose=False):
+        """
+        Parameters
+        -----------
+            filename: str or pathlib.Path
+                String or pathlib.Path object pointing to the filesystem location of the file.
+            verbose : bool
+                If True, debug information is printed.
+        Returns
+        --------
+           out: dict
+                A dictionary with keys data, voxelSize, filename, axisOrientations, FEIinfo
 
+        """
         # check filename type
         if isinstance(filename, str):
             pass
