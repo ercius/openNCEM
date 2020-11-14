@@ -3,7 +3,7 @@ This module provides an interface to the SER file format written by FEI and Ther
 
 It reads STEM and TEM images and other datasets.
 
-Following the information provided by Dr Chris Boothroyd (http://www.er-c.org/cbb/info/TIAformat/).
+It is based on information provided by Dr Chris Boothroyd and work by Peter Ercius' original serReader code in Matlab.
 
 Note
 ----
@@ -35,24 +35,38 @@ class fileSER:
 
     Attributes
     ----------
-        self._file_hdl = None
-        self._emi = None
-        self.filename = filename
+        self._file_hdl
+            The open file as a raw stream.
+        self._emi
+            A dictionary of metadata from the EMI file accompanying the SER file.
+        self.filename
+            A string of the file name of the SER file.
         self.head
+            Header information for the SER file as a dictionary. Provides direct access to data offsets and other
+            internal file information.
     Methods
     -------
-
+        readHeader()
+            Reads the header information of the SER file. Each dataset also has its own header with more information
+            for each data set. This allows each data set to have a different pixel size, data type, shape, etc. The
+            necessary information is stored in the head attribute as a dictionary.
+        getDataset()
+            Retrieve a dataset from the file and load into memory. Due to the layout of data in a SER file it is
+            difficult to implement a memmap. Thus, there is no option for this method. If the data is too large to
+            fit in memory you can access each "slice" of the data using this function.
+        writeEMD()
+            Write out the SER data as a Berkelely EMD file. This is somewhat old code and not well supported in
+            newer ncempy versions and will be removed in the future. It is suggested to use the
+            emd.fileEMD.put_emdgroup() method to properly format an EMD file. This
     Note
     ----
         For most users, we suggest using the ser.serReader() function to
         load the full data set into memory. Otherwise, this class provides
-        low level access to the ser file data and metadata.
-
-
+        low level access to the SER file data and metadata and internals.
 
     Examples
     --------
-        Read data from a single image into memory.
+        Read data from a single image into memory using the low level API.
 
         >>> import matplotlib.pyplot as plt
         >>> import ncempy.io as nio
@@ -684,8 +698,8 @@ class fileSER:
                 dims.append((dim, 'x', '[m]'))
 
                 # write dimensions
-                for i in range(len(dims)):
-                    f.write_dim('dim{:d}'.format(i + 1), dims[i], grp)
+                for ii in range(len(dims)):
+                    f.write_dim('dim{:d}'.format(ii + 1), dims[ii], grp)
 
                 # write out time as additional dataset
                 _ = f.put_emdgroup('timestamp', time, dims_time, parent=grp)
