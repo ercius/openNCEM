@@ -87,11 +87,6 @@ class fileMRC:
             verbose : bool
                 If True, debug information is printed.
 
-        Returns
-        --------
-           out: dict
-                A dictionary with keys data, voxelSize, filename, axisOrientations, FEIinfo
-
         """
         # check filename type
         if isinstance(filename, str):

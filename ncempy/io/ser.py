@@ -1,5 +1,7 @@
 """
-This module provides an interface to the SER file format written by TIA.
+This module provides an interface to the SER file format written by FEI and Therm0 Fischer's program TIA.
+
+It reads STEM and TEM images and other datasets.
 
 Following the information provided by Dr Chris Boothroyd (http://www.er-c.org/cbb/info/TIAformat/).
 
@@ -16,8 +18,7 @@ Note
 
 import xml.etree.ElementTree as ET
 from pathlib import Path
-import os
-import re
+import os # TODO: Remove os and use pathlib instead.
 
 import numpy as np
 
@@ -34,17 +35,11 @@ class fileSER:
 
     Note
     ----
-        For most user cases, we suggest using the ser.serReader() function to
+        For most users, we suggest using the ser.serReader() function to
         load the full data set into memory. Otherwise, this class provides
         low level access to the ser file data and metadata.
 
-    Parameters
-    ----------
-        filename: str
-            Name of the SER file.
 
-        verbose: bool, optional
-            True to get extensive output while reading the file.
 
     Examples
     --------
@@ -84,6 +79,17 @@ class fileSER:
 
     def __init__(self, filename, verbose=False):
         """Init opening the file and reading in the header.
+
+        Parameters
+        ----------
+            filename : str
+                Name of the SER file.
+
+            verbose : bool, optional
+                True to get extensive output while reading the file.
+
+        Returns
+        -------
 
         """
         # necessary declarations, if something fails

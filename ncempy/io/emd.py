@@ -77,10 +77,10 @@ class fileEMD:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
-            Path to the EMD file.
-        readonly : bool, default True
-            Set to False to allow writing to the file.
+            filename : str or pathlib.Path
+                Path to the EMD file.
+            readonly : bool, default True
+                Set to False to allow writing to the file.
 
         """
 
