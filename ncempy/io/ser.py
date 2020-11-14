@@ -1051,16 +1051,17 @@ def _parseEntry_emi(value):
 
 
 def serReader(filename):
-    """Simple function to parse the file and read all datasets. This is a one function implementation to load all data in a ser file.
+    """Simple function to parse the file and read all datasets. This is a one function implementation to load all data
+     in a ser file.
 
     Parameters
     ----------
-        filename: str
+        filename : str
             The filename of the SER file containing the data.
 
     Returns
     -------
-        dataOut: dict
+        dataOut : dict
             A dictionary containing the data and meta data.
             The data is accessed using the 'data' key and is a 1, 2, 3, or 4
             dimensional numpy ndarray.
@@ -1071,7 +1072,7 @@ def serReader(filename):
 
             >>> import ncempy.io as nio
             >>> ser1 = nio.ser.serReader('filename_1.ser')
-            >>> plt.imshow(ser1['data']) #show the single image from the data file
+            >>> plt.imshow(ser1['data'])  # show the single image from the data file
     """
     # Open the file and init the class
     with fileSER(filename) as f1:
