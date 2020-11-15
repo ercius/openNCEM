@@ -35,54 +35,54 @@ class fileSER:
 
     Attributes
     ----------
-        self._file_hdl
-            The open file as a raw stream.
-        self._emi
-            A dictionary of metadata from the EMI file accompanying the SER file.
-        self.filename
-            A string of the file name of the SER file.
-        self.head
-            Header information for the SER file as a dictionary. Provides direct access to data offsets and other
-            internal file information.
+    _file_hdl
+        The open file as a raw stream.
+    _emi
+        A dictionary of metadata from the EMI file accompanying the SER file.
+    filename
+        A string of the file name of the SER file.
+    head
+        Header information for the SER file as a dictionary. Provides direct access to data offsets and other
+        internal file information.
     Methods
     -------
-        readHeader()
-            Reads the header information of the SER file. Each dataset also has its own header with more information
-            for each data set. This allows each data set to have a different pixel size, data type, shape, etc. The
-            necessary information is stored in the head attribute as a dictionary.
-        getDataset()
-            Retrieve a dataset from the file and load into memory. Due to the layout of data in a SER file it is
-            difficult to implement a memmap. Thus, there is no option for this method. If the data is too large to
-            fit in memory you can access each "slice" of the data using this function.
-        writeEMD()
-            Write out the SER data as a Berkelely EMD file. This is somewhat old code and not well supported in
-            newer ncempy versions and will be removed in the future. It is suggested to use the
-            emd.fileEMD.put_emdgroup() method to properly format an EMD file. This
+    readHeader()
+        Reads the header information of the SER file. Each dataset also has its own header with more information
+        for each data set. This allows each data set to have a different pixel size, data type, shape, etc. The
+        necessary information is stored in the head attribute as a dictionary.
+    getDataset()
+        Retrieve a dataset from the file and load into memory. Due to the layout of data in a SER file it is
+        difficult to implement a memmap. Thus, there is no option for this method. If the data is too large to
+        fit in memory you can access each "slice" of the data using this function.
+    writeEMD()
+        Write out the SER data as a Berkelely EMD file. This is somewhat old code and not well supported in
+        newer ncempy versions and will be removed in the future. It is suggested to use the
+        emd.fileEMD.put_emdgroup() method to properly format an EMD file. This
     Note
     ----
-        For most users, we suggest using the ser.serReader() function to
-        load the full data set into memory. Otherwise, this class provides
-        low level access to the SER file data and metadata and internals.
+    For most users, we suggest using the ser.serReader() function to
+    load the full data set into memory. Otherwise, this class provides
+    low level access to the SER file data and metadata and internals.
 
     Examples
     --------
-        Read data from a single image into memory using the low level API.
+    Read data from a single image into memory using the low level API.
 
-        >>> import matplotlib.pyplot as plt
-        >>> import ncempy.io as nio
-        >>> with nio.ser.fileSER('filename.ser') as ser1:
-        >>>    data, metadata = ser1.getDataset(0)
-        >>> plt.imshow(data)
+    >>> import matplotlib.pyplot as plt
+    >>> import ncempy.io as nio
+    >>> with nio.ser.fileSER('filename.ser') as ser1:
+    >>>    data, metadata = ser1.getDataset(0)
+    >>> plt.imshow(data)
 
-        SER files are internally structured such that each image in a series is a
-        different data set. Thus, time series data should be read as the
-        following:
+    SER files are internally structured such that each image in a series is a
+    different data set. Thus, time series data should be read as the
+    following:
 
-        >>> with ser.fileSER('filename_1.ser') as ser1:
-        >>>     image0, metadata0 = ser1.getDataset(0)
-        >>>     image1, metadata1 = ser1.getDataset(1)
-        >>> plt.imshow(image0)
-        >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
+    >>> with ser.fileSER('filename_1.ser') as ser1:
+    >>>     image0, metadata0 = ser1.getDataset(0)
+    >>>     image1, metadata1 = ser1.getDataset(1)
+    >>> plt.imshow(image0)
+    >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     """
 
     _dictByteOrder = {0x4949: 'little endian'}

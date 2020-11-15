@@ -16,66 +16,66 @@ class fileMRC:
 
     Attributes
     ---------
-        fid : file
-            The file handle to the opened MRC file.
-        mrcType : int
-            The internal MRC data type.
-        dataType : np.dtype
-            The numpy dtype corresponding to the mrcType.
-        dataSize : np.ndarray
-            The number of pixels along each dimension. Corresponds to the shape attribute of a np.ndarray
-        gridSize : np.ndarray
-            The size of the grid. Usually the same as dataSize
-        volumeSize : np.ndarray
-            The size of the volume along each direction in Angstroms.
-        voxelSize : np.ndarray
-            The size of the voxel along each direction in Angstroms.
-        cellAngles : np.ndarray
-            The angles of the cell. Ignored in most cases including ncempy.
-        axisOrientations : np.ndarray
-            Mapping the orientations of the data to real space directions X, Y, Z. Ignored by ncempy
-        minMaxMean  : np.ndarray
-            The minimum, maximum and mean value of the data to avoid computing this every time.
-        extra : np.ndarray
-            Extra mbinary metadata if it exists.
-        FEIinfo : dict
-            A dictionary of metadata used by FEI (Thermo Fischer) microsocpes for important metadata. This metadata
-            overwrites the voxelsize attribute if it exists.
-        dataOffset : int
-            The integer offset in bytes to the start of the raw data.
-        dataOut: dict
-            Will hold the data and metadata to output to the user after getDataset() call.
-        v : bool
-            More output for debugging. False by default
+    fid : file
+        The file handle to the opened MRC file.
+    mrcType : int
+        The internal MRC data type.
+    dataType : np.dtype
+        The numpy dtype corresponding to the mrcType.
+    dataSize : np.ndarray
+        The number of pixels along each dimension. Corresponds to the shape attribute of a np.ndarray
+    gridSize : np.ndarray
+        The size of the grid. Usually the same as dataSize
+    volumeSize : np.ndarray
+        The size of the volume along each direction in Angstroms.
+    voxelSize : np.ndarray
+        The size of the voxel along each direction in Angstroms.
+    cellAngles : np.ndarray
+        The angles of the cell. Ignored in most cases including ncempy.
+    axisOrientations : np.ndarray
+        Mapping the orientations of the data to real space directions X, Y, Z. Ignored by ncempy
+    minMaxMean  : np.ndarray
+        The minimum, maximum and mean value of the data to avoid computing this every time.
+    extra : np.ndarray
+        Extra mbinary metadata if it exists.
+    FEIinfo : dict
+        A dictionary of metadata used by FEI (Thermo Fischer) microsocpes for important metadata. This metadata
+        overwrites the voxelsize attribute if it exists.
+    dataOffset : int
+        The integer offset in bytes to the start of the raw data.
+    dataOut: dict
+        Will hold the data and metadata to output to the user after getDataset() call.
+    v : bool
+        More output for debugging. False by default
 
     Methods
     -------
-        parseHeader()
-            Parse the header of the file. This populates most attributes in the class and is run automatically.
-        getDataset()
-            Retrieve the data in the file.
-        getSlice(num)
-            Get a single slice from the data set along the X and Y directions. These correspond to the second and third
-            dimensions in the full data set according to C-ordering. num corresonds to the Z position (the zeroeth
-            axis in the ndarray) in the file.
-        getMemmap
-            Return a memmap for the data with the correct dimensions and datatype.
+    parseHeader()
+        Parse the header of the file. This populates most attributes in the class and is run automatically.
+    getDataset()
+        Retrieve the data in the file.
+    getSlice(num)
+        Get a single slice from the data set along the X and Y directions. These correspond to the second and third
+        dimensions in the full data set according to C-ordering. num corresonds to the Z position (the zeroeth
+        axis in the ndarray) in the file.
+    getMemmap
+        Return a memmap for the data with the correct dimensions and datatype.
 
     Note
     ----
-        Most users will prefer to use the mrc.mrcReader() function to simply read
-        the entire data set into memory with a single command.
+    Most users will prefer to use the mrc.mrcReader() function to simply read
+    the entire data set into memory with a single command.
 
-    Example
-    -------
-        Read in all data and metadata into memory.
-            >>> import ncempy.io as nio
-            >>> mrc0 = nio.mrc.mrcReader('file.mrc')
+    Examples
+    --------
+    Read in all data and metadata into memory.
+    >>> import ncempy.io as nio
+    >>> mrc0 = nio.mrc.mrcReader('file.mrc')
 
-        Low level operations to get 1 slice of the 3D data
-            >>> import ncempy.io as nio
-            >>> with nio.mrc.fileMRC('file.mrc') as f1:
-                    single_slice = f1.getSlice(0)
+    Low level operations to get 1 slice of the 3D data
+    >>> import ncempy.io as nio
+    >>> with nio.mrc.fileMRC('file.mrc') as f1:
+            single_slice = f1.getSlice(0)
     """
 
     def __init__(self, filename, verbose=False):

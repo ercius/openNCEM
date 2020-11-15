@@ -24,34 +24,34 @@ class fileEMDVelox:
 
     Attributes
     ----------
-        list_data : list
-            A list containing each h5py data group that can be loaded.
+    list_data : list
+        A list containing each h5py data group that can be loaded.
 
-        file_hdl : h5py.File
-            The File handle from h5py.File.
+    file_hdl : h5py.File
+        The File handle from h5py.File.
 
-        metaDataJSON : dict
-            The metadata for the most recently loaded data set.
+    metaDataJSON : dict
+        The metadata for the most recently loaded data set.
 
     Methods
     -------
-        get_dataset(group, memmap=False)
-            Get a dataset from the EMDvelox file. You can indicate the dataset using the list_data attribute or
-            an integer corresponding to the entry in the the list_data attribute. If memmap is True then the data is
-            returned as a h5py dataset on disk instead of loading fully into memory.
-        parseMetaData(group)
-            Parse the metadata in the file for the indicated group which can be indicated either using the list_data
-            attribute or the corresponding integer to the entry in the list_data attribute.
+    get_dataset(group, memmap=False)
+        Get a dataset from the EMDvelox file. You can indicate the dataset using the list_data attribute or
+        an integer corresponding to the entry in the the list_data attribute. If memmap is True then the data is
+        returned as a h5py dataset on disk instead of loading fully into memory.
+    parseMetaData(group)
+        Parse the metadata in the file for the indicated group which can be indicated either using the list_data
+        attribute or the corresponding integer to the entry in the list_data attribute.
 
-    Example
-    -------
-        Open an EMD Velox file containing 1 image.
+    Examples
+    --------
+    Open an EMD Velox file containing 1 image.
 
-        >>> import ncempy.io as nio
-        >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
-        >>> print(emd1) # print information about the file
-        >>> im0, metadata0 = emd1.get_dataset(0)
-        >>> del emd1 # close the file
+    >>> import ncempy.io as nio
+    >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
+    >>> print(emd1) # print information about the file
+    >>> im0, metadata0 = emd1.get_dataset(0)
+    >>> del emd1 # close the file
     """
     
     def __init__(self, filename):
@@ -60,8 +60,8 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            filename : str or pathlib.Path
-                The file path to load as a string or a pathlib.Path object.
+        filename : str or pathlib.Path
+            The file path to load as a string or a pathlib.Path object.
 
         """
         
