@@ -140,10 +140,6 @@ class fileDM:
 
         self._on_memory = on_memory
 
-        # check for string
-        # if not isinstance(filename, str):
-        #    raise TypeError('Filename is supposed to be a string')
-
         # check filename type
         if isinstance(filename, str):
             pass
@@ -179,7 +175,6 @@ class fileDM:
             raise
 
         if not self._validDM():
-            # print('Not a valid DM3 or DM4 file: "{}"'.format(filename))
             raise IOError('Can not read file: {}'.format(filename))
 
         # Lists that will contain information about binary data arrays
@@ -188,9 +183,15 @@ class fileDM:
         self.zSize = []
         self.zSize2 = []  # only used for 4D datasets in DM4 files
         self.dataType = []
-        self.dataSize = []
+        self.dataSize = []  # like numpy.shape
         self.dataOffset = []
-        self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set
+        self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set (like numpy.ndim)
+        self.allTags = {}
+
+        # lists that will contain scale information (pixel size)
+        self.scale = []
+        self.scaleUnit = []
+        self.origin = []
 
         # The number of objects found in the DM3 file
         self.numObjects = 0
@@ -198,24 +199,17 @@ class fileDM:
         # Indicator that a thumbnail exists (tested for later)
         self.thumbnail = False
 
+        # TODO: Refactor these internal attributes
         self.curGroupLevel = 0  # track how deep we currently are in a group
         self.maxDepth = 64  # maximum number of group levels allowed
         self.curGroupAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track group at current level
         self.curGroupNameAtLevelX = ''  # set the name of the root group
-
         self.curTagAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track tag number at the current level
         self.curTagName = ''  # string of the current tag
-
-        # lists that will contain scale information (pixel size)
-        self.scale = []
-        self.scaleUnit = []
-        self.origin = []
 
         # Temporary variables to keep in case a tag entry shows useful information in an array
         self.scale_temp = 0
         self.origin_temp = 0
-
-        self.allTags = {}
 
         self._encodedTypeSizes = {0: 0, 8: 1, 9: 1, 10: 1,
                                   2: 2, 4: 2,
