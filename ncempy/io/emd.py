@@ -15,37 +15,72 @@ import h5py
 
 
 class fileEMD:
-    """Class to represent EMD files.
+    """Class to represent Berkelely EMD files.
 
     Implemented for spec 0.2 using the recommended layout for metadata.
 
-    Meant to provide convenience functions for commonly occurring tasks. This means that you will still want to access
-     fileEMD.file_hdl to manipulate the HDF5 file for not so commonly occurring tasks.
-
-    Parameters
+    Attributes
     ----------
-        filename : str
-            Name of the EMD file.
-        readonly : bool, default True
-            Set to False to allow writing to the file.
+    file_hdl : h5py.File
+        The h5py file handle which provides direct access to the underlying h5py file structure.
+    version : tuple
+        A 2-tuple of the major and minor EMD version as ints.
+    data : h5py.Group
+        A link to the data group in the EMD file.
+    microscope : h5py.Group
+        A link to the microsocpe EMD group with metadata.
+    sample : h5py.Group
+        A link to the sample EMD group with metadata.
+    user : h5py.Group
+        A link to the user EMD group with metadata.
+    comments : h5py.Group
+        A link to the comments in this EMD file. A time stamp is included with the comment.
+    list_emds : list
+        A list of the EMD groups in the file.
 
-    Example
+    Methods
     -------
-        Open an Berkeley EMD file. List the available data sets. Load a 3D data set and plot the first image.
+    get_emddims(Group)
+        Gets the emd dims from a emd Group. Use list_emds to easily provide the Group path inside the file.
 
-            >>> from ncempy.io import emd
-            >>> import matplotlib.pyplot as plt
-            >>> emd1 = emd.fileEMD('filename.emd')
-            >>> [print(dataGroup.name) for dataGroup in emd1.list_emds] # Use the builtin list_emds variable to print all available EMD datasets
-            >>> data1,dims1 = emd1.get_emdgroup(emd1.list_emds[0]) # load the first full data array and dimension information
-            >>> fg1,ax1 = plt.subplots(1,1)
-            >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) # the extent uses the first and last array values of the dimension vectors
-            >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) # label the axes with the name and units of each dimension vector
-            >>> del emd1 #close the emd file
+    get_emdgroup(Group, memmap=False)
+        Gets a full EMD group which include the data as and ndarray and the dims. You can use list_emds[n] to
+        specify the group or just the corresponding integer (n).
+    put_emdgroup(label, data, dims, parent=None, overwrite=False)
+        Write data to the EMD file (must use readonly=False when initialized). You specify the name of the group,
+        the raw data, and the dims tuple. you can specify the parent group and overwrite the data if needed. Other
+        keyword args are passed to h5py.create_dataset(), e.g. for compression. See h5py.create_dataset for more
+        available keywords.
+    put_comment(msg, timestamp=None)
+        Add a time stamped comment as an attribute to the comments group.
+    get_memmap(group)
+        Get a memmap version of an EMD group. This is identical to get_emdgroup with memmap=True.
+
+    Examples
+    --------
+    Open an Berkeley EMD file using the *advanced* interface. See the emdReader function for a more convenient
+    way to load the data. We show how to list the available data sets, load a 3D data set and plot the first image.
+
+        >>> from ncempy.io import emd
+        >>> import matplotlib.pyplot as plt
+        >>> emd1 = emd.fileEMD('filename.emd')
+        >>> [print(dataGroup.name) for dataGroup in emd1.list_emds] # Use the builtin list_emds variable to print all available EMD datasets
+        >>> data1,dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
+        >>> fg1,ax1 = plt.subplots(1,1)
+        >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) # the extent uses the first and last array values of the dimension vectors
+        >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) # label the axes with the name and units of each dimension vector
+        >>> del emd1 # close the emd file
     """
 
     def __init__(self, filename, readonly=False):
         """Init opening/creating the file.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to the EMD file.
+        readonly : bool, default True
+            Set to False to allow writing to the file.
 
         """
 
@@ -59,9 +94,9 @@ class fileEMD:
         self.sample = None
         self.user = None
         self.comments = None
-        self.list_emds = []  # list of HDF5 groups with emd_data_type type
+        self.list_emds = []  # list of HDF5 groups with emd_data_type type 1
 
-        # check filename type
+        # check filename type, change to string
         if isinstance(filename, str):
             pass
         elif isinstance(filename, Path):
@@ -241,7 +276,7 @@ class fileEMD:
         dims = tuple(dims)
         return dims
 
-    def get_emdgroup(self, group, memmap = False):
+    def get_emdgroup(self, group, memmap=False):
         """Get the emd data saved in the requested group.
 
         Parameters
@@ -457,7 +492,7 @@ class fileEMD:
         
         
         """
-        return self.get_emdgroup(group, memmap = True)
+        return self.get_emdgroup(group, memmap=True)
         
 
 def defaultDims(data, pixel_size=None):

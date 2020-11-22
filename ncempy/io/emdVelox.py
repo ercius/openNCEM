@@ -20,32 +20,38 @@ class fileEMDVelox:
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and an inefficient choice of chunking.
 
-    Parameters
-    ----------
-        filename : str
-            Name of the EMD file.
+    For simmple use cases please see the emdVeloxReader() function.
 
     Attributes
     ----------
-        list_data : list
-            A list containing each h5py data group.
+    list_data : list
+        A list containing each h5py data group that can be loaded.
 
-        file_hdl : h5py.File
-            The File handle from h5py.File.
+    file_hdl : h5py.File
+        The File handle from h5py.File.
 
-        metaDataJSON : dict
-            The metadata for the most recently loaded data set.
+    metaDataJSON : dict
+        The metadata for the most recently loaded data set.
 
-
-    Example
+    Methods
     -------
-        Open an EMD Velox file containing 1 image.
+    get_dataset(group, memmap=False)
+        Get a dataset from the EMDvelox file. You can indicate the dataset using the list_data attribute or
+        an integer corresponding to the entry in the the list_data attribute. If memmap is True then the data is
+        returned as a h5py dataset on disk instead of loading fully into memory.
+    parseMetaData(group)
+        Parse the metadata in the file for the indicated group which can be indicated either using the list_data
+        attribute or the corresponding integer to the entry in the list_data attribute.
 
-        >>> import ncempy.io as nio
-        >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
-        >>> print(emd1) # print information about the file
-        >>> im0, metadata0 = emd1.get_dataset(0)
-        >>> del emd1 # close the file
+    Examples
+    --------
+    Open an EMD Velox file containing 1 image.
+
+    >>> import ncempy.io as nio
+    >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
+    >>> print(emd1) # print information about the file
+    >>> im0, metadata0 = emd1.get_dataset(0)
+    >>> del emd1 # close the file
     """
     
     def __init__(self, filename):
@@ -54,8 +60,8 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            filename : str or pathlib.Path
-                The file path to load as a string or a pathlib.Path object.
+        filename : str or pathlib.Path
+            The file path to load as a string or a pathlib.Path object.
 
         """
         
@@ -75,7 +81,7 @@ class fileEMDVelox:
 
         # try opening the file
         try:
-            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760) # rdcc_nbytes = 10*1024**2
+            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760)  # rdcc_nbytes = 10*1024**2
         except:
             print('Error opening file for readonly: "{}"'.format(filename))
             raise
@@ -111,9 +117,10 @@ class fileEMDVelox:
 
         """
         out = 'EMD file contains {} data sets\n'.format(len(self.list_data))
+        md = {'pixelSize': 1, 'detectorName': 'unknown'}
         for ii, group in enumerate(self.list_data):
             md = self.parseMetaData(group)
-            out += 'Dataset #{} from detector: {}\n'.format(ii,md['detectorName'])
+            out += 'Dataset #{} from detector: {}\n'.format(ii, md['detectorName'])
         out += 'pixel size = ({0[0]:0.4f}, {0[1]:0.4f}) nm'.format(md['pixelSize'])
         return out
     
@@ -131,7 +138,7 @@ class fileEMDVelox:
             self.list_data = []
             raise
         
-        self.list_emds = self.list_data # make a copy to match the Berkeley EMD attribute
+        self.list_emds = self.list_data  # make a copy to match the Berkeley EMD attribute
     
     def get_dataset(self, group, memmap=False):
         """ Get the data from a group and the associated metadata.
@@ -160,13 +167,13 @@ class fileEMDVelox:
         except IndexError:
             raise IndexError('EMDVelox group #{} does not exist.'.format(group))
         
-        if not isinstance(group, h5py._hl.group.Group):
+        if not isinstance(group, h5py.Group):
             raise TypeError('group needs to refer to a valid HDF5 group!')
 
         if memmap:
-            data = group['Data'] # return the HDF5 dataset object
+            data = group['Data']  # return the HDF5 dataset object
         else:
-            data = np.squeeze(group['Data'][:]) # load the full data set
+            data = np.squeeze(group['Data'][:])  # load the full data set
         metaData = self.parseMetaData(group)
         return data, metaData
     
@@ -177,15 +184,16 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            group : h5py group or int
-                The h5py group to load the metadata from. If int then the
-                group corresponding to list_data is used. The string is loaded
+            group : h5py.Group or int
+                The h5py group to load the metadata from which is easily retrived from the list_data attribute.
+                If input is an int then the
+                group corresponding to list_data attribute is used. The string metadata is loaded
                 and parsed by the json module into a dictionary.
 
         Returns
         -------
             md : dict
-                The JSON information returned as a python dictionary.
+                The JSON information in the file returned as a python dictionary.
 
         """
         try:
@@ -221,7 +229,7 @@ class fileEMDVelox:
         md['Stage'] = self.metaDataJSON['Stage']
         md['detectorName'] = self.metaDataJSON['BinaryResult']['Detector']
         try:
-            md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime'] # only for STEM
+            md['dwellTime'] = self.metaDataJSON['Scan']['DwellTime']  # only for STEM
         except KeyError:
             md['dwellTime'] = 0
 
@@ -234,7 +242,7 @@ def emdVeloxReader(filename, dsetNum=0):
 
     Note
     ----
-        Note fully implemented yet. Work in progress.
+        Not fully implemented yet. Work in progress. Important metadata is missing, but you can get the data.
 
     Parameters
     ----------

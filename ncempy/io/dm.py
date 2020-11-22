@@ -4,18 +4,18 @@ as written by Gatan's Digital Micrograph program.
 
 Note
 ----
-    General users:
-        Use the simplified dm.dmReader() function to load the data and meta 
-        data as a python dictionary. 
-        
-    Advanced users and developers:
-        Access the file internals through the dm.fileDM() class.
+General users:
+    Use the simplified dm.dmReader() function to load the data and meta
+    data as a python dictionary.
 
-    On Memory mode:
-      The fileDM support and "on memory" mode that pre-loads the file data in memory
-      and read operations during header parsing are performed against memory. This
-      can significantly improve performance when the file resides in a parallel file
-      system (PFS) because latency of seek operations PFSs is very high.
+Advanced users and developers:
+    Access the file internals through the dm.fileDM() class.
+
+On Memory mode:
+  The fileDM support and "on memory" mode that pre-loads the file data in memory
+  and read operations during header parsing are performed against memory. This
+  can significantly improve performance when the file resides in a parallel file
+  system (PFS) because latency of seek operations PFSs is very high.
   
 """
 
@@ -31,35 +31,76 @@ import numpy as np
 class fileDM:
     """Init opening the file and reading in the header.
 
-    Parameters
+    Attributes
     ----------
-        filename : str
-            String pointing to the filesystem location of the file.
+    xSize, ySize, zSize : list
+        The shape of the data for each data set in the file. Each value is the same as the shape attribute for an
+        ndarray.
+    zSize2 : list
+        The shape of the 4th dimension for a 4D file (i.e. 4D-STEM data)
+    dataSize : list
+        The total number of bytes in each dataset. Similar to numpy's nbytes attribute for an ndarray.
+    dataOffset : list
+        The starting byte number for each dataset. This can provide fast access directly to the data if needed
+        by seeking to this byte number.
+    dataShape : list
+        The total number of dimensions in eahc dataset. Similar to numpy's ndims attribute for an ndarray.
+    filename : str
+        The path to the file as a string
+    fid : file
+        The file handle.
+    numObjects : list
+        The number of datasets in the file. Often (but not always) the file contains a thumbnail and the raw data.
+        The thumbnail will always be the first object. See thumbnail attribute.
+    thumbnail : bool
+        Tells whether the first object or dataset in the file is a thumbnail. If true then this object is always
+        skipped in methods and it is assumed that the user wants to skip this. Can retrive this thumbnail using
+        a built-in method if desired.
+    scale : list
+        The real size of the pixel. Real and reciprical space are supported.
+    scaleUnit : list
+        The unit name as a string for each dimension of each dataset.
+    origin : list
+        The origin for the real or reciprocal space scaling for each dimension. Be careful, this value is actually
+        meant to be *scaled* by the scale before being used. See ncempy.io.dmReader() for proper handling of this
+        especially for spectroscopy data.
+    allTags : dictionary
+        Contains *all* tags in the DM file as key value pairs.
 
-        verbose : bool, optional, default False
-            If True, debug information is printed.
-
-        on_memory : bool, optional, default True
-            If True, file data is pre-loaded in memory and all data
-            parsing is performed against memory. This mode is necessary
-            for network based or parallel file systems but seems to
-            improve reading in all cases.
-
-    Example
+    Methods
     -------
-        Read data from a single image into memory:
+    parseHeader()
+        Parses the header of the DM file. DM files have the data and the metadata interspersed so you have to
+        parse the entire file to find the raw data. However, this method skips any raw data found which is then
+        loaded separately using get_dataset() or get_memmap methods. This is automatically run at class init.
+    writeTags()
+        Write out the allTags attribute as a text file in the directory of the file. Provides a convenient
+        way to inspect and search trhough useful metadata as text.
+    getDataset()
+        Load the full data set into memory as an ndarray properly shaped with the original dtype.
+    getSlice()
+        Load a slice of the data where slice is meant to be a full image. This is useful for large time series data
+        where you might only want 1 image from the file. Slicing other dimensions is not supported. See getMemmap()
+        for more complex slicing capabilities without loading the data into memory.
+    getMemmap()
+        Return a memmap object allowing the data to be accessed directly from disk. This is very useful for large
+        datasets which do not fit into memory and for fancy slicing operations.
 
-            >>> import matplotlib.pyplot as plt
-            >>> from ncempy.io import dm
-            >>> with dm.fileDM('filename.dm4') as dmFile1:
-            >>>     dataSet = dmFile1.getDataset(0)
-            >>> plt.imshow(dataSet['data'])
+    Examples
+    --------
+    Read data from a file containing a single image into memory:
 
-        Example of reading a full multi-image DM3 file into memory:
+    >>> import matplotlib.pyplot as plt
+    >>> from ncempy.io import dm
+    >>> with dm.fileDM('filename.dm4') as dmFile1:
+    >>>     dataSet = dmFile1.getDataset(0)
+    >>> plt.imshow(dataSet['data'])
 
-            >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
-            >>>     series = dmFile2.getDataset(0)
-            >>> plt.imshow(series['data'][0, :, :]) #show the first image in the series
+    Example of reading a full multi-image DM3 file into memory:
+
+    >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
+    >>>     series = dmFile2.getDataset(0)
+    >>> plt.imshow(series['data'][0, :, :]) #show the first image in the series
     """
 
     __slots__ = ('filename', 'fid', '_on_memory', 'v', 'xSize', 'ySize',
@@ -75,17 +116,29 @@ class fileDM:
                  '_EncodedTypeDTypes')
 
     def __init__(self, filename, verbose=False, on_memory=True):
+        """
 
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            String pointing to the filesystem location of the file.
+
+        verbose : bool, optional, default False
+            If True, debug information is printed.
+
+        on_memory : bool, optional, default True
+            If True, file data is pre-loaded in memory and all data
+            parsing is performed against memory. This mode is necessary
+            for network based or parallel file systems but seems to
+            improve reading in all cases.
+
+        """
         self.filename = filename
 
         # necessary declarations, if something fails
         self.fid = None
 
         self._on_memory = on_memory
-
-        # check for string
-        # if not isinstance(filename, str):
-        #    raise TypeError('Filename is supposed to be a string')
 
         # check filename type
         if isinstance(filename, str):
@@ -122,7 +175,6 @@ class fileDM:
             raise
 
         if not self._validDM():
-            # print('Not a valid DM3 or DM4 file: "{}"'.format(filename))
             raise IOError('Can not read file: {}'.format(filename))
 
         # Lists that will contain information about binary data arrays
@@ -131,9 +183,15 @@ class fileDM:
         self.zSize = []
         self.zSize2 = []  # only used for 4D datasets in DM4 files
         self.dataType = []
-        self.dataSize = []
+        self.dataSize = []  # like numpy.shape
         self.dataOffset = []
-        self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set
+        self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set (like numpy.ndim)
+        self.allTags = {}
+
+        # lists that will contain scale information (pixel size)
+        self.scale = []
+        self.scaleUnit = []
+        self.origin = []
 
         # The number of objects found in the DM3 file
         self.numObjects = 0
@@ -141,24 +199,17 @@ class fileDM:
         # Indicator that a thumbnail exists (tested for later)
         self.thumbnail = False
 
+        # TODO: Refactor these internal attributes
         self.curGroupLevel = 0  # track how deep we currently are in a group
         self.maxDepth = 64  # maximum number of group levels allowed
         self.curGroupAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track group at current level
         self.curGroupNameAtLevelX = ''  # set the name of the root group
-
         self.curTagAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track tag number at the current level
         self.curTagName = ''  # string of the current tag
-
-        # lists that will contain scale information (pixel size)
-        self.scale = []
-        self.scaleUnit = []
-        self.origin = []
 
         # Temporary variables to keep in case a tag entry shows useful information in an array
         self.scale_temp = 0
         self.origin_temp = 0
-
-        self.allTags = {}
 
         self._encodedTypeSizes = {0: 0, 8: 1, 9: 1, 10: 1,
                                   2: 2, 4: 2,
@@ -819,7 +870,7 @@ class fileDM:
 
         # Change output path
         if new_folder_path_for_tags:
-            print('chooseing different path')
+            print('choosing different path')
             out_directory = Path(new_folder_path_for_tags)
         else:
             out_directory = file_name.parent

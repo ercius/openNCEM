@@ -11,39 +11,83 @@ import numpy as np
 
 
 class fileMRC:
-    """Init opening the file and reading in the header.
-    Read in the data in MRC format and other useful information.
+    """ Read in the data in MRC format and other useful information like metadata. Follows the specification
+    published at http://bio3d.colorado.edu/imod/betaDoc/mrc_format.txt
 
-    Parameters
-    -----------
-        filename: str or pathlib.Path
-            String or pathlib.Path object pointing to the filesystem location of the file.
-        verbose : bool
-            If True, debug information is printed.
-    Returns
-    --------
-       out: dict
-            A dictionary with keys data, voxelSize, filename, axisOrientations, {FEIinfo}
+    Attributes
+    ---------
+    fid : file
+        The file handle to the opened MRC file.
+    mrcType : int
+        The internal MRC data type.
+    dataType : np.dtype
+        The numpy dtype corresponding to the mrcType.
+    dataSize : np.ndarray
+        The number of pixels along each dimension. Corresponds to the shape attribute of a np.ndarray
+    gridSize : np.ndarray
+        The size of the grid. Usually the same as dataSize
+    volumeSize : np.ndarray
+        The size of the volume along each direction in Angstroms.
+    voxelSize : np.ndarray
+        The size of the voxel along each direction in Angstroms.
+    cellAngles : np.ndarray
+        The angles of the cell. Ignored in most cases including ncempy.
+    axisOrientations : np.ndarray
+        Mapping the orientations of the data to real space directions X, Y, Z. Ignored by ncempy
+    minMaxMean  : np.ndarray
+        The minimum, maximum and mean value of the data to avoid computing this every time.
+    extra : np.ndarray
+        Extra mbinary metadata if it exists.
+    FEIinfo : dict
+        A dictionary of metadata used by FEI (Thermo Fischer) microsocpes for important metadata. This metadata
+        overwrites the voxelsize attribute if it exists.
+    dataOffset : int
+        The integer offset in bytes to the start of the raw data.
+    dataOut: dict
+        Will hold the data and metadata to output to the user after getDataset() call.
+    v : bool
+        More output for debugging. False by default
+
+    Methods
+    -------
+    parseHeader()
+        Parse the header of the file. This populates most attributes in the class and is run automatically.
+    getDataset()
+        Retrieve the data in the file.
+    getSlice(num)
+        Get a single slice from the data set along the X and Y directions. These correspond to the second and third
+        dimensions in the full data set according to C-ordering. num corresonds to the Z position (the zeroeth
+        axis in the ndarray) in the file.
+    getMemmap
+        Return a memmap for the data with the correct dimensions and datatype.
 
     Note
     ----
-        Most users will prefer to use the mrc.mrcReader() function to simply read
-        the entire data set into memory with a single command.
+    Most users will prefer to use the mrc.mrcReader() function to simply read
+    the entire data set into memory with a single command.
 
-    Example
-    -------
-        Read in all data and metadata into memory.
-            >>> import ncempy.io as nio
-            >>> mrc0 = nio.mrc.mrcReader('file.mrc')
+    Examples
+    --------
+    Read in all data and metadata into memory.
+    >>> import ncempy.io as nio
+    >>> mrc0 = nio.mrc.mrcReader('file.mrc')
 
-        Low level operations to get 1 slice of the 3D data
-            >>> import ncempy.io as nio
-            >>> with nio.mrc.fileMRC('file.mrc') as f1:
-                    single_slice = f1.getSlice(0)
+    Low level operations to get 1 slice of the 3D data
+    >>> import ncempy.io as nio
+    >>> with nio.mrc.fileMRC('file.mrc') as f1:
+            single_slice = f1.getSlice(0)
     """
 
     def __init__(self, filename, verbose=False):
+        """
+        Parameters
+        -----------
+            filename: str or pathlib.Path
+                String or pathlib.Path object pointing to the filesystem location of the file.
+            verbose : bool
+                If True, debug information is printed.
 
+        """
         # check filename type
         if isinstance(filename, str):
             pass
@@ -122,15 +166,13 @@ class fileMRC:
         TODO
         ----
             Implement special dtype to read the entire header at once.
-        """
+            Read everything at once using special dtype. ~5x faster than multiple np.fromfile() reads:
 
-        ''' Read everything at once using special dtype. ~5x faster than multiple np.fromfile() reads:
-        
-        Untested but works in theory
-        headerDtype = np.dtype([('head1','10int32'),('head2','6float32'),('axisOrientations','3int32'),('minMaxMean','3int32'),('extra','32int32')])
-        head = np.fromfile(self.fid,dtype=headerDtype,count=1)
-        
-        '''
+            Untested but works in theory
+            headerDtype = np.dtype([('head1','10int32'),('head2','6float32'),('axisOrientations','3int32'),
+            ('minMaxMean','3int32'),('extra','32int32')])
+            head = np.fromfile(self.fid,dtype=headerDtype,count=1)
+        """
 
         # Always start at the beginning of the file.
         self.fid.seek(0)
@@ -141,7 +183,6 @@ class fileMRC:
         header = np.fromfile(self.fid, dtype=header_dtype, count=1)
 
         # Read in the initial header values
-        #head1 = np.fromfile(self.fid, dtype=np.int32, count=10)
         head1 = header['head1'][0]
         if self.v:
             print('header1 = {}'.format(head1))
@@ -162,7 +203,6 @@ class fileMRC:
             print('mrc defined gridSize = {}'.format(self.gridSize))
 
         # Get the physical volume size (always in Angstroms) (starting at byte #11 in the file).
-        #head2 = np.fromfile(self.fid, dtype=np.float32, count=6)
         head2 = header['head2'][0]
         self.volumeSize = head2[0:3]
         if self.v:
@@ -189,7 +229,8 @@ class fileMRC:
         else:
             self.voxelSize = (self.volumeSize / np.float32(self.gridSize))
             if self.v:
-                print('voxelSize (Ang) = {}'.format(self.voxelSize))"""
+                print('voxelSize (Ang) = {}'.format(self.voxelSize))
+        """
 
         # Pixel (cell) angles
         self.cellAngles = head2[3:6]
@@ -197,22 +238,15 @@ class fileMRC:
             print('cellAngles = {}'.format(self.cellAngles))
 
         # Axis orientations. Tells which axes are X,Y,Z
-        #self.axisOrientations = np.fromfile(self.fid, dtype=np.int32, count=3)
         self.axisOrientations = header['axisOrientations'][0]
         if self.v:
             print('axisOrientations = {}'.format(self.axisOrientations))
 
-        # self.Shape = [self.dataSize[x-1] for x in self.axisOrientations]
-        # if self.v:
-        #    print('data shape = {}'.format(self.Shape))
-
         # Min, max,mean
-        #self.minMaxMean = np.fromfile(self.fid, dtype=np.int32, count=3)
         self.minMaxMean = header['minMaxMean'][0]
 
         # Extra information (for FEI MRC file, extra(1) is the size of the FEI information encoded with the file in
         # terms of 4 byte floats)
-        #self.extra = np.fromfile(self.fid, dtype=np.int32, count=34)
         self.extra = header['extra'][0]
 
         # Numpy uses C-style ordering. The header is written in Fortran-Style ordering.
@@ -297,7 +331,7 @@ class fileMRC:
         """
         self.fid.seek(self.dataOffset, 0)  # move to the start of the data from the start of the file
         try:
-            num0 = np.prod(self.dataSize, dtype=np.uint64)
+            num0 = int(np.prod(self.dataSize, dtype=np.uint64))
             data1 = np.fromfile(self.fid, dtype=self.dataType, count=num0)
             self.dataOut['data'] = data1.reshape(self.dataSize)
         except MemoryError:
@@ -310,12 +344,12 @@ class fileMRC:
 
         Parameters
         ----------
-            num: int
+            num : int
                 Get the requested image.
 
         Returns
         -------
-            out: ndarray
+            out : ndarray
                 A 2D slice or a 3D set of slices along the first index
 
         Raises
@@ -487,7 +521,7 @@ def mrc2emd(file_name):
 
         # Save the data to the EMD file and reshape it to a C-style array
         try:
-            tiltDset = tiltseriesGroup.create_dataset('data', data=tomo['data'], compression='gzip', shuffle=True)
+            _ = tiltseriesGroup.create_dataset('data', data=tomo['data'], compression='gzip', shuffle=True)
         except MemoryError:
             raise MemoryError("Not enough memory to write out data to EMD file")
 
@@ -513,16 +547,15 @@ def mrcWriter(filename, data, pixelSize, forceWrite=False):
 
     Parameters
     ----------
-        filename: str
-            The name of the MRC file.
-        data: ndarray
+        filename : str or pathlib.Path
+            The name or Path of the file to write out to.
+        data : ndarray
             The array data to write to disk.
-        pixelSize: tuple
+        pixelSize : tuple
             The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeZ,sizeY,sizeX).
-    Returns
-    -------
-        out: int
-            1 if successful and 0 if unsuccessful
+        forceWrite : bool
+            This will write the data as a C-contiguous array. It is not suggested to use this option and it will
+            be removed in future versions.
 
     """
 
@@ -608,17 +641,22 @@ def mrcWriter(filename, data, pixelSize, forceWrite=False):
 
 
 def writeHeader(filename, shape, dtype, pixelSize):
-    """Write out a MRC type file header according to the specification at http://bio3d.colorado.edu/imod/doc/mrc_format.txt.
-    This is useful for initializing an MRC file and then writing to it manually or see appendData() function below.
+    """Write out a MRC type file header according to the specification at
+    http://bio3d.colorado.edu/imod/doc/mrc_format.txt. This is useful for initializing an MRC file and then writing to
+    it manually or see appendData() function below.
 
     Parameters
     ----------
-        filename: str
+        filename : str
             The name of the EMD file
-        shape: tuple
+        shape : tuple
             The shape of the data to write
-        pixelSize: tuple
-            The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ). sizeZ could be the angular step for a tilt series
+        dtype : np.dtype
+            The dtype to write out the data as. Only some numpy dtypes are supported byt his format. It is suggested
+            to use np.float32 in most cases for maximum compatibility.
+        pixelSize : tuple
+            The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ).
+            sizeZ could be the angular step for a tilt series
 
     Returns
     -------
@@ -737,15 +775,15 @@ def emd2mrc(filename, dsetPath):
                           0] + '.mrc'  # use the first part of the file as the prefix removing the .emd on the end
 
         print('Warning: Converting to float32 before writing to disk')
-        mrcWriter(filenameOut, np.float32(f1[dsetPath + '/data']), (
-        1, pixelSizeY, pixelSizeX))  # the extra slash is not a problem. // is the same as / in a HDF5 data set path
+        mrcWriter(filenameOut, np.float32(f1[dsetPath + '/data']),
+                  (1, pixelSizeY, pixelSizeX))
 
         print('Finished writing to: {}'.format(filenameOut))
 
 
 if __name__ == '__main__':
 
-    fPath = Path(r'C:\Users\linol\Downloads') / Path('Collapsed_3.mrc')
+    fPath = Path(r'C:\Users\linol\data\xicam temp') / Path('Au_Nanoparticle.mrc')
 
     mrc0 = mrcReader(fPath)
 
