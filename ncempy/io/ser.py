@@ -50,11 +50,11 @@ class fileSER:
         Reads the header information of the SER file. Each dataset also has its own header with more information
         for each data set. This allows each data set to have a different pixel size, data type, shape, etc. The
         necessary information is stored in the head attribute as a dictionary.
-    getDataset()
+    getDataset(index, verbose)
         Retrieve a dataset from the file and load into memory. Due to the layout of data in a SER file it is
         difficult to implement a memmap. Thus, there is no option for this method. If the data is too large to
         fit in memory you can access each "slice" of the data using this function.
-    writeEMD()
+    writeEMD(filename)
         Write out the SER data as a Berkelely EMD file. This is somewhat old code and not well supported in
         newer ncempy versions and will be removed in the future. It is suggested to use the
         emd.fileEMD.put_emdgroup() method to properly format an EMD file. This
