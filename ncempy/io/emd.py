@@ -212,8 +212,8 @@ class fileEMD:
         """
         # get the dims
         dims = []
-        for i in range(len(group['data'].shape)):
-            dim = group['dim{}'.format(i + 1)]
+        for ii in range(group['data'].ndim):
+            dim = group['dim{}'.format(ii + 1)]
             # save them as (vector, name, units)
 
             if isinstance(dim.attrs['name'], np.ndarray):
@@ -226,10 +226,20 @@ class fileEMD:
             else:
                 units = dim.attrs['units']
 
-            dims.append((dim[:], name.decode('utf-8'), units.decode('utf-8')))
+            # Handle bytes objects by decoding them to strings
+            # If something goes wrong, the original attribute is left as-is
+            try:
+                if isinstance(name, bytes):
+                    name = name.decode('utf-8')
+                if isinstance(units, bytes):
+                    units = units.decode('utf-8')
+            except:
+                pass
+
+            dims.append((dim[:], name, units))
 
         dims = tuple(dims)
-        return (dims)
+        return dims
 
     def get_emdgroup(self, group, memmap = False):
         """Get the emd data saved in the requested group.
@@ -532,7 +542,8 @@ def emdReader(filename, dsetNum=0):
 
 
 if __name__ == '__main__':
-    fPath = Path(r'C:\Users\linol\Data') / Path('Acquisition_18.emd')
+    fPath = Path(r'C:\Users\linol\Data') / Path('TimeSeries_18.emd')
+    #fPath = Path(r'C:\Users\linol\Downloads') / Path('emd_type1_shortDims.h5')
 
     emd00 = emdReader(fPath)
 
