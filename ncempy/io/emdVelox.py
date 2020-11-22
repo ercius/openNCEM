@@ -242,7 +242,7 @@ def emdVeloxReader(filename, dsetNum=0):
 
     Note
     ----
-        Note fully implemented yet. Work in progress.
+        Not fully implemented yet. Work in progress. Important metadata is missing, but you can get the data.
 
     Parameters
     ----------
