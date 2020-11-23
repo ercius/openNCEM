@@ -5,8 +5,6 @@ Tests for the basic functionality of the dm io module.
 import pytest
 
 import time
-import inspect
-import os
 from pathlib import Path
 
 import ncempy.io.dm

@@ -103,14 +103,14 @@ class fileDM:
     >>> plt.imshow(series['data'][0, :, :]) #show the first image in the series
     """
 
-    __slots__ = ('filename', 'fid', '_on_memory', 'v', 'xSize', 'ySize',
+    __slots__ = ('filename', 'fid', '_on_memory', '_v', 'xSize', 'ySize',
                  'zSize', 'zSize2', 'dataType', 'dataSize', 'dataOffset',
-                 'dataShape', 'numObjects', 'thumbnail', 'curGroupLevel',
-                 'maxDepth', 'curGroupAtLevelX', 'curGroupNameAtLevelX',
-                 'curTagAtLevelX', 'curTagName', 'scale', 'scaleUnit',
-                 'scaleOrigin', 'scale_temp', 'origin_temp',
-                 'allTags', 'dmType', 'specialType', 'fileSize',
-                 'endianType', 'origin', '_encodedTypeSizes',
+                 'dataShape', 'numObjects', 'thumbnail', '_curGroupLevel',
+                 '_maxDepth', '_curGroupAtLevelX', '_curGroupNameAtLevelX',
+                 '_curTagAtLevelX', '_curTagName', 'scale', 'scaleUnit',
+                 'scaleOrigin', '_scale_temp', '_origin_temp',
+                 'allTags', '_dmType', '_specialType', 'fileSize',
+                 '_endianType', 'origin', '_encodedTypeSizes',
                  '_buffer_offset', '_buffer_size', '_DM2NPDataTypes',
                  '_TagType2NPDataTypes', 'on_memory', 'verbose',
                  '_EncodedTypeDTypes')
@@ -149,7 +149,7 @@ class fileDM:
             raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
         # Add a top level variable to indicate verbose output for debugging
-        self.v = verbose
+        self._v = verbose
 
         # try opening the file
         try:
@@ -200,16 +200,19 @@ class fileDM:
         self.thumbnail = False
 
         # TODO: Refactor these internal attributes
-        self.curGroupLevel = 0  # track how deep we currently are in a group
-        self.maxDepth = 64  # maximum number of group levels allowed
-        self.curGroupAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track group at current level
-        self.curGroupNameAtLevelX = ''  # set the name of the root group
-        self.curTagAtLevelX = np.zeros((self.maxDepth,), dtype=np.int8)  # track tag number at the current level
-        self.curTagName = ''  # string of the current tag
+        self._curGroupLevel = 0  # track how deep we currently are in a group
+        self._maxDepth = 64  # maximum number of group levels allowed
+        self._curGroupAtLevelX = np.zeros((self._maxDepth,), dtype=np.int8)  # track group at current level
+        self._curGroupNameAtLevelX = ''  # set the name of the root group
+        self._curTagAtLevelX = np.zeros((self._maxDepth,), dtype=np.int8)  # track tag number at the current level
+        self._curTagName = ''  # string of the current tag
+        # self._specialType = np.dtype('>u4')   # type which changes for DM3 and DM4
+        # self._dmType = None
+        # self._endianType = None
 
         # Temporary variables to keep in case a tag entry shows useful information in an array
-        self.scale_temp = 0
-        self.origin_temp = 0
+        self._scale_temp = 0
+        self._origin_temp = 0
 
         self._encodedTypeSizes = {0: 0, 8: 1, 9: 1, 10: 1,
                                   2: 2, 4: 2,
@@ -241,7 +244,7 @@ class fileDM:
 
         """
         if not self.fid.closed:
-            if self.v:
+            if self._v:
                 print('Closing input file: {}'.format(self.filename))
             self.fid.close()
 
@@ -350,25 +353,25 @@ class fileDM:
         output = True  # output will stay == 1 if the file is a true DM4 file
 
         # file type: == 3 for DM3 or == 4 for DM4
-        self.dmType = self.fromfile(self.fid, dtype=np.dtype('>u4'), count=1)[0]
+        self._dmType = self.fromfile(self.fid, dtype=np.dtype('>u4'), count=1)[0]
 
-        if self.v:
-            print('validDM: DM file type number = {}'.format(self.dmType))
+        if self._v:
+            print('validDM: DM file type number = {}'.format(self._dmType))
 
-        if self.dmType == 3:
-            self.specialType = np.dtype('>u4')  # uint32
-        elif self.dmType == 4:
-            self.specialType = np.dtype('>u8')  # uint64
+        if self._dmType == 3:
+            self._specialType = np.dtype('>u4')  # uint32
+        elif self._dmType == 4:
+            self._specialType = np.dtype('>u8')  # uint64
         else:
             raise IOError('File is not a valid DM3 or DM4')
 
-        aa = self.fromfile(self.fid, dtype=np.dtype([('fileSize', self.specialType),
+        aa = self.fromfile(self.fid, dtype=np.dtype([('fileSize', self._specialType),
                                                      ('endianType', '>u4')]), count=1)
 
         self.fileSize = aa['fileSize']
-        self.endianType = aa['endianType']
+        self._endianType = aa['endianType']
 
-        if self.endianType != 1:
+        if self._endianType != 1:
             # print('File is not written Little Endian (PC) format and can not be read by this program.')
             raise IOError('File is not written Little Endian (PC) format and can not be read by this program.')
 
@@ -380,9 +383,9 @@ class fileDM:
 
         """
         # skip the bytes read by dmType
-        if self.dmType == 3:
+        if self._dmType == 3:
             self.seek(self.fid, 12, 0)
-        elif self.dmType == 4:
+        elif self._dmType == 4:
             self.seek(self.fid, 16, 0)
         # Read the first root tag the same as any other group
         self._readTagGroup()
@@ -433,29 +436,29 @@ class fileDM:
         """Read a tag group in a DM file.
 
         """
-        self.curGroupLevel += 1
+        self._curGroupLevel += 1
         # Check to see if the maximum group level is reached.
-        if self.curGroupLevel > self.maxDepth:
+        if self._curGroupLevel > self._maxDepth:
             raise IOError(
-                'Maximum tag group depth of {} reached. This file is most likely corrupt.'.format(self.maxDepth))
+                'Maximum tag group depth of {} reached. This file is most likely corrupt.'.format(self._maxDepth))
 
-        self.curGroupAtLevelX[self.curGroupLevel] = self.curGroupAtLevelX[self.curGroupLevel] + 1
-        self.curTagAtLevelX[self.curGroupLevel] = 0
+        self._curGroupAtLevelX[self._curGroupLevel] = self._curGroupAtLevelX[self._curGroupLevel] + 1
+        self._curTagAtLevelX[self._curGroupLevel] = 0
 
-        aa = self.fromfile(self.fid, dtype=[('IsOpenSorted', '2<i1'), ('nTags', self.specialType)], count=1)
+        aa = self.fromfile(self.fid, dtype=[('IsOpenSorted', '2<i1'), ('nTags', self._specialType)], count=1)
         nTags = aa['nTags'][0]
 
-        if self.v:
+        if self._v:
             print('Total number of root tags = {}'.format(nTags))
 
         # Iterate of the number of tag entries
-        oldTotalTag = self.curGroupNameAtLevelX
+        oldTotalTag = self._curGroupNameAtLevelX
         for ii in range(0, nTags):
             self._readTagEntry()
 
         # Go back down a level after reading all entries
-        self.curGroupLevel -= 1
-        self.curGroupNameAtLevelX = oldTotalTag
+        self._curGroupLevel -= 1
+        self._curGroupNameAtLevelX = oldTotalTag
 
     def _readTagEntry(self):
         """Read one entry in a tag group.
@@ -464,95 +467,96 @@ class fileDM:
         dataType = self.fromfile(self.fid, dtype=np.dtype('>u1'), count=1)[0]
 
         # Record tag at this level
-        self.curTagAtLevelX[self.curGroupLevel] += 1
+        self._curTagAtLevelX[self._curGroupLevel] += 1
 
         # get the tag
         lenTagLabel = self.fromfile(self.fid, dtype='>u2', count=1)[0]
 
-        if self.v:
+        if self._v:
             print('_readTagEntry: dataType = {}, lenTagLabel = {}'.format(dataType, lenTagLabel))
 
         if lenTagLabel > 0:
             tagLabelBinary = self.fromfile(self.fid, dtype='<u1', count=lenTagLabel)  # read as binary
             tagLabel = self._bin2str(tagLabelBinary)
-            if self.v:
+            if self._v:
                 print('_readTagEntry: tagLabel = {}'.format(tagLabel))
         else:
-            tagLabel = str(self.curTagAtLevelX[self.curGroupLevel])  # unlabeled tag.
+            tagLabel = str(self._curTagAtLevelX[self._curGroupLevel])  # unlabeled tag.
 
         # Save the current group name in case this is needed
-        oldGroupName = self.curGroupNameAtLevelX
+        oldGroupName = self._curGroupNameAtLevelX
 
         if dataType == 21:
             # This tag entry contains data
-            self.curTagName = tagLabel  # save its name
+            self._curTagName = tagLabel  # save its name
             self._readTagType()
         else:
             # This is a nested tag group
-            self.curGroupNameAtLevelX += '.' + tagLabel  # add to group names
+            self._curGroupNameAtLevelX += '.' + tagLabel  # add to group names
 
             # An unknown part of the DM4 tags
-            if self.dmType == 4:
-                _ = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
+            if self._dmType == 4:
+                _ = self.fromfile(self.fid, dtype=self._specialType, count=1)[0]
 
             self._readTagGroup()
 
-        self.curGroupNameAtLevelX = oldGroupName
+        self._curGroupNameAtLevelX = oldGroupName
 
     def _readTagType(self):
         """Determine the type of tag: Regular data, string, struct, or array.
 
         """
         # Need to read 8 bytes before %%%% delimiter. Unknown part of DM4 tag structure
-        if self.dmType == 4:
-            temp1 = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
+        if self._dmType == 4:
+            temp1 = self.fromfile(self.fid, dtype=self._specialType, count=1)[0]
 
         delim = self.fromfile(self.fid, dtype='<i1', count=4)
         assert ((delim == 37).all())  # delim has to be [37,37,37,37] which is %%%% in ASCII.
-        if self.v:
+        if self._v:
             print('_readTagType: should be %%%% = {}'.format(self._bin2str(delim)))
 
-        nInTag = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]  # nInTag: unnecessary redundant info
+        nInTag = self.fromfile(self.fid, dtype=self._specialType, count=1)[0]  # nInTag: unnecessary redundant info
 
         # Determine the type of the data in the tag
         # specifies data type: int8, uint16, float32, etc.
-        encodedType = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]  # big endian
+        encodedType = self.fromfile(self.fid, dtype=self._specialType, count=1)[0]  # big endian
 
         etSize = self._encodedTypeSize(encodedType)
 
         if etSize > 0:
             # regular data. Read it and store it with the tag name
-            if self.v:
+            if self._v:
                 print('regular')
-            self._storeTag(self.curTagName, self._readNativeData(encodedType))
+            self._storeTag(self._curTagName, self._readNativeData(encodedType))
         elif encodedType == 18:  # string
-            if self.v:
+            if self._v:
                 print('string')
             stringSize = self.fromfile(self.fid, dtype='>u4', count=1)[0]
             # strtemp = '' #in case stringSize == 0
             strTempBin = self.fromfile(self.fid, dtype='<u1', count=stringSize)  # read as uint8 little endian
             strTemp = self._bin2str(strTempBin)
-            self._storeTag(self.curTagName, strTemp)
+            self._storeTag(self._curTagName, strTemp)
         elif encodedType == 15:  # struct
             # This does not work for field names that are non-zero. This is uncommon
-            if self.v:
+            if self._v:
                 print('struct')
             structTypes = self._readStructTypes()
             structs = self._readStructData(structTypes)
-            self._storeTag(self.curTagName, structs)
+            self._storeTag(self._curTagName, structs)
         elif encodedType == 20:  # array
             # The array data is not read. It will be read later if needed
-            if self.v:
+            if self._v:
                 print('array')
             arrayTypes = self._readArrayTypes()  # could be recursive if array contains array(s)
             arrInfo = self._readArrayData(arrayTypes)  # only info of the array is read. It is read later if needed
-            self._storeTag(self.curTagName, arrInfo)
+            self._storeTag(self._curTagName, arrInfo)
 
-    def _bin2str(self, bin):
+    @staticmethod
+    def _bin2str(bin0):
         """Utility function to convert a numpy array of binary values to a python string.
 
         """
-        return ''.join([chr(item) for item in bin])
+        return ''.join([chr(item) for item in bin0])
 
     def _encodedTypeSize(self, encodedType):
         """Return the number of bytes in a data type for the encodings used by DM.
@@ -579,7 +583,6 @@ class fileDM:
             encodedTypeSize : int
                 Number of bytes this type uses.
         """
-        # print(encodedType)
         try:
             return self._encodedTypeSizes[encodedType]
         except KeyError:
@@ -626,17 +629,17 @@ class fileDM:
         """Analyze the types of data in a struct.
 
         """
-        structNameLength = self.fromfile(self.fid, count=1, dtype=self.specialType)[0]  # this is not needed
-        nFields = self.fromfile(self.fid, count=1, dtype=self.specialType)[0]
-        if self.v:
+        _ = self.fromfile(self.fid, count=1, dtype=self._specialType)[0]  # this is not needed
+        nFields = self.fromfile(self.fid, count=1, dtype=self._specialType)[0]
+        if self._v:
             print('_readStructTypes: nFields = {}'.format(nFields))
 
-        if (nFields > 100):
+        if nFields > 100:
             raise RuntimeError('Too many fields in a struct.')
 
         fieldTypes = np.zeros(nFields)
         for ii in range(0, nFields):
-            aa = self.fromfile(self.fid, dtype=self.specialType, count=2)  # nameLength, fieldType
+            aa = self.fromfile(self.fid, dtype=self._specialType, count=2)  # nameLength, fieldType
             # nameLength = aa[0] #not used currently
             fieldTypes[ii] = aa[1]
         return fieldTypes
@@ -686,7 +689,7 @@ class fileDM:
         Type = self._TagType2NPDataTypes[encodedType]
         val = self.fromfile(self.fid, count=1, dtype=Type)[0]
 
-        if self.v:
+        if self._v:
             print('_readNativeData: encodedType == {} and val = {}'.format(encodedType, val))
 
         return val
@@ -695,7 +698,7 @@ class fileDM:
         """Analyze the types of data in an array.
 
         """
-        arrayType = self.fromfile(self.fid, dtype=self.specialType, count=1)[0]
+        arrayType = self.fromfile(self.fid, dtype=self._specialType, count=1)[0]
 
         itemTypes = []
 
@@ -707,7 +710,7 @@ class fileDM:
             itemTypes = self._readArrayTypes()
         else:
             itemTypes.append(arrayType)
-        if self.v:
+        if self._v:
             print('_readArrayTypes: itemTypes = {}'.format(itemTypes))
         return itemTypes
 
@@ -728,17 +731,19 @@ class fileDM:
                 A string containing the key value pair of this tag
 
         """
+        arrOut = None
+        encodedType = None
 
         # The number of elements in the array
-        arraySize = self.fromfile(self.fid, count=1, dtype=self.specialType)[0]
+        arraySize = self.fromfile(self.fid, count=1, dtype=self._specialType)[0]
 
-        if self.v:
+        if self._v:
             print('_readArrayData: arraySize, arrayTypes = {}, {}'.format(arraySize, arrayTypes))
 
         # Everything used to calculate the bufSize is not needed anymore. THis can be removed after testing
         itemSize = 0
         for encodedType in arrayTypes:
-            if self.v:
+            if self._v:
                 print('_readArrayData: encodedType = {}'.format(encodedType))
             etSize = self._encodedTypeSize(encodedType)
             itemSize += etSize
@@ -746,14 +751,14 @@ class fileDM:
         bufSize = arraySize * itemSize
         bufSize = bufSize.astype('<u8')  # change to an integer
 
-        if self.v:
+        if self._v:
             print('_readArrayData: arraySize, itemSize = {}, {}'.format(arraySize, itemSize))
 
-        if self.curTagName == 'Data':
+        if self._curTagName == 'Data':
             # This is a binary array. Save its location to read later if needed
-            self._storeTag(self.curTagName + '.arraySize', bufSize)
-            self._storeTag(self.curTagName + '.arrayOffset', self.tell())
-            self._storeTag(self.curTagName + '.arrayType', encodedType)
+            self._storeTag(self._curTagName + '.arraySize', bufSize)
+            self._storeTag(self._curTagName + '.arrayOffset', self.tell())
+            self._storeTag(self._curTagName + '.arrayType', encodedType)
             self.seek(self.fid, bufSize.astype('<u8'), 1)  # advance the pointer by bufsize from current position
             arrOut = 'Data unread. Encoded type = {}'.format(encodedType)
         elif bufSize < 1e3:  # set an upper limit on the size of array that will be read in as a string
@@ -764,20 +769,16 @@ class fileDM:
                 # stringData = self.fromfile(self.fid,count=arraySize,dtype=self._encodedTypeDtype(encodedType))
                 arrOut = self._bin2str(stringData)
 
-            # This is the old way to read this in. Its not really correct though.
-            # stringData = self.bin2str(self.fromfile(self.fid,count=bufSize,dtype='<u1'))
-            # arrOut = stringData.replace('\x00','') #remove all spaces from the string data
-
             # Catch useful tags for images and spectra (nm, eV, etc.)
-            fullTagName = self.curGroupNameAtLevelX + '.' + self.curTagName
-            if ((fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1)):  # & (self.numObjects > 0)):
-                self.scale.append(self.scale_temp)
+            fullTagName = self._curGroupNameAtLevelX + '.' + self._curTagName
+            if (fullTagName.find('Dimension') > -1) & (fullTagName.find('Units') > -1):  # & (self.numObjects > 0)):
+                self.scale.append(self._scale_temp)
                 self.scaleUnit.append(arrOut)
-                self.origin.append(self.origin_temp)
+                self.origin.append(self._origin_temp)
         else:
-            self._storeTag(self.curTagName + '.arraySize', bufSize)
-            self._storeTag(self.curTagName + '.arrayOffset', self.tell())
-            self._storeTag(self.curTagName + '.arrayType', encodedType)
+            self._storeTag(self._curTagName + '.arraySize', bufSize)
+            self._storeTag(self._curTagName + '.arrayOffset', self.tell())
+            self._storeTag(self._curTagName + '.arrayType', encodedType)
             self.seek(self.fid, bufSize.astype('<u8'), 1)  # advance the pointer by bufsize from current position
             arrOut = 'Array unread. Encoded type = {}'.format(encodedType)
 
@@ -798,15 +799,15 @@ class fileDM:
 
         """
         # Build the full tag name (key) and add the tag value
-        if self.v:
+        if self._v:
             print('_storeTag: curTagName, curTagValue = {}, {}'.format(curTagName, curTagValue))
-        totalTag = self.curGroupNameAtLevelX + '.' + '{}'.format(curTagName)  # + '= {}'.format(curTagValue)
+        totalTag = self._curGroupNameAtLevelX + '.' + '{}'.format(curTagName)  # + '= {}'.format(curTagValue)
 
         self._catchUsefulTags(totalTag, curTagName, curTagValue)
 
         self.allTags[totalTag] = curTagValue  # this needs to be done better.
 
-        return (totalTag)
+        return totalTag
 
     def _catchUsefulTags(self, totalTag, curTagName, curTagValue):
         """Find interesting keys and keep their values for later. This is separate from _storeTag
@@ -849,9 +850,9 @@ class fileDM:
             self.zSize2[-1] = curTagValue
             self.dataShape[-1] = 4  # indicate as at least 3D data
         elif (totalTag.find('Dimension.') > -1) & (totalTag.find('.Scale') > -1):
-            self.scale_temp = curTagValue
+            self._scale_temp = curTagValue
         elif (totalTag.find('Dimension.') > -1) & (totalTag.find('.Origin') > -1):
-            self.origin_temp = curTagValue
+            self._origin_temp = curTagValue
         else:
             pass
 
@@ -1035,7 +1036,8 @@ class fileDM:
         """Retrieve a slice of a dataset from the DM file. The data set will have a shape according to
         3D = [sliceZ,Y,X] or 4D: [sliceZ2,sliceZ,Y,X]
 
-        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
+        Note: Most DM3 and DM4 files contain a small "thumbnail" as the first dataset written as RGB data. This function
+        ignores that dataset if it exists. To retrieve the thumbnail use the getThumbnail() function.
 
         Warning: DM4 files with 4D data sets are written as [X,Y,Z1,Z2]. This code currently gets the [X,Y] slice.
         Getting the [Z1,Z2] slice is not yet implemented. Use the getMemmap() function to retrieve arbitrary slices of
@@ -1078,8 +1080,7 @@ class fileDM:
 
         self.seek(self.fid, self.dataOffset[ii], 0)  # Seek to start of dataset from beginning of the file
 
-        outputDict = {}
-        outputDict['filename'] = os_basename(self.filename)
+        outputDict = {'filename': os_basename(self.filename)}
 
         # Parse the dataset to see what type it is (image, 3D image series, spectra, 4D, etc.)
         if self.xSize[ii] > 0:
@@ -1229,12 +1230,3 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     del im1['pixelOrigin']
 
     return im1  # return the dataset and metadata as a dictionary
-
-
-if __name__ == '__main__':
-    #im0 = dmReader('c:/users/linol/scripting/openNCEMgh/ncempy/data/08_carbon.dm3')
-    im0 = dmReader('c:/users/linol/Downloads/Spectrum of EELS Spectrum Image.dm4')
-    print(im0['data'].shape)
-    print(im0['coords'])
-    print(im0['pixelSize'])
-    print(im0)
