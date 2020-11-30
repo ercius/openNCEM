@@ -576,13 +576,47 @@ def emdReader(filename, dsetNum=0):
         return out
 
 
+def emdWriter(filename, data, pixel_size=None):
+    """ Simple method to write data to a file formatted as an EMD. The only possible metadata to write is the pixel
+    size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
+
+    Parameters
+    ----------
+    filename : str or pathlib.Path
+        The path and file name to write the data to.
+    data : ndarray
+        The data as an ndarray to write to the file.
+    pixel_size : tuple
+        A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
+
+    """
+    if isinstance(filename, str):
+        filename = Path(filename)
+
+    if pixel_size:
+        try:
+            assert len(pixel_size) == data.ndim
+        except ValueError:
+            raise ValueError('pixel_size length must match the number of dimensions of data.')
+
+    if not filename.exists():
+        with fileEMD(filename, readonly=False) as emd0:
+            # Setup the dims for the EMD file. Pixel size is set to 1 by default for each dimension
+            dims0 = defaultDims(data, pixel_size=pixel_size)
+            # Write the data to he emd file.
+            emd0.put_emdgroup('converted', data, dims0)
+    else:
+        raise FileExistsError
+
+
 if __name__ == '__main__':
-    fPath = Path(r'C:\Users\linol\Data') / Path('TimeSeries_18.emd')
-    #fPath = Path(r'C:\Users\linol\Downloads') / Path('emd_type1_shortDims.h5')
+    fPath = Path(r'C:\Users\linol\Data') / Path('10_series.emd')
 
     emd00 = emdReader(fPath)
 
-    print(emd00['pixelSize'])
+    # Test writer
+    emdWriter('C:/users/linol/data/temp.emd', emd00['data'])
+    emdWriter('C:/users/linol/data/temp1.emd', emd00['data'], pixel_size=(0.5, 0.5, 0.5))
 
-    print(defaultDims(np.zeros((10, 20, 30)), pixel_size=(0.1, 0.2, 0.3)))
-    print(defaultDims(np.zeros((10, 20, 30))))
+    # read it back in
+    emdReader('C:/users/linol/data/temp.emd')
