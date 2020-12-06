@@ -377,13 +377,10 @@ class fileMRC:
         for very large datasets to avoid loading the entire data set into memory. No meta data is
         returned.
 
-        Parameters:
-        -----------
-            None
-
-        Returns:
+        Returns
         --------
-            [numpy.core.memmap]: A read-only numpy memmap object with access to the data on disk.
+        : numpy.core.memmap
+            A read-only numpy memmap object with access to the data on disk.
         """
         mm = np.memmap(self.fid, dtype=self.dataType, mode='r', offset=self.dataOffset,
                        shape=tuple(self.dataSize))
@@ -399,7 +396,7 @@ class fileMRC:
     def _getMRCType(self, dataType):
         """Return the correct data type according to the official MRC type list:
         0 image : signed 8-bit bytes range -128 to 127
-        1 image : 16-bit halfwords
+        1 image : 16-bit
         2 image : 32-bit reals
         3 transform : complex 16-bit integers
         4 transform : complex 32-bit reals
@@ -430,15 +427,13 @@ class fileMRC:
         return Type
 
 
-# end class fileMRC
-
-def mrcReader(fname, verbose=False):
+def mrcReader(file_name, verbose=False):
     """A simple function to read open a MRC, parse the header, and read the full
     data set.
 
     Parameters
     ----------
-        fname: str
+        file_name: str
             The name of the file to load
         verbose : bool, optional
             Enable printing debug messages as the header is parsed.
@@ -455,30 +450,40 @@ def mrcReader(fname, verbose=False):
             >>> from ncempy.io import mrc
             >>> import matplotlib.pyplot as plt
             >>> mrc1 = mrc.mrcReader('filename.mrc')
-            >>> plt.imshow(mrc1['data'][0,:,:]) #show the first image in the data set
+            >>> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
     """
-    with fileMRC(fname, verbose) as f1:  # open the file and init the class
+    with fileMRC(file_name, verbose) as f1:  # open the file and init the class
         im1 = f1.getDataset()  # read in the dataset
+
+    im1['pixelUnit'] = 'A'
+
     return im1  # return the data and metadata as a dictionary
 
 
-def mrc2raw(fname):
-    """Writes the image data in an MRC file as binary file with the same file
-    name and .raw ending. Data type and size are written in the file name.
-    No other header information is retained.
+def mrc2raw(file_name):
+    """ Convert an MRC type file to raw binary. The entire data is read into memory and then written to a new
+    raw file in the same location with the data type and shape (C-ordering) written into the filename. No other
+    meta data is retained.
 
     Parameters
     ----------
-        fname: str
-            The name of the file to convert.
+    file_name : str or pathlib.Path
+        The file name to convert.
 
     """
-    tomo = mrcReader(fname)
-    rawName = tomo['filename'].rsplit('.', 1)[0] + '_' + str(tomo['data'].dtype) + '_' + str(
-        tomo['data'].shape) + '.raw'
-    fid = open(rawName, 'wb')
-    fid.write(tomo['data'])  # write out as C ordered data
-    fid.close()
+    if isinstance(file_name, str):
+        file_name = Path(file_name)
+
+    tomo = mrcReader(file_name)
+
+    # Add metadata to file name
+    out_name = file_name.stem + '_{}_{}.raw'.format(tomo['data'].dtype, tomo['data'].shape)
+
+    outPath = file_name.with_name(out_name.replace(' ', ''))
+    print(outPath)
+
+    with open(outPath, 'wb') as f0:
+        f0.write(tomo['data'])  # write out as C ordered data
 
 
 def mrc2emd(file_name):
@@ -647,21 +652,16 @@ def writeHeader(filename, shape, dtype, pixelSize):
 
     Parameters
     ----------
-        filename : str
-            The name of the EMD file
-        shape : tuple
-            The shape of the data to write
-        dtype : np.dtype
-            The dtype to write out the data as. Only some numpy dtypes are supported byt his format. It is suggested
-            to use np.float32 in most cases for maximum compatibility.
-        pixelSize : tuple
-            The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ).
-            sizeZ could be the angular step for a tilt series
-
-    Returns
-    -------
-        out: int
-            1 if successful.
+    filename : str
+        The name of the EMD file
+    shape : tuple
+        The shape of the data to write
+    dtype : numpy.dtype
+        The dtype to write out the data as. Only some numpy dtypes are supported byt his format. It is suggested
+        to use np.float32 in most cases for maximum compatibility.
+    pixelSize : tuple
+        The size of the pixel along each direction (in Angstroms) as a 3 element vector (sizeX,sizeY,sizeZ).
+        sizeZ could be the angular step for a tilt series
 
     """
 
@@ -728,8 +728,6 @@ def writeHeader(filename, shape, dtype, pixelSize):
         fid.seek(212, 0)
         fid.write(np.int8([68, 65, 0, 0]))  # use [17,17,0,0] for big endian
 
-    return 1
-
 
 def appendData(filename, data):
     """Append a binary set of data to the end of a MRC file. This should only be used in conjunction with
@@ -737,10 +735,10 @@ def appendData(filename, data):
 
     Parameters
     ----------
-        filename: str
-            Name of the MRC file with pre-initiated header and some data already written.
-        data: ndarray
-            Data to append to the file.
+    filename : str
+        Name of the MRC file with pre-initiated header and some data already written.
+    data : ndarray
+        Data to append to the file.
 
     """
     with open(filename, 'ab') as fid:
@@ -754,10 +752,10 @@ def emd2mrc(filename, dsetPath):
 
     Parameters
     ----------
-        filename: str
-            The name of the EMD file
-        dsetPath: str
-            The HDF5 path to the top group holding the data. ex. '/data/raw/'
+    filename : str
+        The name of the EMD file
+    dsetPath : str
+        The HDF5 path to the top group holding the data. ex. '/data/raw/'
     """
     import h5py
     with h5py.File(filename, 'r') as f1:
@@ -779,17 +777,3 @@ def emd2mrc(filename, dsetPath):
                   (1, pixelSizeY, pixelSizeX))
 
         print('Finished writing to: {}'.format(filenameOut))
-
-
-if __name__ == '__main__':
-
-    fPath = Path(r'C:\Users\linol\data\xicam temp') / Path('Au_Nanoparticle.mrc')
-
-    mrc0 = mrcReader(fPath)
-
-    print(mrc0['voxelSize'])
-
-    with fileMRC(fPath) as f2:
-        _ = f2.getDataset()
-        _ = f2.getMemmap()
-        _ = f2.getSlice(0)
