@@ -78,3 +78,12 @@ def test_mrc(temp_file):
     with nio.mrc.fileMRC(temp_file) as mrc0:
         dd = mrc0.getDataset()
         assert dd['data'].shape == (10, 11, 12)
+
+
+def test_read(data_location):
+    """Test the general reader function"""
+    all_files = Path(data_location).glob('*.*')
+    for file in all_files:
+        file_dict = nio.read(file)
+        if file_dict:
+            assert 'data' in file_dict

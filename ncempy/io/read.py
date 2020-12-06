@@ -47,7 +47,8 @@ def read(filename, dsetNum=0):
     elif suffix in ('.mrc', '.rec', '.st', '.ali'):
         out = nio.mrc.mrcReader(filename)
     else:
-        print('File suffix is not recognized. Supported formats are ser, mrc, rec, ali, st, emd, dm3, dm4.')
+        print('File suffix {} is not recognized.'.format(suffix))
+        print('Supported formats are ser, mrc, rec, ali, st, emd, dm3, dm4.')
 
     return out
 
