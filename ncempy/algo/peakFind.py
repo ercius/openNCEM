@@ -22,7 +22,7 @@ def doubleRoll(image, vec):
             image : np.ndarray
                 The 2D array to roll.
             
-            vec : tuple
+            vec : iterable
                 The number of time to apply the roll to the rows and columns where
                 the tuple has the structure (row, col). Values in tuple must be int.
                 
@@ -42,7 +42,7 @@ def tripleRoll(vol, vec):
             vol : np.ndarray
                 The 3D array to roll
             
-            vec : tuple
+            vec : iterable
                 The number of time to apply the roll the tuple has the structure (axis0, axis1, axis2).
                 Values in tuple must be int.
                 
@@ -859,9 +859,9 @@ def refineLattice3D(or0, u0, v0, w0, pos, fraction=(1, 1, 1), max_iter=30, refin
         (xy_beta, xyRes, rXY, sXY) = np.linalg.lstsq(A, pos, rcond=None)
 
         if xyRes[0] < xRes0 and xyRes[1] < yRes0 and xyRes[2] < zRes0:
-            xRes0 = xyRes[0]
-            yRes0 = xyRes[1]
-            zRes0 = xyRes[2]
+            _ = xyRes[0]
+            _ = xyRes[1]
+            _ = xyRes[2]
         else:
             print('----Converged----')
             break
@@ -1134,7 +1134,7 @@ def fit_peaks_gauss3d(volume, peaks, cutOut, init, bounds, remove_edge_peaks=Tru
             # Fit to a 3D Gaussian to the area around the peak
             y_error = 1 / np.sqrt(curVol_norm.ravel() + 0.00001)  # add error
             optP3D, optCov3D = opt.curve_fit(gaussND.gauss3D_FIT, (X3D, Y3D, Z3D), curVol_norm.ravel(),
-                                             p0=(0,0,0,*init), bounds=bounds, sigma=y_error)
+                                             p0=(0, 0, 0, *init), bounds=bounds, sigma=y_error)
             fittingValues[ii, :] = optP3D
 
             # Enter values into output array as X,Y,Z,sigma_x,sigma_y,sigma_z
