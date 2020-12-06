@@ -206,7 +206,7 @@ class fileEMDVelox:
         tempMetaData = group['Metadata'][:, 0]
         # Reduce to valid metadata
         validMetaDataIndex = np.where(tempMetaData > 0) 
-        metaData = tempMetaData[validMetaDataIndex].tostring()
+        metaData = tempMetaData[validMetaDataIndex].tobytes()
         # Interpret as UTF-8 encoded characters and load as JSON
         self.metaDataJSON = json.loads(metaData.decode('utf-8', 'ignore'))
         # Pull out basic meta data about the images
