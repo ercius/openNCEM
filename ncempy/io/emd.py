@@ -126,9 +126,8 @@ class fileEMD:
                 self.version = (self.file_hdl.attrs['version_major'], self.file_hdl.attrs['version_minor'])
                 # compare to implementation
                 if not self.version == (0, 2):
-                    print(
-                        'WARNING: You are reading a version {}.{} EMD file, this implementation assumes version 0.2!'.format(
-                            self.version[0], self.version[1]))
+                    print('WARNING: You are reading a version {}.{} EMD file, '
+                          'this implementation assumes version 0.2!'.format(self.version[0], self.version[1]))
             else:
                 # set version information
                 if not readonly:
@@ -210,7 +209,7 @@ class fileEMD:
 
         """
 
-        emds = []
+        emds0 = []
 
         # recursive function to run and retrieve groups with emd_group_type set to 1
         def proc_group(group, emds):
@@ -227,9 +226,9 @@ class fileEMD:
                     proc_group(item, emds)
 
         # run
-        proc_group(parent, emds)
+        proc_group(parent, emds0)
 
-        return emds
+        return emds0
 
     def get_emddims(self, group):
         """Get the emdtype dimensions saved in in group.
@@ -308,7 +307,7 @@ class fileEMD:
             else:
                 raise TypeError('group needs to refer to a valid HDF5 group!')
 
-        if not 'emd_group_type' in group.attrs:
+        if 'emd_group_type' not in group.attrs:
             raise TypeError('group is not a emd_group_type group!')
         if not group.attrs['emd_group_type'] == 1:
             raise TypeError('group is not a emd_group_type group!')
@@ -325,7 +324,6 @@ class fileEMD:
             dims = self.get_emddims(group)
 
             return data, dims
-
         except:
             # if something goes wrong, return None
             print('Content of "{}" does not seem to be in emd specified shape'.format(group.name))
@@ -486,7 +484,7 @@ class fileEMD:
     def get_memmap(self, group):
         """ Get the emd group data as a memmap so that the data
         is not loaded into memory. Essentially calls get_emdgroup()
-        with the keyword memmap keyord equals True.
+        with the keyword memmap keyword equals True.
         
         See get_emdgroup() for parameters and return values.
         
@@ -561,8 +559,8 @@ def emdReader(filename, dsetNum=0):
             >> emd0 = nio.emd.emdReader('filename.emd', dsetNum = 0)
 
     """
-    with fileEMD(filename, readonly = True) as emd0:
-        d, dims = emd0.get_emdgroup(dsetNum, memmap = False) # memmap must be false. File is closed
+    with fileEMD(filename, readonly=True) as emd0:
+        d, dims = emd0.get_emdgroup(dsetNum, memmap=False)  # memmap must be false. File is closed
         out = {'data': d, 'filename': filename, 'pixelSize': []}
 
         for dim in dims:
@@ -574,15 +572,3 @@ def emdReader(filename, dsetNum=0):
         out['pixelUnit'] = [aa[2] for aa in dims]
         out['pixelName'] = [aa[1] for aa in dims]
         return out
-
-
-if __name__ == '__main__':
-    fPath = Path(r'C:\Users\linol\Data') / Path('TimeSeries_18.emd')
-    #fPath = Path(r'C:\Users\linol\Downloads') / Path('emd_type1_shortDims.h5')
-
-    emd00 = emdReader(fPath)
-
-    print(emd00['pixelSize'])
-
-    print(defaultDims(np.zeros((10, 20, 30)), pixel_size=(0.1, 0.2, 0.3)))
-    print(defaultDims(np.zeros((10, 20, 30))))
