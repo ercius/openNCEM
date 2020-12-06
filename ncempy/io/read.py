@@ -51,13 +51,3 @@ def read(filename, dsetNum=0):
         print('Supported formats are ser, mrc, rec, ali, st, emd, dm3, dm4.')
 
     return out
-
-
-if __name__ == '__main__':
-    dPath = Path(r'c:\users\linol\data')
-    out0 = read(r'c:\users\linol\data\10_series.emd')
-    out0 = read(r'c:\users\linol\data\1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
-    out0 = read(r'c:\users\linol\data\5_Te_15x83_ss=3nm_CL=245_alpha=p48_p06sec_no beamstop_bin4_300kV.dm4')
-    fPath = Path('AgNWweld_tomo2_1wire_115kx_160mmCL.mrc')
-    out0 = read(dPath / fPath)
-    print(out0.keys())
