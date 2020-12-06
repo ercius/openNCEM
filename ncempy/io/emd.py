@@ -72,7 +72,7 @@ class fileEMD:
         >>> del emd1 # close the emd file
     """
 
-    def __init__(self, filename, readonly=False):
+    def __init__(self, filename, readonly=True):
         """Init opening/creating the file.
 
         Parameters
