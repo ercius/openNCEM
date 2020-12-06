@@ -210,16 +210,17 @@ class fileEMDVelox:
         # Interpret as UTF-8 encoded characters and load as JSON
         self.metaDataJSON = json.loads(metaData.decode('utf-8', 'ignore'))
         # Pull out basic meta data about the images
-        md['pixelSizeUnit'] = [self.metaDataJSON['BinaryResult']['PixelUnitX'],
+        md['pixelUnit'] = [self.metaDataJSON['BinaryResult']['PixelUnitX'],
                                self.metaDataJSON['BinaryResult']['PixelUnitY']]
         convert_pixel_sizeX = 1
         convert_pixel_sizeY = 1
-        if md['pixelSizeUnit'][0] == 'm':
+        if md['pixelUnit'][0] == 'm':
             convert_pixel_sizeX = 1e9
-            md['pixelSizeUnit'][0] = 'nm'
-        if md['pixelSizeUnit'][1] == 'm':
+            md['pixelUnit'][0] = 'nm'
+        if md['pixelUnit'][1] == 'm':
             convert_pixel_sizeY = 1e9
-            md['pixelSizeUnit'][1] = 'nm'
+            md['pixelUnit'][1] = 'nm'
+        md['pixelSizeUnit'] = md['pixelUnit'] # Keep this metadata key for legacy purposes
         pixelSizeX = float(self.metaDataJSON['BinaryResult']['PixelSize']['width'])*convert_pixel_sizeX  # convert
         pixelSizeY = float(self.metaDataJSON['BinaryResult']['PixelSize']['height'])*convert_pixel_sizeY  # change to nm
         # Construct meta data dictionary with most useful metadata
@@ -264,6 +265,7 @@ def emdVeloxReader(filename, dsetNum=0):
     """
     with fileEMDVelox(filename) as emd0:
         d, md = emd0.get_dataset(dsetNum)
-        out = {'data': d, 'filename': filename}  # TODO: Add in pixel size and other meta data
+        out = {'data': d, 'filename': filename}
         out.update(md)
+
         return out

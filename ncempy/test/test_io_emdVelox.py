@@ -40,6 +40,7 @@ class TestEMDVelox:
         print(round(md['pixelSize'][0], ndigits=4))
 
         assert md['pixelSizeUnit'][0] == 'nm'
+        assert md['pixelUnit'][0] == 'nm'
         assert round(md['pixelSize'][0], ndigits=4) == round(87.3708, ndigits=4)
 
         with ncempy.io.emdVelox.fileEMDVelox(data_location / Path('STEM HAADF-DF4-DF2-BF Diffraction Micro.emd')) as emd0:
@@ -59,3 +60,4 @@ class TestEMDVelox:
             dd, md = emd0.get_dataset(0)
         assert dd.ndim == 2
         assert md['pixelSizeUnit'][0] == '1/m'
+        assert md['pixelUnit'][0] == '1/m'
