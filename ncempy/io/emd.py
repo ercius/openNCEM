@@ -219,7 +219,7 @@ class fileEMD:
                 if group.get(item, getclass=True) == h5py.Group:
                     item = group.get(item)
                     # check if emd_group_type
-                    if 'emd_group_type' in item.attrs:
+                    if 'emd_group_type' in item.attrs  and 'data' in item.keys():
                         if item.attrs['emd_group_type'] == 1:
                             emds.append(item)
                     # process subgroups
