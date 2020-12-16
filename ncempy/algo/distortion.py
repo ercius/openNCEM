@@ -151,7 +151,7 @@ def optimize_center(points, center, maxfev=1000, verbose=None):
         raise TypeError('Something wrong with the input!')
 
     # run the optimization
-    popt, flag, _, _, _ = scipy.optimize.leastsq(residuals_center, center, args=points, maxfev=maxfev)
+    popt, flag = scipy.optimize.leastsq(residuals_center, center, args=points, maxfev=maxfev)
     
     if flag not in [1, 2, 3, 4]:
         print('WARNING: center optimization failed.')
@@ -259,7 +259,7 @@ def optimize_distortion(points, ns, maxfev=1000, verbose=False):
     # subsequently fit the orders
     for i in range(len(ns)):
         # optimize order to points_tmp
-        popt, flag, _, _, _ = scipy.optimize.leastsq(residuals_dis, np.array((init_guess[0], 0.1, 0.1)),
+        popt, flag = scipy.optimize.leastsq(residuals_dis, np.array((init_guess[0], 0.1, 0.1)),
                                                      args=(points_tmp, (ns[i],)), maxfev=maxfev)
         
         if flag not in [1, 2, 3, 4]:
@@ -280,7 +280,7 @@ def optimize_distortion(points, ns, maxfev=1000, verbose=False):
     if verbose:
         print('starting the full fit:')    
     
-    popt, flag, _, _, _ = scipy.optimize.leastsq(residuals_dis, init_guess, args=(points, ns), maxfev=maxfev)
+    popt, flag = scipy.optimize.leastsq(residuals_dis, init_guess, args=(points, ns), maxfev=maxfev)
     
     if flag not in [1, 2, 3, 4]:
         print('WARNING: optimization of distortions failed.')
