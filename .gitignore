@@ -106,4 +106,4 @@ tags
 # Pycharm
 build
 dist
-ncempy/.idea
+./ncempy/.idea
