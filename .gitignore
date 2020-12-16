@@ -23,6 +23,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+ncempy.egg-info
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -82,6 +83,7 @@ celerybeat-schedule
 # virtualenv
 venv/
 ENV/
+ncempy/venv
 
 # Spyder project settings
 .spyderproject
@@ -101,3 +103,7 @@ tags
 .pickle
 .pyc
 
+# Pycharm
+build
+dist
+ncempy/.idea
