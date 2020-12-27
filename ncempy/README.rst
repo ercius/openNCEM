@@ -9,12 +9,6 @@ Structure
 
 The package is given the following structure:
 
-* data
-    Example datasets which can be used to test and demonstrate the code base.
-
-* docs
-    Documentation of the `ncempy` package.
-
 * algo
     Algorithms used for image processing and other computing. These act as the machinery of the provided tools. Heavy reusing is encouraged by keeping them general to the processing of datasets.
 
@@ -22,10 +16,16 @@ The package is given the following structure:
     Evaluation routines build from the single algorithms in `algo`. These address specific tasks like evaluating the results from a particular method or experimental setup.
 
 * edstomo
-    Routines used for reconstructing STEM/EDS tomographic datasets.
+    (Optional) Routines used for reconstructing STEM/EDS tomographic datasets.
 
 * io
     Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
+
+* data
+    Example datasets which can be used to test and demonstrate the code base.
+
+* docs
+    Documentation of the `ncempy` package.
 
 * test
     Tests for all modules, functions, and classes.
@@ -34,7 +34,7 @@ The package is given the following structure:
 Requirements
 ------------
 
-``ncempy`` is designed and written for python3.5.
+``ncempy`` is designed and written for python3.6 or later.
 
 It relies on the following packages:
 * numpy
