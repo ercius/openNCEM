@@ -65,8 +65,8 @@ class fileEMD:
         >>> import matplotlib.pyplot as plt
         >>> emd1 = emd.fileEMD('filename.emd')
         >>> [print(dataGroup.name) for dataGroup in emd1.list_emds] # Use the builtin list_emds variable to print all available EMD datasets
-        >>> data1,dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
-        >>> fg1,ax1 = plt.subplots(1,1)
+        >>> data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
+        >>> fg1, ax1 = plt.subplots(1,1)
         >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) # the extent uses the first and last array values of the dimension vectors
         >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) # label the axes with the name and units of each dimension vector
         >>> del emd1 # close the emd file
