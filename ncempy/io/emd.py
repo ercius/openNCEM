@@ -605,16 +605,3 @@ def emdWriter(filename, data, pixel_size=None):
             emd0.put_emdgroup('converted', data, dims0)
     else:
         raise FileExistsError
-
-
-if __name__ == '__main__':
-    fPath = Path(r'C:\Users\linol\Data') / Path('10_series.emd')
-
-    emd00 = emdReader(fPath)
-
-    # Test writer
-    emdWriter('C:/users/linol/data/temp.emd', emd00['data'])
-    emdWriter('C:/users/linol/data/temp1.emd', emd00['data'], pixel_size=(0.5, 0.5, 0.5))
-
-    # read it back in
-    emdReader('C:/users/linol/data/temp.emd')
