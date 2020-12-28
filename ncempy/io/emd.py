@@ -577,7 +577,7 @@ def emdReader(filename, dsetNum=0):
 
 
 def emdWriter(filename, data, pixel_size=None):
-    """ Simple method to write data to a file formatted as an EMD. The only possible metadata to write is the pixel
+    """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
     size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
 
     Parameters
