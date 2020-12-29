@@ -26,7 +26,7 @@ class fileMRC:
     published at http://bio3d.colorado.edu/imod/betaDoc/mrc_format.txt
 
     Attributes
-    ---------
+    ----------
     fid : file
         The file handle to the opened MRC file.
     mrcType : int
