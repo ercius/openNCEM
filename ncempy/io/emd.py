@@ -5,6 +5,13 @@ See https://emdatasets.com/ for more details.
 
 * It fully supports v0.2 for reading and writing
 
+General users:
+    Use the simplified emd.emdReader() function to load the data and meta
+    data as a python dictionary.
+
+Advanced users and developers:
+    Access the file internals through the emd.fileDEMD() class.
+
 """
 
 from pathlib import Path

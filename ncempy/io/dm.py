@@ -88,8 +88,8 @@ class fileDM:
 
     Examples
     --------
-    Read data from a file containing a single image into memory:
 
+    >>> # Read data from a file containing a single image into memory:
     >>> import matplotlib.pyplot as plt
     >>> from ncempy.io import dm
     >>> with dm.fileDM('filename.dm4') as dmFile1:
@@ -1204,7 +1204,7 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
 
     Example
     -------
-        Load all data from a single image dm3 file and display it:
+        Load all data from a single image dm3 file and display it
             >>> from ncempy.io import dm
             >>> im0 = dm.dmReader('filename.dm3')
             >>> plt.imshow(im0['data']) #show the single image from the data file

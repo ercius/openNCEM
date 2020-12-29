@@ -7,12 +7,12 @@ It is based on information provided by Dr Chris Boothroyd and work by Peter Erci
 
 Note
 ----
-    General users:
-        Use the simplified ser.serReader() function to load the data and meta
-        data as a python dictionary.
+General users:
+    Use the simplified ser.serReader() function to load the data and meta
+    data as a python dictionary.
 
-    Advanced users and developers:
-        Access the file internals through the ser.fileSER() class.
+Advanced users and developers:
+    Access the file internals through the ser.fileSER() class.
 
 """
 

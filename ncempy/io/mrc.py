@@ -2,7 +2,18 @@
 A module to read MRC files in python and numpy.
 Written according to MRC specification at http://bio3d.colorado.edu/imod/betaDoc/mrc_format.txt
 Also works with FEI MRC files which include a special header block with experimental information.
+
+Note
+----
+General users:
+    Use the simplified mrc.mrcReader() function to load the data and meta
+    data as a python dictionary.
+
+Advanced users and developers:
+    Access the file internals through the mrc.fileMRC() class.
+
 written by: Peter Ercius, percius@lbl.gov
+
 """
 
 from pathlib import Path
@@ -61,21 +72,18 @@ class fileMRC:
     getMemmap
         Return a memmap for the data with the correct dimensions and datatype.
 
-    Note
-    ----
-    Most users will prefer to use the mrc.mrcReader() function to simply read
-    the entire data set into memory with a single command.
-
     Examples
     --------
     Read in all data and metadata into memory.
+
     >>> import ncempy.io as nio
     >>> mrc0 = nio.mrc.mrcReader('file.mrc')
 
     Low level operations to get 1 slice of the 3D data
+
     >>> import ncempy.io as nio
     >>> with nio.mrc.fileMRC('file.mrc') as f1:
-            single_slice = f1.getSlice(0)
+    >>>     single_slice = f1.getSlice(0)
     """
 
     def __init__(self, filename, verbose=False):

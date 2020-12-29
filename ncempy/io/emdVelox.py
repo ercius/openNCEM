@@ -5,6 +5,13 @@ The reader for EMD Berkeley and Velox files will be combined in the near
 future once they are fully tested separately.
 
 Currently limited to only images. This file can not load spectra.
+
+General users:
+    Use the simplified emdVelox.emdVeloxReader() function to load the data and meta
+    data as a python dictionary.
+
+Advanced users and developers:
+    Access the file internals through the emd.fileEMDVelox() class.
 """
 
 import json
