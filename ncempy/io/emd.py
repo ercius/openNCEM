@@ -74,8 +74,8 @@ class fileEMD:
         >>> import matplotlib.pyplot as plt
         >>> emd1 = emd.fileEMD('filename.emd')
         >>> [print(dataGroup.name) for dataGroup in emd1.list_emds] # Use the builtin list_emds variable to print all available EMD datasets
-        >>> data1,dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
-        >>> fg1,ax1 = plt.subplots(1,1)
+        >>> data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
+        >>> fg1, ax1 = plt.subplots(1,1)
         >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) # the extent uses the first and last array values of the dimension vectors
         >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) # label the axes with the name and units of each dimension vector
         >>> del emd1 # close the emd file
@@ -228,7 +228,7 @@ class fileEMD:
                 if group.get(item, getclass=True) == h5py.Group:
                     item = group.get(item)
                     # check if emd_group_type
-                    if 'emd_group_type' in item.attrs:
+                    if 'emd_group_type' in item.attrs and 'data' in item.keys():
                         if item.attrs['emd_group_type'] == 1:
                             emds.append(item)
                     # process subgroups
@@ -581,3 +581,36 @@ def emdReader(filename, dsetNum=0):
         out['pixelUnit'] = [aa[2] for aa in dims]
         out['pixelName'] = [aa[1] for aa in dims]
         return out
+
+
+def emdWriter(filename, data, pixel_size=None):
+    """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
+    size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
+
+    Parameters
+    ----------
+    filename : str or pathlib.Path
+        The path and file name to write the data to.
+    data : ndarray
+        The data as an ndarray to write to the file.
+    pixel_size : tuple
+        A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
+
+    """
+    if isinstance(filename, str):
+        filename = Path(filename)
+
+    if pixel_size:
+        try:
+            assert len(pixel_size) == data.ndim
+        except ValueError:
+            raise ValueError('pixel_size length must match the number of dimensions of data.')
+
+    if not filename.exists():
+        with fileEMD(filename, readonly=False) as emd0:
+            # Setup the dims for the EMD file. Pixel size is set to 1 by default for each dimension
+            dims0 = defaultDims(data, pixel_size=pixel_size)
+            # Write the data to he emd file.
+            emd0.put_emdgroup('converted', data, dims0)
+    else:
+        raise FileExistsError
