@@ -5,6 +5,8 @@ See https://emdatasets.com/ for more details.
 
 * It fully supports v0.2 for reading and writing
 
+Note
+----
 General users:
     Use the simplified emd.emdReader() function to load the data and meta
     data as a python dictionary.

@@ -2,6 +2,6 @@ ncempy.io.mrc module
 ====================
 
 .. automodule:: ncempy.io.mrc
-    :members:
+    :no-members:
     :show-inheritance:
     

@@ -2,6 +2,5 @@ ncempy.io.ser module
 ====================
 
 .. automodule:: ncempy.io.ser
-    :members:
-    :undoc-members:
+    :no-members:
     :show-inheritance:

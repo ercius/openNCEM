@@ -2,6 +2,5 @@ ncempy.io.emdVelox module
 =========================
 
 .. automodule:: ncempy.io.emdVelox
-    :members:
-    :undoc-members:
+    :no-members:
     :show-inheritance:

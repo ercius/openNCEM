@@ -6,6 +6,8 @@ future once they are fully tested separately.
 
 Currently limited to only images. This file can not load spectra.
 
+Note
+----
 General users:
     Use the simplified emdVelox.emdVeloxReader() function to load the data and meta
     data as a python dictionary.
