@@ -29,7 +29,7 @@ import numpy as np
 
 
 class fileDM:
-    """Init opening the file and reading in the header.
+    """Opens the file and reads in the header. Data is loaded using the getDataset method.
 
     Attributes
     ----------
@@ -67,40 +67,18 @@ class fileDM:
     allTags : dictionary
         Contains *all* tags in the DM file as key value pairs.
 
-    Methods
-    -------
-    parseHeader()
-        Parses the header of the DM file. DM files have the data and the metadata interspersed so you have to
-        parse the entire file to find the raw data. However, this method skips any raw data found which is then
-        loaded separately using get_dataset() or get_memmap methods. This is automatically run at class init.
-    writeTags()
-        Write out the allTags attribute as a text file in the directory of the file. Provides a convenient
-        way to inspect and search trhough useful metadata as text.
-    getDataset()
-        Load the full data set into memory as an ndarray properly shaped with the original dtype.
-    getSlice()
-        Load a slice of the data where slice is meant to be a full image. This is useful for large time series data
-        where you might only want 1 image from the file. Slicing other dimensions is not supported. See getMemmap()
-        for more complex slicing capabilities without loading the data into memory.
-    getMemmap()
-        Return a memmap object allowing the data to be accessed directly from disk. This is very useful for large
-        datasets which do not fit into memory and for fancy slicing operations.
-
     Examples
     --------
     Read data from a file containing a single image into memory
 
-    >>> import matplotlib.pyplot as plt
     >>> from ncempy.io import dm
     >>> with dm.fileDM('filename.dm4') as dmFile1:
     >>>     dataSet = dmFile1.getDataset(0)
-    >>> plt.imshow(dataSet['data'])
 
     Example of reading a full multi-image DM3 file into memory:
 
     >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
     >>>     series = dmFile2.getDataset(0)
-    >>> plt.imshow(series['data'][0, :, :]) #show the first image in the series
     """
 
     __slots__ = ('filename', 'fid', '_on_memory', '_v', 'xSize', 'ySize',

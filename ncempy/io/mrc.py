@@ -12,8 +12,6 @@ General users:
 Advanced users and developers:
     Access the file internals through the mrc.fileMRC() class.
 
-written by: Peter Ercius, percius@lbl.gov
-
 """
 
 from pathlib import Path
@@ -58,19 +56,6 @@ class fileMRC:
         Will hold the data and metadata to output to the user after getDataset() call.
     v : bool
         More output for debugging. False by default
-
-    Methods
-    -------
-    parseHeader()
-        Parse the header of the file. This populates most attributes in the class and is run automatically.
-    getDataset()
-        Retrieve the data in the file.
-    getSlice(num)
-        Get a single slice from the data set along the X and Y directions. These correspond to the second and third
-        dimensions in the full data set according to C-ordering. num corresonds to the Z position (the zeroeth
-        axis in the ndarray) in the file.
-    getMemmap
-        Return a memmap for the data with the correct dimensions and datatype.
 
     Examples
     --------

@@ -29,8 +29,6 @@ class fileEMDVelox:
     improves file reading for EMDVelox files which are written with Fortran-
     style ordering and an inefficient choice of chunking.
 
-    For simmple use cases please see the emdVeloxReader() function.
-
     Attributes
     ----------
     list_data : list
@@ -42,25 +40,14 @@ class fileEMDVelox:
     metaDataJSON : dict
         The metadata for the most recently loaded data set.
 
-    Methods
-    -------
-    get_dataset(group, memmap=False)
-        Get a dataset from the EMDvelox file. You can indicate the dataset using the list_data attribute or
-        an integer corresponding to the entry in the the list_data attribute. If memmap is True then the data is
-        returned as a h5py dataset on disk instead of loading fully into memory.
-    parseMetaData(group)
-        Parse the metadata in the file for the indicated group which can be indicated either using the list_data
-        attribute or the corresponding integer to the entry in the list_data attribute.
-
     Examples
     --------
     Open an EMD Velox file containing 1 image.
 
     >>> import ncempy.io as nio
-    >>> emd1 = nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd')
-    >>> print(emd1) # print information about the file
-    >>> im0, metadata0 = emd1.get_dataset(0)
-    >>> del emd1 # close the file
+    >>> with nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd') as emd1:
+    >>>     print(emd1) # print information about the file
+    >>>     im0, metadata0 = emd1.get_dataset(0)
     """
     
     def __init__(self, filename):

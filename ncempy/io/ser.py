@@ -35,29 +35,16 @@ class fileSER:
 
     Attributes
     ----------
-    _file_hdl
+    _file_hdl : file
         The open file as a raw stream.
-    _emi
+    _emi : dict
         A dictionary of metadata from the EMI file accompanying the SER file.
-    filename
+    filename : str
         A string of the file name of the SER file.
-    head
+    head : dict
         Header information for the SER file as a dictionary. Provides direct access to data offsets and other
         internal file information.
-    Methods
-    -------
-    readHeader()
-        Reads the header information of the SER file. Each dataset also has its own header with more information
-        for each data set. This allows each data set to have a different pixel size, data type, shape, etc. The
-        necessary information is stored in the head attribute as a dictionary.
-    getDataset(index, verbose)
-        Retrieve a dataset from the file and load into memory. Due to the layout of data in a SER file it is
-        difficult to implement a memmap. Thus, there is no option for this method. If the data is too large to
-        fit in memory you can access each "slice" of the data using this function.
-    writeEMD(filename)
-        Write out the SER data as a Berkelely EMD file. This is somewhat old code and not well supported in
-        newer ncempy versions and will be removed in the future. It is suggested to use the
-        emd.fileEMD.put_emdgroup() method to properly format an EMD file. This
+
     Note
     ----
     For most users, we suggest using the ser.serReader() function to
@@ -72,7 +59,6 @@ class fileSER:
     >>> import ncempy.io as nio
     >>> with nio.ser.fileSER('filename.ser') as ser1:
     >>>    data, metadata = ser1.getDataset(0)
-    >>> plt.imshow(data)
 
     SER files are internally structured such that each image in a series is a
     different data set. Thus, time series data should be read as the
@@ -81,25 +67,23 @@ class fileSER:
     >>> with ser.fileSER('filename_1.ser') as ser1:
     >>>     image0, metadata0 = ser1.getDataset(0)
     >>>     image1, metadata1 = ser1.getDataset(1)
-    >>> plt.imshow(image0)
-    >>> print('Pixel size for dimension 0 = {} meters'.format(metadata['Calibration'][0]['CalibrationDelta']))
     """
 
     _dictByteOrder = {0x4949: 'little endian'}
-    '''(dict):    Information on byte order.'''
+    '''dict : Information on byte order.'''
 
     _dictSeriesVersion = {0x0210: '< TIA 4.7.3', 0x0220: '>= TIA 4.7.3'}
-    '''(dict):    Information on file format version.'''
+    '''dict : Information on file format version.'''
 
     _dictDataTypeID = {0x4120: '1D datasets', 0x4122: '2D images'}
-    '''(dict):    Information on data type.'''
+    '''dict : Information on data type.'''
 
     _dictTagTypeID = {0x4152: 'time only', 0x4142: 'time and 2D position'}
-    '''(dict):    Information on tag type.'''
+    '''dict : Information on tag type.'''
 
     _dictDataType = {1: ' <u1', 2: '<u2', 3: '<u4', 4: '<i1', 5: '<i2', 6: '<i4', 7: '<f4', 8: '<f8', 9: '<c8',
                      10: '<c16'}
-    '''(dict):    Information on data format.'''
+    '''dict : Information on data format.'''
 
     def __init__(self, filename, verbose=False):
         """Init opening the file and reading in the header.
@@ -117,6 +101,7 @@ class fileSER:
         self._file_hdl = None
         self._emi = None
         self.filename = filename
+        self.head = None
 
         # check filename type
         if isinstance(self.filename, str):
@@ -145,8 +130,6 @@ class fileSER:
         """ Close the file stream in destructor.
 
         """
-
-        # close the file
         if not self._file_hdl.closed:
             self._file_hdl.close()
 

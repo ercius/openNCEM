@@ -47,38 +47,15 @@ class fileEMD:
     list_emds : list
         A list of the EMD groups in the file.
 
-    Methods
-    -------
-    get_emddims(Group)
-        Gets the emd dims from a emd Group. Use list_emds to easily provide the Group path inside the file.
-
-    get_emdgroup(Group, memmap=False)
-        Gets a full EMD group which include the data as and ndarray and the dims. You can use list_emds[n] to
-        specify the group or just the corresponding integer (n).
-    put_emdgroup(label, data, dims, parent=None, overwrite=False)
-        Write data to the EMD file (must use readonly=False when initialized). You specify the name of the group,
-        the raw data, and the dims tuple. you can specify the parent group and overwrite the data if needed. Other
-        keyword args are passed to h5py.create_dataset(), e.g. for compression. See h5py.create_dataset for more
-        available keywords.
-    put_comment(msg, timestamp=None)
-        Add a time stamped comment as an attribute to the comments group.
-    get_memmap(group)
-        Get a memmap version of an EMD group. This is identical to get_emdgroup with memmap=True.
-
     Examples
     --------
     Open an Berkeley EMD file using the *advanced* interface. See the emdReader function for a more convenient
     way to load the data. We show how to list the available data sets, load a 3D data set and plot the first image.
 
         >>> from ncempy.io import emd
-        >>> import matplotlib.pyplot as plt
-        >>> emd1 = emd.fileEMD('filename.emd')
-        >>> [print(dataGroup.name) for dataGroup in emd1.list_emds] # Use the builtin list_emds variable to print all available EMD datasets
-        >>> data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
-        >>> fg1, ax1 = plt.subplots(1,1)
-        >>> ax1.imshow(data1[0,:,:],extent=(dims1[1][0][0],dims1[1][0][-1],dims1[2][0][0],dims1[2][0][-1])) # the extent uses the first and last array values of the dimension vectors
-        >>> ax1.set(xlabel='{0[1]} ({0[2]})'.format(dims1[1]),ylabel='{0[1]} ({0[2]})'.format(dims1[2])) # label the axes with the name and units of each dimension vector
-        >>> del emd1 # close the emd file
+        >>> with emd.fileEMD('filename.emd') as emd1:
+        >>>     [print(dataGroup.name) for dataGroup in emd1.list_emds] # print all available EMD datasets
+        >>>     data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
     """
 
     def __init__(self, filename, readonly=True):
