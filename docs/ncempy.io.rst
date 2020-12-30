@@ -4,10 +4,10 @@ ncempy.io package
 Submodules
 ----------
 
-ncempy.io.dm module
--------------------
+ncempy.io.read module
+--------------------
 
-.. automodule:: ncempy.io.dm
+.. automodule:: ncempy.io.read
    :members:
    :undoc-members:
    :show-inheritance:
@@ -18,6 +18,13 @@ ncempy.io.emd module
 .. automodule:: ncempy.io.emd
    :members:
    :undoc-members:
+   :show-inheritance:
+
+ncempy.io.dm module
+-------------------
+
+.. automodule:: ncempy.io.dm
+   :members:
    :show-inheritance:
 
 ncempy.io.emdVelox module
@@ -40,15 +47,6 @@ ncempy.io.ser module
 --------------------
 
 .. automodule:: ncempy.io.ser
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: ncempy.io
    :members:
    :undoc-members:
    :show-inheritance:

@@ -27,12 +27,3 @@ ncempy.eval.stack\_align module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: ncempy.eval
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -5,7 +5,7 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    ncempy.algo
    ncempy.command_line

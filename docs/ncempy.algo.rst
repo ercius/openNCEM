@@ -75,12 +75,3 @@ ncempy.algo.rebin module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: ncempy.algo
-   :members:
-   :undoc-members:
-   :show-inheritance:

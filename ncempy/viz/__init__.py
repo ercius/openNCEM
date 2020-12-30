@@ -16,18 +16,18 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     keyword args are passed to pyplot.imshow(). vmin and vmax are by default set to -2 and 2 respectively
     which are usually good values to set for S/TEM data.
 
-        Parameters
-        ----------
-            im : np.ndarray
-                The image to show.
+    Parameters
+    ----------
+    im : np.ndarray
+        The image to show.
 
-            vmin, vmax : float, default = -2, 2
-                The vmin and vmax values to pass to imshow.
+    vmin, vmax : float, default = -2, 2
+        The vmin and vmax values to pass to imshow.
 
-        Returns
-        -------
-            : matplotlib.pyplot.Figure
-                The handle to the created figure
+    Returns
+    -------
+    : matplotlib.pyplot.Figure
+        The handle to the created figure
     """
     fg, ax = plt.subplots(1, 1)
     im2 = im - im.mean()
@@ -43,15 +43,15 @@ def im_calibrated(im, d):
 
     Parameters
     ---------
-        im : np.ndarray
-            The image to show using imshow
-        d : float
-            The pixel size in both directions. The pixel size must be isotropic.
+    im : np.ndarray
+        The image to show using imshow
+    d : float
+        The pixel size in both directions. The pixel size must be isotropic.
 
     Returns
     -------
-        : pyplot.figure
-            The figure containing the plot
+    : pyplot.figure
+        The figure containing the plot
     """
     # The default extent is calculated like this:
     ext = [-0.5, im.shape[1] - 0.5, im.shape[0] - 0.5, -0.5]
@@ -73,24 +73,24 @@ def imfft(im, d=1.0, ax=None):
 
     Parameters
     ----------
-        im: np.ndarray
-            The 2D fft of the diffraction pattern to display as a diffractogram
-        d: float, optional, default = 1.0
-            The real space pixel size of the image used to get the FFT
-        ax: pyplot axis, optional
-            An axis to plot into.
+    im: np.ndarray
+        The 2D fft of the diffraction pattern to display as a diffractogram
+    d: float, optional, default = 1.0
+        The real space pixel size of the image used to get the FFT
+    ax: pyplot axis, optional
+        An axis to plot into.
     Returns
     -------
-        : matplotlib.image.AxesImage
-            The AxesImage that contains the image displayed.
+    : matplotlib.image.AxesImage
+        The AxesImage that contains the image displayed.
 
     Example
     -------
-        This example shows how to display a 2D ndarray (image) as a
-        diffractogram. The image has a real space pixel size of 0.1 nanometer.
+    This example shows how to display a 2D ndarray (image) as a
+    diffractogram. The image has a real space pixel size of 0.1 nanometer.
 
-        >>> imageFFT = np.fft.fft2(im)
-        >>> ncempy.viz.imfft(imageFFT, d = 0.1)
+    >>> imageFFT = np.fft.fft2(im)
+    >>> ncempy.viz.imfft(imageFFT, d = 0.1)
 
     """
 
@@ -109,16 +109,16 @@ def imrfft(im, d=1.0, ax=None):
 
     Parameters
     ----------
-        im : ndarray
-            The 2D fft of the diffraction pattern to display as a diffractogram
-        d : float, optional, default = 1.0
-            The real space pixel size of the image used to get the FFT
-        ax : pyplot axis, optional
-            An axis to plot into.
+    im : ndarray
+        The 2D fft of the diffraction pattern to display as a diffractogram
+    d : float, optional, default = 1.0
+        The real space pixel size of the image used to get the FFT
+    ax : pyplot axis, optional
+        An axis to plot into.
     Returns
     -------
-        : matplotlib.image.AxesImage
-            The AxesImage that contains the image displayed.
+    : matplotlib.image.AxesImage
+        The AxesImage that contains the image displayed.
     """
 
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
@@ -136,17 +136,17 @@ def im_and_fft(im, d=1.0, fft=None):
 
     Parameters
     ----------
-        im : np.ndarray
-            The image to show in both real and FFT space
-        d : float
-            The pixel spacing
-        fft : np.ndarray, optional
-            The FFT to display. If not provided then np.fft.fft2 is used.
+    im : np.ndarray
+        The image to show in both real and FFT space
+    d : float
+        The pixel spacing
+    fft : np.ndarray, optional
+        The FFT to display. If not provided then np.fft.fft2 is used.
 
     Returns
     -------
-        : plt.figure
-            The matplotlib.pyplot figure
+    : plt.figure
+        The matplotlib.pyplot figure
     """
     fg, ax = plt.subplots(1, 2)
     ax[0].imshow(im)
@@ -164,13 +164,11 @@ class stack_view:
 
     Parameters
     ----------
-        stack : numpy.ndarray, 3D stack
-            The stack of to show as images
+    stack : numpy.ndarray, 3D stack
+        The stack of to show as images
 
-    Keywords
-    --------
-        **kwargs :
-            Passed directly to pyplot.imshow()
+    **kwargs :
+        Passed directly to pyplot.imshow()
 
     """
 
@@ -208,17 +206,17 @@ def plot_ringpolar(points, dims, show=False):
 
     Parameters
     ----------
-        points : np.ndarray
-            Positions in polar coords.
-        dims : tuple
-            Dimension information to plot labels.
-        show : bool
-            Set to directly show plot in interactive mode.
+    points : np.ndarray
+        Positions in polar coords.
+    dims : tuple
+        Dimension information to plot labels.
+    show : bool
+        Set to directly show plot in interactive mode.
 
     Returns
     -------
-        : numpy.ndarray
-            Image of the plot.
+    : numpy.ndarray
+        Image of the plot.
 
     """
 
@@ -261,25 +259,25 @@ def plot_distpolar(points, dims, dists, ns, show=False):
 
     Parameters
     ----------
-        points : np.ndarray
-            Points in polar coords.
+    points : np.ndarray
+        Points in polar coords.
 
-        dims : tuple
-            Dimensions, necessary to have unit information.
+    dims : tuple
+        Dimensions, necessary to have unit information.
 
-        dists : np.ndarray
-            Results of dist fitting, length according to ns.
+    dists : np.ndarray
+        Results of dist fitting, length according to ns.
 
-        ns : list
-            List of used orders.
+    ns : list
+        List of used orders.
 
-        show : bool
-            Set to directly show the plot in interactive mode.
+    show : bool
+        Set to directly show the plot in interactive mode.
 
     Returns
     -------
-        : np.ndarray
-            Image of the plot.
+    : np.ndarray
+        Image of the plot.
 
     """
 
@@ -345,23 +343,23 @@ def plot_points(img, points, vminmax=(0, 1), dims=None, invert=False, show=False
 
     Parameters
     ----------
-        img : np.ndarray
-            Image.
-        points : np.ndarray
-            Array containing the points.
-        vminmax : tuple
-            Tuple of two values for relative lower and upper cut off to display image.
-        dims : tuple
-            Tuple of dims to plot in dimensions.
-        invert : bool
-            Set to invert the image.
-        show : bool
-            Set to directly show the plot interactively.
+    img : np.ndarray
+        Image.
+    points : np.ndarray
+        Array containing the points.
+    vminmax : tuple
+        Tuple of two values for relative lower and upper cut off to display image.
+    dims : tuple
+        Tuple of dims to plot in dimensions.
+    invert : bool
+        Set to invert the image.
+    show : bool
+        Set to directly show the plot interactively.
 
     Returns
     -------
-        : np.ndarray
-            Image of the plot.
+    : np.ndarray
+        Image of the plot.
 
     """
 
@@ -417,19 +415,19 @@ def plot_radialprofile(r, intens, dims, show=False):
 
     Parameters
     ----------
-        r : np.ndarray
-            r-axis of radial profile.
-        intens : np.ndarray
-            Intensity-axis of radial profile.
-        dims : tuple
-            Dimensions of original image to read out units.
-        show : bool
-            Set to directly show plot interactively.
+    r : np.ndarray
+        r-axis of radial profile.
+    intens : np.ndarray
+        Intensity-axis of radial profile.
+    dims : tuple
+        Dimensions of original image to read out units.
+    show : bool
+        Set to directly show plot interactively.
 
     Returns
     -------
-        : np.ndarray
-            Image of the plot.
+    : np.ndarray
+        Image of the plot.
     """
 
     try:
@@ -470,23 +468,23 @@ def plot_fit(r, intens, dims, funcs, param, show=False):
 
     Parameters
     ----------
-        r : np.ndarray
-            r-axis of radial profile.
-        intens : np.ndarray
-            Intensity-axis of radial profile.
-        dims : tuple
-            Dimensions of original image to read out units.
-        funcs : tuple
-            List of functions.
-        param : np.ndarray
-            Parameters for functions in funcs.
-        show : bool
-            Set to directly show plot interactively.
+    r : np.ndarray
+        r-axis of radial profile.
+    intens : np.ndarray
+        Intensity-axis of radial profile.
+    dims : tuple
+        Dimensions of original image to read out units.
+    funcs : tuple
+        List of functions.
+    param : np.ndarray
+        Parameters for functions in funcs.
+    show : bool
+        Set to directly show plot interactively.
 
     Returns
     -------
-        : np.ndarray
-            Image of the plot.
+    : np.ndarray
+        Image of the plot.
 
     """
 

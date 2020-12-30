@@ -80,7 +80,7 @@ def image_correlate(image, reference, real_filter=1, k_filter=1, shift_func='shi
             Plots the cross-correlation using matplotlib for debugging purposes.
 
     Returns
-    ------
+    -------
         : tuple, (ndarray, tuple)
             A tuple containing the shifted image and the shifts applied.
     """

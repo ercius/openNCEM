@@ -15,10 +15,10 @@ import h5py
 
 # used to indicate settings format
 cur_set_vers = 'ring_diffraction_setting_vers0.1'
-'''(str):    Used to identify settings hdf5 groups.'''
+'''str : Used to identify settings hdf5 groups.'''
 
 cur_eva_vers = 'ring_diffraction_evaluation_vers0.1'
-'''(str):    Used to identify evaluation hdf5 groups.'''
+'''str : Used to identify evaluation hdf5 groups.'''
 
 dummy_settings = {'lmax_r': 1,
                     'lmax_thresh': 1,
@@ -38,7 +38,7 @@ dummy_settings = {'lmax_r': 1,
                   'fit_init': (1.0, 1.0, 1.0, 1.0),
                   'fit_maxfev':10
                   }
-'''(dict):    Dummy settings with all parameters set.'''
+'''dict : Dummy settings with all parameters set.'''
 
 min_dummy_settings = {'lmax_r': 1,
                         'lmax_thresh': 1,
@@ -58,17 +58,21 @@ min_dummy_settings = {'lmax_r': 1,
                       'fit_init': (1.0, 1.0, 1.0, 1.0),
                       'fit_maxfev': None
                       }
-'''(dict):    Dummy settings with all parameters set but all optional ones as Nones.'''
+'''dict : Dummy settings with all parameters set but all optional ones as Nones.'''
 
 
 def get_settings( parent ):
     """Get settings for radial profile evaluation.
 
-    Parameters:
-        parent (h5py._hl.group.Group):    Input group.
+    Parameters
+    ----------
+        parent : h5py.Group
+            Input group.
 
-    Returns:
-        (dict):    Settings read from parent.
+    Returns
+    -------
+        : dict
+            Settings read from parent.
 
     """
     
@@ -143,12 +147,17 @@ def put_settings( parent, settings ):
 
     Creates a subgroup in parent holding the settings as attributes.
 
-    Parameters:
-        parent (h5py._hl.group.Group):    Group to hold settings subgroup.
-        setting (dict):    Settings to write.
+    Parameters
+    ----------
+        parent : h5py.Group
+            Group to hold settings subgroup.
+        setting : dict
+            Settings to write.
 
-    Returns:
-        (h5py._hl.group.Group):    Handle to settings group.
+    Returns
+    -------
+        : h5py.Group
+            Handle to settings group.
 
     """
  
@@ -206,13 +215,19 @@ def put_sglgroup(parent, label, data_grp):
 
     Remember that the resource of the external link must not be already opened elsewhere to access data.
 
-    Parameters:
-        parent (h5py._hl.group.Group):    Hdf5 group to add this evaluation group to.
-        label (str):    Label for the evaluation group.
-        data_grp (h5py._hl.group.Group):    Emdtype group where to find the data.
+    Parameters
+    ----------
+        parent : h5py.Group
+            Hdf5 group to add this evaluation group to.
+        label : str
+            Label for the evaluation group.
+        data_grp : h5py.Group
+            Emdtype group where to find the data.
 
-    Returns:
-        (h5py._hl.group.Group):    Handle to group.
+    Returns
+    -------
+        : h5py.Group
+            Handle to group.
 
     """
     
@@ -238,12 +253,18 @@ def put_sglgroup(parent, label, data_grp):
 def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False):
     """Run evaluation on a single group.
 
-    Parameters:
-        group (h5py._hl.group.Group):    Handle to evaluation group to execute.
-        outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
-        overwrite (bool):    Set to overwrite existing results in outfile.
-        verbose (bool):    Set to get verbose output during run.
-        showplots (bool):    Set to directly show plots interactively.
+    Parameters
+    ----------
+        group : h5py.Group
+            Handle to evaluation group to execute.
+        outfile : ncempy.io.emd.fileEMD
+            Emdfile for output.
+        overwrite : bool
+            Set to overwrite existing results in outfile.
+        verbose : bool
+            Set to get verbose output during run.
+        showplots : bool
+            Set to directly show plots interactively.
 
     """
 
@@ -349,12 +370,18 @@ def run_all(parent, outfile, overwrite=False, verbose=False, showplots=False):
 
     All evaluations within parent are run.
 
-    Parameters:
-        parent (h5py._hl.group.Group):    Handle to parent.
-        outfile (ncempy.io.emd.fileEMD):    Emdfile for output.
-        overwrite (bool):    Set to overwrite existing results in outfile.
-        verbose (bool):    Set to get verbose output during run.
-        showplots (bool):    Set to directly show plots interactively.
+    Parameters
+    ----------
+        parent : h5py.Group
+            Handle to parent.
+        outfile : ncempy.io.emd.fileEMD
+            Emdfile for output.
+        overwrite : bool
+            Set to overwrite existing results in outfile.
+        verbose : bool
+            Set to get verbose output during run.
+        showplots : bool
+            Set to directly show plots interactively.
 
     """
     
