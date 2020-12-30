@@ -30,6 +30,7 @@ class fileEMD:
 
     Attributes
     ----------
+
     file_hdl : h5py.File
         The h5py file handle which provides direct access to the underlying h5py file structure.
     version : tuple
