@@ -23,7 +23,7 @@ def moments(im, order=3):
     for ii in range(order):
         XXii = XX ** ii
         for jj in range(order):
-            mm[ii, jj] = np.sum(XXii * YY ** jj * im)
+            mm[ii, jj] = np.sum(XXii * YY ** jj * im.astype(np.float64))
     return mm
 
 
@@ -63,7 +63,7 @@ def moments_central(im, cent=None, order=3):
     for ii in range(order):
         XXii = XX ** ii
         for jj in range(order):
-            mc[ii, jj] = np.sum(XXii * YY ** jj * im)
+            mc[ii, jj] = np.sum(XXii * YY ** jj * im.astype(np.float64))
     return mc
 
 
