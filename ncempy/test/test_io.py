@@ -1,4 +1,4 @@
-"""General tests for io module. More in depth testing is done in sepearte test_.py files for more advanced
+"""General tests for io module. More in depth testing is done in separate test_.py files for more advanced
 capabilities.
 """
 
@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import ncempy.io as nio
 
-# Todo: Add emd velox (small file needed)
 
 @pytest.fixture
 def data_location():
@@ -17,6 +16,7 @@ def data_location():
     test_path = Path(__file__).resolve()
     root_path = test_path.parents[1]
     return root_path / Path('data')
+
 
 @pytest.fixture
 def temp_file():
