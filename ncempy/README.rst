@@ -4,6 +4,22 @@ ncempy
 
 openNCEM's python package.
 
+Installation
+------------
+
+We recommend installing the ``ncempy`` package from PyPi:
+
+``pip install ncempy``
+
+If you wish to install the optional EDSTomo module then run:
+
+``pip install 'ncempy[edstomo]'``
+
+Documentation
+--------------
+
+The ncempy documentation is found at read the docs https://openncem.readthedocs.io/en/latest/
+
 Structure
 ---------
 
@@ -50,17 +66,6 @@ edstomo has additional optional packages:
 * scikit-image
 * matplotlib
 * ipyvolume
-
-Installation
-------------
-
-We recommend installing the ``ncempy`` package from PyPi:
-
-``pip install ncempy``
-
-If you wish to install the optional EDSTomo module then run:
-
-``pip install 'ncempy[edstomo]'``
 
 License
 -------
