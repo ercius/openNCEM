@@ -38,7 +38,8 @@ class fileEMDVelox:
         The File handle from h5py.File.
 
     metaDataJSON : dict
-        The metadata for the most recently loaded data set.
+        The full metadata for the most recently loaded data set. Note that you have to load a data set for this to be
+        populated or run parseMetaData(num).
 
     Examples
     --------
