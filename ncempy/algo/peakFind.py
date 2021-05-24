@@ -4,7 +4,15 @@ Module to find local maxima in 2D and 3D data such as images and density maps.
 author: Peter Ercius, percius@lbl.gov
 """
 
-from . import gaussND
+try:
+    from . import gaussND
+except:
+    try:
+        print('peakFind: Temporary import!')
+        import gaussND
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError
+    
 
 import numpy as np
 from scipy import signal as sig
