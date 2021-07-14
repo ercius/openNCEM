@@ -15,7 +15,7 @@ import ncempy.algo.distortion
 import ncempy.algo.radial_profile
 import ncempy.eval.ring_diff
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import pyqtgraph as pg
 
@@ -40,18 +40,18 @@ class MaskDialog(QtGui.QDialog):
         self.roi = pg.PolyLineROI([ [int(0.25*parent.data.shape[2]), int(0.25*parent.data.shape[1])], [int(0.75*parent.data.shape[2]), int(0.25*parent.data.shape[1])], [int(0.75*parent.data.shape[2]), int(0.75*parent.data.shape[1])], [int(0.25*parent.data.shape[2]), int(0.75*parent.data.shape[1])]], closed=True)
         self.imgview.getView().addItem(self.roi)
         
-        okbtn = QtGui.QPushButton('Use new mask', self)
+        okbtn = QtWidgets.QPushButton('Use new mask', self)
         okbtn.clicked.connect(self.accept)
         okbtn.setDefault(True)
         okbtn.setToolTip('Create mask to remove selected ROI from affecting the radial profile.')
         
-        cclbtn = QtGui.QPushButton('Remove mask', self)
+        cclbtn = QtWidgets.QPushButton('Remove mask', self)
         cclbtn.clicked.connect(self.reject)
         cclbtn.setToolTip('Cancel procedure and remove any mask present in the settings.')
 
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.addWidget(self.imgview)
-        hbox_btns = QtGui.QHBoxLayout()
+        hbox_btns = QtWidgets.QHBoxLayout()
         hbox_btns.addStretch(1)
         hbox_btns.addWidget(okbtn)
         hbox_btns.addWidget(cclbtn)
@@ -85,11 +85,11 @@ class MaskDialog(QtGui.QDialog):
         dialog = MaskDialog(parent)
         result = dialog.exec_()
         mask = dialog.getResult()
-        return (mask, result==QtGui.QDialog.Accepted) 
+        return (mask, result==QtWidgets.QDialog.Accepted) 
 
 
 
-class Main(QtGui.QMainWindow):
+class Main(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -135,45 +135,45 @@ class Main(QtGui.QMainWindow):
     
         self.statusBar().showMessage('')
         
-        self.mnwid = QtGui.QWidget()
+        self.mnwid = QtWidgets.QWidget()
         
         self.setCentralWidget(self.mnwid)
         
-        self.log_wdg = QtGui.QWidget()
-        self.log_txt = QtGui.QPlainTextEdit(self.log_wdg)
+        self.log_wdg = QtWidgets.QWidget()
+        self.log_txt = QtWidgets.QPlainTextEdit(self.log_wdg)
         self.log_txt.setReadOnly(True)
-        hbox_log = QtGui.QHBoxLayout(self.log_wdg)
+        hbox_log = QtWidgets.QHBoxLayout(self.log_wdg)
         hbox_log.addWidget(self.log_txt)
         self.log_wdg.setGeometry(300,300,768,200)
         self.log_wdg.setWindowTitle('Log')
         self.log_wdg.show()
         
         ## file informations
-        frame_files = QtGui.QGroupBox('Input', self.mnwid)
-        layout_files = QtGui.QVBoxLayout(frame_files)
+        frame_files = QtWidgets.QGroupBox('Input', self.mnwid)
+        layout_files = QtWidgets.QVBoxLayout(frame_files)
         
-        self.gui_file['re_btn'] = QtGui.QPushButton('Reopen Evaluation File')
+        self.gui_file['re_btn'] = QtWidgets.QPushButton('Reopen Evaluation File')
         self.gui_file['re_btn'].clicked.connect(self.on_reopen)
         layout_files.addWidget(self.gui_file['re_btn'])
 
-        self.gui_file['in_btn'] = QtGui.QPushButton('Open', frame_files)
+        self.gui_file['in_btn'] = QtWidgets.QPushButton('Open', frame_files)
         self.gui_file['in_btn'].clicked.connect(self.on_open_infile)
-        self.gui_file['in_lbl'] = QtGui.QLabel( 'input emd file: ', frame_files )
-        self.gui_file['in_txt'] = QtGui.QLineEdit( '', frame_files )
+        self.gui_file['in_lbl'] = QtWidgets.QLabel( 'input emd file: ', frame_files )
+        self.gui_file['in_txt'] = QtWidgets.QLineEdit( '', frame_files )
         self.gui_file['in_txt'].setReadOnly(True)
-        hbox_infile = QtGui.QHBoxLayout()
+        hbox_infile = QtWidgets.QHBoxLayout()
         hbox_infile.addWidget(self.gui_file['in_lbl'])        
         hbox_infile.addWidget(self.gui_file['in_txt'])
         hbox_infile.addWidget(self.gui_file['in_btn'])
         layout_files.addLayout(hbox_infile)
         
-        self.gui_file['idx_lbl'] = QtGui.QLabel('index: ', frame_files)
-        self.gui_file['idx_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_files)
+        self.gui_file['idx_lbl'] = QtWidgets.QLabel('index: ', frame_files)
+        self.gui_file['idx_slider'] = QtWidgets.QSlider(QtCore.Qt.Horizontal, frame_files)
         self.gui_file['idx_slider'].setMinimum(0)
         self.gui_file['idx_slider'].setMaximum(0)
         self.gui_file['idx_slider'].valueChanged.connect(self.on_indexSlider)
-        self.gui_file['idx_value'] = QtGui.QLabel('0', frame_files)
-        hbox_idx = QtGui.QHBoxLayout()
+        self.gui_file['idx_value'] = QtWidgets.QLabel('0', frame_files)
+        hbox_idx = QtWidgets.QHBoxLayout()
         hbox_idx.addWidget(self.gui_file['idx_lbl'])
         hbox_idx.addWidget(self.gui_file['idx_slider'])
         hbox_idx.addWidget(self.gui_file['idx_value'])
@@ -181,196 +181,196 @@ class Main(QtGui.QMainWindow):
         
 
         ## local maxima stuff
-        frame_localmax = QtGui.QGroupBox('Local Maxima', self.mnwid)
-        layout_localmax = QtGui.QVBoxLayout(frame_localmax)
+        frame_localmax = QtWidgets.QGroupBox('Local Maxima', self.mnwid)
+        layout_localmax = QtWidgets.QVBoxLayout(frame_localmax)
         
-        self.gui_localmax['lbl_lmax_r'] = QtGui.QLabel('local radius: ', frame_localmax)
-        self.gui_localmax['txt_lmax_r'] = QtGui.QLineEdit( '', frame_localmax)
-        hbox_lmax_r = QtGui.QHBoxLayout()
+        self.gui_localmax['lbl_lmax_r'] = QtWidgets.QLabel('local radius: ', frame_localmax)
+        self.gui_localmax['txt_lmax_r'] = QtWidgets.QLineEdit( '', frame_localmax)
+        hbox_lmax_r = QtWidgets.QHBoxLayout()
         hbox_lmax_r.addWidget(self.gui_localmax['lbl_lmax_r'])
         hbox_lmax_r.addWidget(self.gui_localmax['txt_lmax_r'])
         layout_localmax.addLayout(hbox_lmax_r)
         
-        self.gui_localmax['lbl_lmax_thresh'] = QtGui.QLabel('threshold: ', frame_localmax)
-        self.gui_localmax['txt_lmax_thresh'] = QtGui.QLineEdit( '', frame_localmax)
-        hbox_lmax_thresh = QtGui.QHBoxLayout()
+        self.gui_localmax['lbl_lmax_thresh'] = QtWidgets.QLabel('threshold: ', frame_localmax)
+        self.gui_localmax['txt_lmax_thresh'] = QtWidgets.QLineEdit( '', frame_localmax)
+        hbox_lmax_thresh = QtWidgets.QHBoxLayout()
         hbox_lmax_thresh.addWidget(self.gui_localmax['lbl_lmax_thresh'])
         hbox_lmax_thresh.addWidget(self.gui_localmax['txt_lmax_thresh'])
         layout_localmax.addLayout(hbox_lmax_thresh)
         
-        self.gui_localmax['lbl_lmax_cinit'] = QtGui.QLabel('init center: ')
-        self.gui_localmax['txt_lmax_cinit'] = QtGui.QLineEdit( '', frame_localmax)
-        self.gui_localmax['btn_lmax_cinit'] = QtGui.QPushButton( 'Select', frame_localmax)
+        self.gui_localmax['lbl_lmax_cinit'] = QtWidgets.QLabel('init center: ')
+        self.gui_localmax['txt_lmax_cinit'] = QtWidgets.QLineEdit( '', frame_localmax)
+        self.gui_localmax['btn_lmax_cinit'] = QtWidgets.QPushButton( 'Select', frame_localmax)
         self.gui_localmax['btn_lmax_cinit'].clicked.connect(self.update_localmax)
         self.gui_localmax['btn_lmax_cinit'].setCheckable(True)
-        hbox_lmax_cinit = QtGui.QHBoxLayout()
+        hbox_lmax_cinit = QtWidgets.QHBoxLayout()
         hbox_lmax_cinit.addWidget(self.gui_localmax['lbl_lmax_cinit'])
         hbox_lmax_cinit.addWidget(self.gui_localmax['txt_lmax_cinit'])
         hbox_lmax_cinit.addWidget(self.gui_localmax['btn_lmax_cinit'])
         layout_localmax.addLayout(hbox_lmax_cinit)
         
-        self.gui_localmax['lbl_lmax_range'] = QtGui.QLabel('radial range: ', frame_localmax)
-        self.gui_localmax['txt_lmax_range'] = QtGui.QLineEdit( '', frame_localmax)
-        hbox_lmax_range = QtGui.QHBoxLayout()
+        self.gui_localmax['lbl_lmax_range'] = QtWidgets.QLabel('radial range: ', frame_localmax)
+        self.gui_localmax['txt_lmax_range'] = QtWidgets.QLineEdit( '', frame_localmax)
+        hbox_lmax_range = QtWidgets.QHBoxLayout()
         hbox_lmax_range.addWidget(self.gui_localmax['lbl_lmax_range'])
         hbox_lmax_range.addWidget(self.gui_localmax['txt_lmax_range'])
         layout_localmax.addLayout(hbox_lmax_range)
         
-        self.gui_localmax['lmax_btn'] = QtGui.QPushButton('Find Local Maxima', frame_localmax)
+        self.gui_localmax['lmax_btn'] = QtWidgets.QPushButton('Find Local Maxima', frame_localmax)
         self.gui_localmax['lmax_btn'].clicked.connect(self.on_localmax)
         layout_localmax.addWidget(self.gui_localmax['lmax_btn'])
         
-        self.gui_localmax['min_lbl'] = QtGui.QLabel('min: ', frame_localmax)
-        self.gui_localmax['min_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_localmax)
+        self.gui_localmax['min_lbl'] = QtWidgets.QLabel('min: ', frame_localmax)
+        self.gui_localmax['min_slider'] = QtWidgets.QSlider(QtCore.Qt.Horizontal, frame_localmax)
         self.gui_localmax['min_slider'].setMinimum(0)
         self.gui_localmax['min_slider'].setMaximum(0)
         self.gui_localmax['min_slider'].valueChanged.connect(self.on_intensitySlider)
-        self.gui_localmax['min_value'] = QtGui.QLabel('0', frame_localmax)
-        hbox_lmax_min = QtGui.QHBoxLayout()
+        self.gui_localmax['min_value'] = QtWidgets.QLabel('0', frame_localmax)
+        hbox_lmax_min = QtWidgets.QHBoxLayout()
         hbox_lmax_min.addWidget(self.gui_localmax['min_lbl'])
         hbox_lmax_min.addWidget(self.gui_localmax['min_slider'])
         hbox_lmax_min.addWidget(self.gui_localmax['min_value'])
         layout_localmax.addLayout(hbox_lmax_min)
         
-        self.gui_localmax['max_lbl'] = QtGui.QLabel('max: ', frame_localmax)
-        self.gui_localmax['max_slider'] = QtGui.QSlider(QtCore.Qt.Horizontal, frame_localmax)
+        self.gui_localmax['max_lbl'] = QtWidgets.QLabel('max: ', frame_localmax)
+        self.gui_localmax['max_slider'] = QtWidgets.QSlider(QtCore.Qt.Horizontal, frame_localmax)
         self.gui_localmax['max_slider'].setMinimum(0)
         self.gui_localmax['max_slider'].setMaximum(0)
         self.gui_localmax['max_slider'].valueChanged.connect(self.on_intensitySlider)
-        self.gui_localmax['max_value'] = QtGui.QLabel('0', frame_localmax)
-        hbox_lmax_max = QtGui.QHBoxLayout()
+        self.gui_localmax['max_value'] = QtWidgets.QLabel('0', frame_localmax)
+        hbox_lmax_max = QtWidgets.QHBoxLayout()
         hbox_lmax_max.addWidget(self.gui_localmax['max_lbl'])
         hbox_lmax_max.addWidget(self.gui_localmax['max_slider'])
         hbox_lmax_max.addWidget(self.gui_localmax['max_value'])
         layout_localmax.addLayout(hbox_lmax_max)
         
-        #self.gui_localmax['upd_btn'] = QtGui.QPushButton('Update', frame_localmax)
+        #self.gui_localmax['upd_btn'] = QtWidgets.QPushButton('Update', frame_localmax)
         #self.gui_localmax['upd_btn'].clicked.connect(self.update_localmax)
         #layout_localmax.addWidget(self.gui_localmax['upd_btn'])
 
 
         ## polar plot stuff
-        frame_polar = QtGui.QGroupBox('Polar Plot',self.mnwid)
-        layout_polar = QtGui.QVBoxLayout(frame_polar)
+        frame_polar = QtWidgets.QGroupBox('Polar Plot',self.mnwid)
+        layout_polar = QtWidgets.QVBoxLayout(frame_polar)
         
-        self.gui_polar['center_lbl'] = QtGui.QLabel('center: ', frame_polar)
-        self.gui_polar['cencpy_btn'] = QtGui.QPushButton('Copy Init', frame_polar)
+        self.gui_polar['center_lbl'] = QtWidgets.QLabel('center: ', frame_polar)
+        self.gui_polar['cencpy_btn'] = QtWidgets.QPushButton('Copy Init', frame_polar)
         self.gui_polar['cencpy_btn'].clicked.connect(self.on_copyCenter)
-        hbox_polar_center = QtGui.QHBoxLayout()
+        hbox_polar_center = QtWidgets.QHBoxLayout()
         hbox_polar_center.addWidget(self.gui_polar['center_lbl'])
         hbox_polar_center.addWidget(self.gui_polar['cencpy_btn'])
         layout_polar.addLayout(hbox_polar_center)
         
-        self.gui_polar['cenopt_btn'] = QtGui.QPushButton('Optimize Center', frame_polar)
+        self.gui_polar['cenopt_btn'] = QtWidgets.QPushButton('Optimize Center', frame_polar)
         self.gui_polar['cenopt_btn'].clicked.connect(self.on_optimizeCenter)
         layout_polar.addWidget(self.gui_polar['cenopt_btn'])
         
-        self.gui_polar['dist_lbl'] = QtGui.QLabel('distortion orders: ', frame_polar)
-        self.gui_polar['dist_txt'] = QtGui.QLineEdit('', frame_polar)
-        hbox_polar_dists = QtGui.QHBoxLayout()
+        self.gui_polar['dist_lbl'] = QtWidgets.QLabel('distortion orders: ', frame_polar)
+        self.gui_polar['dist_txt'] = QtWidgets.QLineEdit('', frame_polar)
+        hbox_polar_dists = QtWidgets.QHBoxLayout()
         hbox_polar_dists.addWidget(self.gui_polar['dist_lbl'])
         hbox_polar_dists.addWidget(self.gui_polar['dist_txt'])
         layout_polar.addLayout(hbox_polar_dists)
         
-        self.gui_polar['dists_btn'] = QtGui.QPushButton('Fit Distortions', frame_polar)
+        self.gui_polar['dists_btn'] = QtWidgets.QPushButton('Fit Distortions', frame_polar)
         self.gui_polar['dists_btn'].clicked.connect(self.on_fitDist)
         layout_polar.addWidget(self.gui_polar['dists_btn'])
         
-        #self.gui_polar['upd_btn'] = QtGui.QPushButton('Update', frame_polar)
+        #self.gui_polar['upd_btn'] = QtWidgets.QPushButton('Update', frame_polar)
         #self.gui_polar['upd_btn'].clicked.connect(self.update_polar)
         #layout_polar.addWidget(self.gui_polar['upd_btn'])
         
         
         ## radial profile stuff
-        frame_radprof = QtGui.QGroupBox('Radial Profile', self.mnwid)
-        layout_radprof = QtGui.QVBoxLayout(frame_radprof)
+        frame_radprof = QtWidgets.QGroupBox('Radial Profile', self.mnwid)
+        layout_radprof = QtWidgets.QVBoxLayout(frame_radprof)
         
-        self.gui_radprof['rad_lbl'] = QtGui.QLabel('r_max, dr, sigma: (opt.)', frame_radprof)
-        self.gui_radprof['rad_txt'] = QtGui.QLineEdit('', frame_radprof)
-        hbox_radprof_rad = QtGui.QHBoxLayout()
+        self.gui_radprof['rad_lbl'] = QtWidgets.QLabel('r_max, dr, sigma: (opt.)', frame_radprof)
+        self.gui_radprof['rad_txt'] = QtWidgets.QLineEdit('', frame_radprof)
+        hbox_radprof_rad = QtWidgets.QHBoxLayout()
         hbox_radprof_rad.addWidget(self.gui_radprof['rad_lbl'])
         hbox_radprof_rad.addWidget(self.gui_radprof['rad_txt'])
         layout_radprof.addLayout(hbox_radprof_rad)
         
-        self.gui_radprof['crct_check'] = QtGui.QCheckBox('correct distortions', frame_radprof)
-        self.gui_radprof['mask_btn'] = QtGui.QPushButton('Mask', frame_radprof)
+        self.gui_radprof['crct_check'] = QtWidgets.QCheckBox('correct distortions', frame_radprof)
+        self.gui_radprof['mask_btn'] = QtWidgets.QPushButton('Mask', frame_radprof)
         self.gui_radprof['mask_btn'].clicked.connect(self.on_mask)
-        hbox_radprof_dist = QtGui.QHBoxLayout()
+        hbox_radprof_dist = QtWidgets.QHBoxLayout()
         hbox_radprof_dist.addWidget(self.gui_radprof['crct_check'])
         hbox_radprof_dist.addWidget(self.gui_radprof['mask_btn'])
         layout_radprof.addLayout(hbox_radprof_dist)
         
-        self.gui_radprof['ext_btn'] = QtGui.QPushButton('Extract', frame_radprof)
+        self.gui_radprof['ext_btn'] = QtWidgets.QPushButton('Extract', frame_radprof)
         self.gui_radprof['ext_btn'].clicked.connect(self.on_extractRadProf)
         layout_radprof.addWidget(self.gui_radprof['ext_btn'])
         
-        self.gui_radprof['fitxs_lbl'] = QtGui.QLabel('supp. x: ', frame_radprof)
-        self.gui_radprof['fitxs_txt'] = QtGui.QLineEdit('', frame_radprof)
-        self.gui_radprof['fitxs_btn'] = QtGui.QPushButton('Select', frame_radprof)
+        self.gui_radprof['fitxs_lbl'] = QtWidgets.QLabel('supp. x: ', frame_radprof)
+        self.gui_radprof['fitxs_txt'] = QtWidgets.QLineEdit('', frame_radprof)
+        self.gui_radprof['fitxs_btn'] = QtWidgets.QPushButton('Select', frame_radprof)
         self.gui_radprof['fitxs_btn'].setCheckable(True)
         self.gui_radprof['fitxs_btn'].clicked.connect(self.update_RadProf)
-        hbox_radprof_fitxs = QtGui.QHBoxLayout()
+        hbox_radprof_fitxs = QtWidgets.QHBoxLayout()
         hbox_radprof_fitxs.addWidget(self.gui_radprof['fitxs_lbl'])
         hbox_radprof_fitxs.addWidget(self.gui_radprof['fitxs_txt'])
         hbox_radprof_fitxs.addWidget(self.gui_radprof['fitxs_btn'])
         layout_radprof.addLayout(hbox_radprof_fitxs)
         
-        self.gui_radprof['fitxsw_lbl'] = QtGui.QLabel('width: ', frame_radprof)
-        self.gui_radprof['fitxsw_txt'] = QtGui.QLineEdit('', frame_radprof)
-        hbox_radprof_fitxsw = QtGui.QHBoxLayout()
+        self.gui_radprof['fitxsw_lbl'] = QtWidgets.QLabel('width: ', frame_radprof)
+        self.gui_radprof['fitxsw_txt'] = QtWidgets.QLineEdit('', frame_radprof)
+        hbox_radprof_fitxsw = QtWidgets.QHBoxLayout()
         hbox_radprof_fitxsw.addWidget(self.gui_radprof['fitxsw_lbl'])
         hbox_radprof_fitxsw.addWidget(self.gui_radprof['fitxsw_txt'])
         layout_radprof.addLayout(hbox_radprof_fitxsw)
         
-        self.gui_radprof['back_init_label'] = QtGui.QLabel('init offset, ampl., exp.: ')
-        self.gui_radprof['back_init_txt'] = QtGui.QLineEdit('', frame_radprof)
-        hbox_radprof_backinit = QtGui.QHBoxLayout()
+        self.gui_radprof['back_init_label'] = QtWidgets.QLabel('init offset, ampl., exp.: ')
+        self.gui_radprof['back_init_txt'] = QtWidgets.QLineEdit('', frame_radprof)
+        hbox_radprof_backinit = QtWidgets.QHBoxLayout()
         hbox_radprof_backinit.addWidget(self.gui_radprof['back_init_label'])
         hbox_radprof_backinit.addWidget(self.gui_radprof['back_init_txt'])
         layout_radprof.addLayout(hbox_radprof_backinit)
         
-        self.gui_radprof['fitback_btn'] = QtGui.QPushButton('Fit Background', frame_radprof)
+        self.gui_radprof['fitback_btn'] = QtWidgets.QPushButton('Fit Background', frame_radprof)
         self.gui_radprof['fitback_btn'].clicked.connect(self.on_subtractBackground)
-        self.gui_radprof['back_check'] = QtGui.QCheckBox('Subtract Background', frame_radprof)
+        self.gui_radprof['back_check'] = QtWidgets.QCheckBox('Subtract Background', frame_radprof)
         self.gui_radprof['back_check'].stateChanged.connect(self.update_RadProf)
         #self.gui_radprof['back_btn'].setCheckable(True)
         #self.gui_radprof['back_btn'].clicked.connect(self.on_subtractBackground)
-        hbox_radprof_backbtn = QtGui.QHBoxLayout()
+        hbox_radprof_backbtn = QtWidgets.QHBoxLayout()
         hbox_radprof_backbtn.addWidget(self.gui_radprof['fitback_btn'])
         hbox_radprof_backbtn.addWidget(self.gui_radprof['back_check'])
         layout_radprof.addLayout(hbox_radprof_backbtn)
         
-        self.gui_radprof['fit_tbl'] = QtGui.QTableWidget(0,2, frame_radprof)
+        self.gui_radprof['fit_tbl'] = QtWidgets.QTableWidget(0,2, frame_radprof)
         self.gui_radprof['fit_tbl'].setHorizontalHeaderLabels(['function', 'initial parameters'])
         self.gui_radprof['fit_tbl'].horizontalHeader().setStretchLastSection(True)
         layout_radprof.addWidget(self.gui_radprof['fit_tbl'])
         
-        self.gui_radprof['fit_add_btn'] = QtGui.QPushButton('Add', frame_radprof)
+        self.gui_radprof['fit_add_btn'] = QtWidgets.QPushButton('Add', frame_radprof)
         self.gui_radprof['fit_add_btn'].clicked.connect(self.on_addFit)
-        self.gui_radprof['fit_del_btn'] = QtGui.QPushButton('Delete', frame_radprof)
+        self.gui_radprof['fit_del_btn'] = QtWidgets.QPushButton('Delete', frame_radprof)
         self.gui_radprof['fit_del_btn'].clicked.connect(self.on_delFit)
-        hbox_radprof_fitbtns = QtGui.QHBoxLayout()
+        hbox_radprof_fitbtns = QtWidgets.QHBoxLayout()
         hbox_radprof_fitbtns.addWidget(self.gui_radprof['fit_add_btn'])
         hbox_radprof_fitbtns.addWidget(self.gui_radprof['fit_del_btn'])
         layout_radprof.addLayout(hbox_radprof_fitbtns)
         
-        self.gui_radprof['fit_range_lbl'] = QtGui.QLabel('fit range: ', frame_radprof)
-        self.gui_radprof['fit_range_txt'] = QtGui.QLineEdit('', frame_radprof)
-        hbox_radprof_fitrange = QtGui.QHBoxLayout()
+        self.gui_radprof['fit_range_lbl'] = QtWidgets.QLabel('fit range: ', frame_radprof)
+        self.gui_radprof['fit_range_txt'] = QtWidgets.QLineEdit('', frame_radprof)
+        hbox_radprof_fitrange = QtWidgets.QHBoxLayout()
         hbox_radprof_fitrange.addWidget(self.gui_radprof['fit_range_lbl'])
         hbox_radprof_fitrange.addWidget(self.gui_radprof['fit_range_txt'])
         layout_radprof.addLayout(hbox_radprof_fitrange)
         
-        self.gui_radprof['fit_btn'] = QtGui.QPushButton('Fit Radial Profile', frame_radprof)
+        self.gui_radprof['fit_btn'] = QtWidgets.QPushButton('Fit Radial Profile', frame_radprof)
         self.gui_radprof['fit_btn'].clicked.connect(self.on_fitRadProf)
-        self.gui_radprof['fit_check'] = QtGui.QRadioButton('Plot Fit', frame_radprof)
+        self.gui_radprof['fit_check'] = QtWidgets.QRadioButton('Plot Fit', frame_radprof)
         self.gui_radprof['fit_check'].toggled.connect(self.update_RadProf)
-        self.gui_radprof['init_check'] = QtGui.QRadioButton('Plot Init', frame_radprof)
+        self.gui_radprof['init_check'] = QtWidgets.QRadioButton('Plot Init', frame_radprof)
         self.gui_radprof['init_check'].toggled.connect(self.update_RadProf)
         self.gui_radprof['init_check'].toggle()
-        hbox_radprof_fitbtns2 = QtGui.QHBoxLayout()
+        hbox_radprof_fitbtns2 = QtWidgets.QHBoxLayout()
         hbox_radprof_fitbtns2.addWidget(self.gui_radprof['fit_btn'])
-        vbox_radprof_tglbtns = QtGui.QVBoxLayout()
+        vbox_radprof_tglbtns = QtWidgets.QVBoxLayout()
         vbox_radprof_tglbtns.addWidget(self.gui_radprof['fit_check'])
         vbox_radprof_tglbtns.addWidget(self.gui_radprof['init_check'])
         hbox_radprof_fitbtns2.addLayout(vbox_radprof_tglbtns)
@@ -378,50 +378,50 @@ class Main(QtGui.QMainWindow):
         
        
         ## Output stuff
-        frame_run = QtGui.QGroupBox('Run', self.mnwid)
-        layout_run = QtGui.QVBoxLayout(frame_run)
+        frame_run = QtWidgets.QGroupBox('Run', self.mnwid)
+        layout_run = QtWidgets.QVBoxLayout(frame_run)
         
-        self.gui_run['run_btn'] = QtGui.QPushButton('Run Current', frame_run)
+        self.gui_run['run_btn'] = QtWidgets.QPushButton('Run Current', frame_run)
         self.gui_run['run_btn'].clicked.connect(self.on_runsgl)
-        self.gui_run['all_btn'] = QtGui.QPushButton('Run All', frame_run)
+        self.gui_run['all_btn'] = QtWidgets.QPushButton('Run All', frame_run)
         self.gui_run['all_btn'].clicked.connect(self.on_runall)
-        hbox_run = QtGui.QHBoxLayout()
+        hbox_run = QtWidgets.QHBoxLayout()
         hbox_run.addWidget(self.gui_run['run_btn'])
         hbox_run.addWidget(self.gui_run['all_btn'])
         layout_run.addLayout(hbox_run)
         
-        self.gui_run['out_btn'] = QtGui.QPushButton('Save evaluation to EMD', frame_run)
+        self.gui_run['out_btn'] = QtWidgets.QPushButton('Save evaluation to EMD', frame_run)
         self.gui_run['out_btn'].clicked.connect(self.on_saveEMDFile)
         layout_run.addWidget(self.gui_run['out_btn'])
         
-        self.gui_run['savedist_btn'] = QtGui.QPushButton('Save corrected diffraction pattern', frame_run)
+        self.gui_run['savedist_btn'] = QtWidgets.QPushButton('Save corrected diffraction pattern', frame_run)
         self.gui_run['savedist_btn'].clicked.connect(self.on_saveCorrPattern)
         layout_run.addWidget(self.gui_run['savedist_btn'])
         
         
-        vbox_left = QtGui.QVBoxLayout()
+        vbox_left = QtWidgets.QVBoxLayout()
         vbox_left.addWidget(frame_files)
         
-        sep1 = QtGui.QFrame(self.mnwid)
-        sep1.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        sep1 = QtWidgets.QFrame(self.mnwid)
+        sep1.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
         vbox_left.addWidget(sep1)
         
         vbox_left.addWidget(frame_localmax)
         
-        sep2 = QtGui.QFrame(self.mnwid)
-        sep2.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        sep2 = QtWidgets.QFrame(self.mnwid)
+        sep2.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
         vbox_left.addWidget(sep2)
         
         vbox_left.addWidget(frame_polar)
         
-        sep3 = QtGui.QFrame(self.mnwid)
-        sep3.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        sep3 = QtWidgets.QFrame(self.mnwid)
+        sep3.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
         vbox_left.addWidget(sep3)
         
         vbox_left.addWidget(frame_radprof)
         
-        sep4 = QtGui.QFrame(self.mnwid)
-        sep4.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        sep4 = QtWidgets.QFrame(self.mnwid)
+        sep4.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
         vbox_left.addWidget(sep4)
         
         vbox_left.addWidget(frame_run)
@@ -465,32 +465,32 @@ class Main(QtGui.QMainWindow):
         self.plt_radprof.scene().sigMouseClicked.connect(self.radprof_mouseClicked)
         
         
-        left = QtGui.QWidget(self.mnwid)
-        hbox_left = QtGui.QHBoxLayout(left)
+        left = QtWidgets.QWidget(self.mnwid)
+        hbox_left = QtWidgets.QHBoxLayout(left)
         hbox_left.addLayout(vbox_left)
         
-        left_scroll = QtGui.QScrollArea()
+        left_scroll = QtWidgets.QScrollArea()
         left_scroll.setWidget(left)
         
         #hbox.addWidget(self.imv_localmax)
         #hbox.addStretch(1)
         
-        self.right = QtGui.QTabWidget(self.mnwid)
+        self.right = QtWidgets.QTabWidget(self.mnwid)
         self.right_tabs = {}
         self.right_tabs['localmax'] = self.right.addTab(self.plt_localmax, 'Local Maxima')
         self.right_tabs['polar'] = self.right.addTab(self.plt_polar, 'Polar Plot')
         self.right_tabs['radprof'] = self.right.addTab(self.plt_radprof, 'Radial Profile')
-        #hbox_right = QtGui.QHBoxLayout(self.right)
+        #hbox_right = QtWidgets.QHBoxLayout(self.right)
         #hbox_right.addWidget(self.imv_localmax)
         
-        splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         splitter.addWidget(left_scroll)
         splitter.addWidget(self.right)
         splitter.setStretchFactor(0, 0.2)
         splitter.setStretchFactor(1, 1.0)   
         
         
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.addWidget(splitter)
         
         self.mnwid.setLayout(hbox)
@@ -567,7 +567,7 @@ class Main(QtGui.QMainWindow):
         self.log('Goodbye!')
         del self.femd_in
         self.log_wdg.close()
-        QtGui.QMainWindow.closeEvent(self, event)
+        QtWidgets.QMainWindow.closeEvent(self, event)
         
          
             
@@ -575,7 +575,11 @@ class Main(QtGui.QMainWindow):
         '''
         Open an EMD file with input images.
         '''
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
+
+        if type(fname)==list:
+            fname = fname[0]
+
         try:
             self.femd_in = ncempy.io.emd.fileEMD(fname, readonly=True)
             
@@ -635,8 +639,11 @@ class Main(QtGui.QMainWindow):
     
     def on_reopen(self):
     
-        fname = QtGui.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtWidgets.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
         
+        if type(fname)==list:
+            fname = fname[0]
+
         try:
             femd = ncempy.io.emd.fileEMD(fname, readonly=True)
             
@@ -702,8 +709,8 @@ class Main(QtGui.QMainWindow):
             n = 0
             for i in range(len(self.settings['fit_funcs'])):
                 self.gui_radprof['fit_tbl'].insertRow(self.gui_radprof['fit_tbl'].rowCount())
-                new_func = QtGui.QTableWidgetItem( self.settings['fit_funcs'][i] )
-                new_init = QtGui.QTableWidgetItem( ', '.join(map('{:g}'.format, self.settings['fit_init'][n:n+ncempy.algo.math.lkp_funcs[self.settings['fit_funcs'][i]][1]])) )
+                new_func = QtWidgets.QTableWidgetItem( self.settings['fit_funcs'][i] )
+                new_init = QtWidgets.QTableWidgetItem( ', '.join(map('{:g}'.format, self.settings['fit_init'][n:n+ncempy.algo.math.lkp_funcs[self.settings['fit_funcs'][i]][1]])) )
                 n += ncempy.algo.math.lkp_funcs[self.settings['fit_funcs'][i]][1]
                 self.gui_radprof['fit_tbl'].setItem(i,0,new_func)
                 self.gui_radprof['fit_tbl'].setItem(i,1,new_init)
@@ -755,7 +762,10 @@ class Main(QtGui.QMainWindow):
         '''
         Open or create an EMD file to hold the evaluation.
         '''
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+
+        if type(fname)==list:
+            fname = fname[0]
         
         try:
             self.log('Saving evaluation to file "{}".'.format(fname))
@@ -763,7 +773,7 @@ class Main(QtGui.QMainWindow):
             # create/overwrite outfile
             if os.path.isfile(fname):
                 os.remove(fname)
-            femd = ncempy.io.emd.fileEMD(fname)            
+            femd = ncempy.io.emd.fileEMD(fname, readonly=False)            
                 
             if 'evaluation' in femd.file_hdl:
                 grp_eva = femd.file_hdl['evaluation']
@@ -998,14 +1008,17 @@ class Main(QtGui.QMainWindow):
             c_dims = self.dims[1:3]
 
         # find local max
+        sys.stdout.write('.. starting local max extraction\n')
         points = ncempy.algo.local_max.local_max(self.data[self.idx,:,:], self.settings['lmax_r'], self.settings['lmax_thresh'])
+        sys.stdout.write('.. converting points to coordinate system\n')
         points = ncempy.algo.local_max.points_todim(points, c_dims)
-                
+        sys.stdout.write('.. found {:d} candidate points.\n'.format(points.shape[0]))
         self.log('.. found {:d} candidate points.'.format(points.shape[0]))
                 
         # filter to single ring if input provided
         if (len(self.settings['lmax_cinit'])==2 and len(self.settings['lmax_range'])==2):
             points = ncempy.algo.distortion.filter_ring(points, self.settings['lmax_cinit'], self.settings['lmax_range'])
+            sys.stdout.write('.. filtered to {:d} points.\n'.format(points.shape[0]))
             self.log('.. filtered to {:d} points.'.format(points.shape[0]))
         
         # save points in main
@@ -1545,7 +1558,10 @@ class Main(QtGui.QMainWindow):
     
     def on_saveCorrPattern(self):
     
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
+
+        if type(fname)==list:
+            fname = fname[0]
         
         try:
             self.log('Saving corrected diffraction pattern to file "{}".'.format(fname))
@@ -1588,6 +1604,6 @@ class Main(QtGui.QMainWindow):
             raise
     
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     main = Main()
     sys.exit(app.exec_())

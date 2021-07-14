@@ -593,7 +593,7 @@ class fileSER:
 
         # create the EMD file and set version attributes
         try:
-            f = emd.fileEMD(filename)
+            f = emd.fileEMD(filename, readonly=False)
         except:
             raise IOError('Cannot write to file "{}"!'.format(filename))
 

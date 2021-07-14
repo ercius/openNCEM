@@ -5,14 +5,14 @@ GUI tool to convert TIF file to EMD file.
 
 import sys
 import os
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import numpy as np
 from PIL import Image
 
 import ncempy.io.emd
 
-class Converter(QtGui.QWidget):
+class Converter(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
@@ -24,50 +24,50 @@ class Converter(QtGui.QWidget):
         
         self.resize(600,250)
         qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
         
-        tif_lbl = QtGui.QLabel('input TIF file:', self) 
+        tif_lbl = QtWidgets.QLabel('input TIF file:', self) 
         
-        self.tif_txt = QtGui.QLineEdit(self)
+        self.tif_txt = QtWidgets.QLineEdit(self)
         self.tif_txt.setReadOnly(True)
-        self.tifButton = QtGui.QPushButton('Open', self)
+        self.tifButton = QtWidgets.QPushButton('Open', self)
         
-        hbox_tif = QtGui.QHBoxLayout()
+        hbox_tif = QtWidgets.QHBoxLayout()
         hbox_tif.addWidget(self.tif_txt)
         hbox_tif.addWidget(self.tifButton)       
         
-        tif_sep = QtGui.QFrame()
-        tif_sep.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        tif_sep = QtWidgets.QFrame()
+        tif_sep.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
 
         
-        emd_lbl = QtGui.QLabel('output EMD file:', self) 
+        emd_lbl = QtWidgets.QLabel('output EMD file:', self) 
         
-        self.emd_txt = QtGui.QLineEdit(self)
+        self.emd_txt = QtWidgets.QLineEdit(self)
         self.emd_txt.setReadOnly(True)
-        self.emdButton = QtGui.QPushButton('Save', self)
+        self.emdButton = QtWidgets.QPushButton('Save', self)
         
-        hbox_emd = QtGui.QHBoxLayout()
+        hbox_emd = QtWidgets.QHBoxLayout()
         hbox_emd.addWidget(self.emd_txt)
         hbox_emd.addWidget(self.emdButton)
         
-        emd_sep = QtGui.QFrame()
-        emd_sep.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        emd_sep = QtWidgets.QFrame()
+        emd_sep.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
         
         
-        self.msg = QtGui.QLabel('Ready', self)
-        self.convButton = QtGui.QPushButton('Convert', self)
-        self.exitButton = QtGui.QPushButton('Exit', self)
+        self.msg = QtWidgets.QLabel('Ready', self)
+        self.convButton = QtWidgets.QPushButton('Convert', self)
+        self.exitButton = QtWidgets.QPushButton('Exit', self)
         
-        hbox_buttons = QtGui.QHBoxLayout()
+        hbox_buttons = QtWidgets.QHBoxLayout()
         hbox_buttons.addWidget(self.msg)
         hbox_buttons.addStretch(1)
         hbox_buttons.addWidget(self.convButton)
         hbox_buttons.addWidget(self.exitButton)
   
         
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(tif_lbl)
         vbox.addLayout(hbox_tif)
         vbox.addWidget(tif_sep)     
@@ -99,12 +99,16 @@ class Converter(QtGui.QWidget):
             
     def clicked_tifButton(self):
         self.msg.setText('Ready')
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open single TIF file', filter='TIF files (*.tif);;All files (*.*)')
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open single TIF file', filter='TIF files (*.tif);;All files (*.*)')
+        if type(fname)==list:
+            fname = fname[0]
         self.tif_txt.setText(fname)
         
     def clicked_emdButton(self):
         self.msg.setText('Ready')
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save EMD file')
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save EMD file')
+        if type(fname)==list:
+            fname = fname[0]
         self.emd_txt.setText(fname)
         
     def convert(self):
@@ -119,7 +123,7 @@ class Converter(QtGui.QWidget):
         dims.append( (np.array(range(img.shape[1])), 'y', 'px'))
         dims.append( (np.array(range(img.shape[0])), 'x', 'px'))
         
-        femd = ncempy.io.emd.fileEMD(self.emd_txt.text())
+        femd = ncempy.io.emd.fileEMD(self.emd_txt.text(), readonly=False)
         
         grp = femd.file_hdl['data'].create_group(os.path.basename(tif_name))
         grp.attrs['emd_group_type'] = 1
@@ -140,6 +144,6 @@ class Converter(QtGui.QWidget):
     
         
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     con = Converter()
     sys.exit(app.exec_())
