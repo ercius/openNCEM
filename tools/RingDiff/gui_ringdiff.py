@@ -577,7 +577,7 @@ class Main(QtWidgets.QMainWindow):
         '''
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open EMD file', filter='EMD files (*.emd);;All files (*.*)')
 
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
 
         try:
@@ -641,7 +641,7 @@ class Main(QtWidgets.QMainWindow):
     
         fname = QtWidgets.QFileDialog.getOpenFileName( self, 'Open EMD evaluation file', filter='EMD files (*.emd);;All files (*.*)')
         
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
 
         try:
@@ -764,7 +764,7 @@ class Main(QtWidgets.QMainWindow):
         '''
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
 
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         
         try:
@@ -1560,7 +1560,7 @@ class Main(QtWidgets.QMainWindow):
     
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save to EMD file', filter='EMD files (*.emd);;All files (*.*)')
 
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         
         try:

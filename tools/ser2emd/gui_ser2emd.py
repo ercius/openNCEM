@@ -97,7 +97,7 @@ class Converter(QtWidgets.QWidget):
     def clicked_serButton(self):
         self.msg.setText('Ready')
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open SER file', filter='SER files (*.ser);;All files (*.*)')
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         self.ser_txt.setText(fname)
        
@@ -105,7 +105,7 @@ class Converter(QtWidgets.QWidget):
     def clicked_emdButton(self):
         self.msg.setText('Ready')
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save EMD file')
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         self.emd_txt.setText(fname)
         

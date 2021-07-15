@@ -100,14 +100,14 @@ class Converter(QtWidgets.QWidget):
     def clicked_tifButton(self):
         self.msg.setText('Ready')
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open single TIF file', filter='TIF files (*.tif);;All files (*.*)')
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         self.tif_txt.setText(fname)
         
     def clicked_emdButton(self):
         self.msg.setText('Ready')
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save EMD file')
-        if type(fname)==list:
+        if type(fname)==tuple:
             fname = fname[0]
         self.emd_txt.setText(fname)
         
