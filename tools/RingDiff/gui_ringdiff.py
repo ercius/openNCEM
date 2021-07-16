@@ -23,7 +23,7 @@ pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
 
-class MaskDialog(QtGui.QDialog):
+class MaskDialog(QtWidgets.QDialog):
 
     def __init__(self, parent):
         super().__init__(parent=parent)
