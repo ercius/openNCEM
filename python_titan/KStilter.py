@@ -5,6 +5,9 @@ in a CBED pattern.
 Currently, only works for the NCEM TEAM Stage and the
 FEI Flucam. The flucam data is gotten from TIA after acquisition.
 
+300 kV: similar to 200 kV
+200kV: alpha orientation = -18, polarity = -1
+
 author: Peter Ercius, percius@lbl.gov
 """
 
@@ -69,14 +72,13 @@ class TilterFrame(wx.Frame):
         
         # TODO Add in configuration option for cbed pixel sizes and change
         # to radians (see calc_tilts also.)
-        self.cbed_pixel_size = 0.006  # in degrees
-        print('Warning: Hard coded cbed pixel size = {} degrees'.format(self.cbed_pixel_size))
+        self.cbed_pixel_size = 0.041  # in degrees
         
         # Todo: Add configuration option for alpha axis orientation
-        self.alpha_orientation = 0
+        self.alpha_orientation = 18
         self.alpha_polarity = -1
-        print('Warning: Hard coded alpha polarity = {} degrees'.format(self.alpha_polarity))
-        print('Warning: Hard coded alpha axis orientation = {} degrees'.format(self.alpha_orientation))
+        print('Alpha polarity = {} degrees for 200 and 300 kV'.format(self.alpha_polarity))
+        print('Alpha axis orientation = {} degrees for 200 and 300 kV'.format(self.alpha_orientation))
 
         # Set the update stage position to either
         # compustage or teamstage function
@@ -155,13 +157,13 @@ class TilterFrame(wx.Frame):
         self._iSample = wx.TextCtrl(setupPage, wx.ID_ANY, value='', 
                                     size=(300,20))
         self._label_alpha_orientation = wx.StaticText(setupPage, wx.ID_ANY, 'Alpha orientation (deg)')
-        self._val_alpha_orientation = wx.TextCtrl(setupPage, wx.ID_ANY, value='0', 
+        self._val_alpha_orientation = wx.TextCtrl(setupPage, wx.ID_ANY, value='18', 
                                     size=(300,20))
         self._label_alpha_polarity = wx.StaticText(setupPage, wx.ID_ANY, 'Alpha polarity')
         self._val_alpha_polarity = wx.TextCtrl(setupPage, wx.ID_ANY, value='-1', 
                                     size=(300,20))
         self._label_cbed_pixel_size = wx.StaticText(setupPage, wx.ID_ANY, 'CBED pixel size (deg)')
-        self._val_cbed_pixel_size = wx.TextCtrl(setupPage, wx.ID_ANY, value='0.006', 
+        self._val_cbed_pixel_size = wx.TextCtrl(setupPage, wx.ID_ANY, value='0.041', 
                                     size=(300,20))
         self._lStage = wx.StaticText(setupPage, wx.ID_ANY, 'Stage type')
         self._iStage = wx.RadioBox(setupPage, wx.ID_ANY,
@@ -212,12 +214,19 @@ class TilterFrame(wx.Frame):
         self._label_cbed_pixel_size = wx.StaticText(alignPage, wx.ID_ANY, 'CBED pixel size (deg)')
         self._val_align_cbed_pixel_size = wx.StaticText(alignPage, wx.ID_ANY, str(self.cbed_pixel_size))
         self._btn_get_cbed_align = wx.Button(alignPage, label='Get CBED')
+        # allow manual convergence angle
+        self._label_convergence = wx.StaticText(alignPage, wx.ID_ANY, 
+                                              'Convergence angle (mrad)')
+        self._val_convergence = wx.TextCtrl(alignPage, wx.ID_ANY, value='30.0', 
+                                            size=(300,20))
         self._btn_auto_cbed_align = wx.Button(alignPage, label='Auto align')
-
+        
         alignbox.Add(self._label_cbed_center)
         alignbox.Add(self._val_cbed_center)
         alignbox.Add(self._label_cbed_pixel_size)
         alignbox.Add(self._val_align_cbed_pixel_size)
+        alignbox.Add(self._label_convergence)
+        alignbox.Add(self._val_convergence)
         alignbox.Add(self._btn_get_cbed_align)
         alignbox.Add(self._btn_auto_cbed_align)
 
@@ -277,16 +286,15 @@ class TilterFrame(wx.Frame):
         #print('Draw plot')
         
         # Need to add updates to the color limits. Not sure how to do that.
-        # self.ax0Im.set_data(imArray) # This should be faster.
+        # self.ax0Im.set_data(imArray) <-- This should be faster.
         # but it does not work. Need to update 
 
         self.ax0.clear()
         if imArray.shape[0] <= 2048:
-            axIm = self.ax0.imshow(imArray) # np.fliplr(np.rot90(imArray,3))
-            #axIm = self.ax0.imshow(np.rot90(imArray,1))
+            axIm = self.ax0.imshow(imArray)
         else:
             # 4kx4k cant be shown
-            axIm = self.ax0.imshow(imArray[::2,::2]) # np.fliplr(np.rot90(imArray,3))
+            axIm = self.ax0.imshow(imArray[::2,::2])
         
         # Add the zero beam marker
         self.ax0.add_patch(self.zero_beam)
@@ -371,12 +379,15 @@ class TilterFrame(wx.Frame):
         # Todo: get this from a config file instead
         self.alpha_orientation = float(self._val_alpha_orientation.GetValue())
         self.cbed_pixel_size = float(self._val_cbed_pixel_size.GetValue())
-        
+        self.alpha_polarity = float(self._val_alpha_polarity.GetValue())
         pos = self.getPosition()
         self._val_alpha.SetLabel('{:0.3}'.format(pos[3]))
         self._val_gamma.SetLabel('{:0.3}'.format(pos[4]))
         self._val_new_alpha.SetLabel('{:0.3}'.format(pos[3]))
         self._val_new_gamma.SetLabel('{:0.3}'.format(pos[4]))
+        
+        # Show convergence angle
+        self._val_convergence.SetLabel('{:0.3}'.format(self.Ill.ConvergenceAngle*1e3))
         
         window1 = self.TIA.ActiveDisplayWindow()
         disp1 = window1.FindDisplay(window1.DisplayNames[0])
@@ -437,7 +448,13 @@ class TilterFrame(wx.Frame):
         # Convert to degrees for now
         # Todo: Change cbed pixel size to radians
         radius0 = np.sqrt(im_th.sum() / np.pi) # pixels
-        self.cbed_pixel_size = (self.Ill.ConvergenceAngle / radius0) * 180 / np.pi
+        
+        # Get the convergence angle
+        #a = self.Ill.ConvergenceAngle
+        a = float(self._val_convergence.GetLabel())
+        a = a * 1.0e-3 # convert to radians
+        
+        self.cbed_pixel_size = (a / radius0) * 180 / np.pi
         if self.v:
             print('New cbed pixel size = {} deg'.format(self.cbed_pixel_size))
             print('CBED radius = {} pixels'.format(radius0))
@@ -518,11 +535,9 @@ class TilterFrame(wx.Frame):
         alpha_orientation = self.alpha_orientation * np.pi / 180.
         
         pos = self.getPosition()
-        #print('HARD CODED STAGE STARTING ANGLES')
-        #pos = (0,0,0,10,20)
         tsAlpha = pos[3] * np.pi / 180
         tsGamma = pos[4] * np.pi / 180
-        beam = [0,0,1] #beam points along z axis in world-beam frame
+        beam = [0, 0, 1] # beam points along z axis in world-beam frame
         
         # both in pixels
         axisXY = (x, y) # where clicked
@@ -536,7 +551,6 @@ class TilterFrame(wx.Frame):
         deltaXY = [x1 - x2 for (x1, x2) in zip(axisXY, cbedXY)]
         
         # Reverse X to get gamma direction correct
-        print('Reverse X')
         deltaXY[0] *= -1
         
         # Rotate the delta vector to accommodate the alpha axis rotation
@@ -552,30 +566,29 @@ class TilterFrame(wx.Frame):
             alpha_sign = self.alpha_polarity
         else:
             alpha_sign = -self.alpha_polarity
-        
         if self.v:
             print('alpha sign = {}'.format(alpha_sign))
         
         # Measure theta and phi using polar coordinates
         theta = alpha_sign * np.sqrt(deltaXY[0]**2 + deltaXY[1]**2) * self.cbed_pixel_size * np.pi/180 #theta can be calculated directly from the user click point and diff pattern calibration
         phi = np.arctan(deltaXY[0]/(deltaXY[1] + 1e-5)) # use arctan2 instead?
-        #Use the arctan2 to calcaulate gamma signs ?
         phi_arctan2 = np.arctan2(deltaXY[0],(deltaXY[1] + 1e-5)) 
         
         if self.v:
             print("theta = {} rad".format(theta))
+            print("theta = {} deg".format(theta * 180/np.pi))
             print("phi = {} rad, {} deg".format(phi, phi*180/np.pi))
             print("phi2 = {} rad, {} deg".format(phi_arctan2, phi_arctan2*180/np.pi))
 
         # Find the quaternion of the stage rotation
-        #this rotates the beam [0,0,1] into stage coordinates
+        # this rotates the beam [0, 0, 1] into stage coordinates
         qA = quaternions.fromAngleAxis(tsAlpha, [-1, 0, 0]) #alpha axis is X-axis
         qG = quaternions.fromAngleAxis(tsGamma, [0, 0, 1])
         world2tsQ = quaternions.normalize(quaternions.multiply(qA, qG)) #first gamma then A; gamma is attached to Alpha stage
 
         # Rotate the beam to the axis in world coordinates
-        axis_qA = quaternions.fromAngleAxis(theta, [-1,0,0]) #alpha axis is X-axis
-        axis_qG = quaternions.fromAngleAxis(phi, [0,0,1])
+        axis_qA = quaternions.fromAngleAxis(theta, [-1, 0, 0]) #alpha axis is X-axis
+        axis_qG = quaternions.fromAngleAxis(phi, [0, 0, 1])
         beam2axisQ = quaternions.normalize(quaternions.multiply(axis_qA, axis_qG)) #first gamma then A; gamma is attached to Alpha stage
         axisV = quaternions.applyToVector(beam2axisQ, beam)
         
@@ -587,14 +600,15 @@ class TilterFrame(wx.Frame):
             print("axis in TS frame = {}".format(axisV_TSframe))
         
         # The alpha and gamma values to tilt to (radians)
-        new_alpha = np.arccos(axisV_TSframe[2])
+        new_alpha_quaternion = np.arccos(axisV_TSframe[2]) # this loses the sign
+        new_alpha = tsAlpha + theta # directly from the calculated theta value
         new_gamma = np.arctan(axisV_TSframe[0]/(axisV_TSframe[1] + 1e-5))
         
         if self.v:
             print("axis in world frame = {}".format(axisV))
-            print("new alpha = {:0.3}".format(new_alpha * 180/np.pi))
-            print("new gamma = {:0.3}".format(new_gamma * 180/np.pi))
-
+            print("new alpha quaternion = {:0.3}".format(new_alpha_quaternion * 180/np.pi))
+            print("new gamma quaternion = {:0.3}".format(new_gamma * 180/np.pi))
+            print("new alpha from theta = {:0.3}".format((tsAlpha + theta)*180/np.pi))
         return new_alpha, new_gamma
         
     def getPosition_compustage(self):
