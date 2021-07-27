@@ -199,7 +199,7 @@ class TEAMFrame(wx.Frame):
         self._lBin2 = wx.StaticText(driftPage, wx.ID_ANY, 'Binning')
         self._iBin2 = wx.TextCtrl(driftPage,wx.ID_ANY,value='8')
         self._lRot2 = wx.StaticText(driftPage,wx.ID_ANY, 'Num scan rotations')
-        self._iRot2 = wx.RadioBox(driftPage,wx.ID_ANY,label='Rotation Series (degrees)', choices=('0, 90','0, 90, 45, 135'))
+        self._iRot2 = wx.RadioBox(driftPage,wx.ID_ANY,label='Rotation Series (degrees)', choices=('0, 90','0, 45, 90, 135'))
         self._iRot2.SetSelection(0)
         self._btnAcqDrift = wx.Button(driftPage, label = 'Acquire')
         
@@ -697,7 +697,10 @@ class TEAMFrame(wx.Frame):
         print(self.dfList)
         self.initializeEMDFile(exType = 'focalseries')
 
-        dataArray = np.zeros((self.numDF,self.numPerDF,self.expectedImageShape[0],self.expectedImageShape[1]),dtype='<u2')
+        if self.numPerDF > 1:
+            dataArray = np.zeros((self.numDF,self.numPerDF,self.expectedImageShape[0],self.expectedImageShape[1]),dtype='<u2')
+        else:
+            dataArray = np.zeros((self.numDF,self.expectedImageShape[0],self.expectedImageShape[1]),dtype='<u2')
         acqTimes = np.zeros((self.Rep,))
         
         for ii,df in enumerate(self.dfList):
@@ -710,7 +713,10 @@ class TEAMFrame(wx.Frame):
                 # Update the GUI
                 self.sb.SetStatusText('Image #{} of {} at defocus {} nm'.format(ii+1, int(self.numDF), np.round(1e9*df)))
                 self.acquireImages()
-                dataArray[ii,jj,:,:] = self.imageData
+                if self.numPerDF > 1:
+                    dataArray[ii,jj,:,:] = self.imageData
+                else:
+                    dataArray[ii,:,:] = self.imageData
             
             acqTimes[ii] = self.acqTime
         
@@ -750,12 +756,11 @@ class TEAMFrame(wx.Frame):
         
         del dataArray
         
-        
         self.sb.SetStatusText('Finished time series acquisition...')
         
     def onAcquireDrift(self, event):
         ''' Acquire a set of stem rotation angles. Either
-        0,90 or 0,90,45,135 degrees
+        0,90 or 0,45,90,135 degrees
         
         '''
         
@@ -766,15 +771,17 @@ class TEAMFrame(wx.Frame):
         rot0 = self.Ill.StemRotation # Current STEM rotation
         rotNum = self.rotSetting
         
-        if rotNum == 0: #2 rotations is selected
-            rotArray = np.array((rot0,rot0+np.pi/2.0)) #0, 90 pair
+        if rotNum == 0: # 2 rotations is selected
+            #rotArray = np.array((rot0,rot0+np.pi/2.0)) #  0, 90 pair
+            rotArray = rot0 + np.array([ii * np.pi / 180. for  ii in (0, 90)])
             self.Rep = 2
-        elif rotNum == 1: #4 rotations is selected
-            rotArray = np.array((rot0,rot0+np.pi/2.0,rot0+np.pi/4.0,rot0+3.0*np.pi/4.0)) # 0, 90 , 45, 135 degrees in that order
+        elif rotNum == 1: # 4 rotations is selected
+            #rotArray = np.array((rot0,rot0+np.pi/2.0,rot0+np.pi/4.0,rot0+3.0*np.pi/4.0)) # 0, 90 , 45, 135 degrees in that order
+            rotArray = rot0 + np.array([ii * np.pi/180 for ii in (0, 45, 90, 135)]) #  0, 45, 90, 135 quad
             self.Rep = 4
         else:
             self.Rep = 1
-            rotArray = rot0*np.ones((1,))
+            rotArray = rot0 * np.ones((1, ))
         
         self.initializeEMDFile(exType = 'drift')
         
@@ -875,7 +882,7 @@ class TEAMFrame(wx.Frame):
                 if self.rotSetting == 0:
                     dataTop.attrs['rotations'] = [0,90]
                 elif self.rotSetting == 1:
-                    dataTop.attrs['rotations'] = [0,90,45,135]
+                    dataTop.attrs['rotations'] = [0,45,90,135]
                 else:
                     dataTop.attrs['rotations'] = 'none'
             elif exType == 'timeseries':
@@ -884,33 +891,38 @@ class TEAMFrame(wx.Frame):
             elif exType == 'focalseries':
                 dataTop.attrs['number images'] = self.Rep
                 dataTop.attrs['number defocus'] = self.numDF
-                dataTop.attrs['number per df'] = self.numPerDF
+                dataTop.attrs['number per defocus'] = self.numPerDF
             
             pix = self.maxBin/self.Bin
             print('num pixesl = {}'.format(pix))
             
             # Create dataset with correct shape
             if exType == 'single':
-                sh = (pix,pix)
-                maxsh = (pix,pix)
-                chunks = (pix,pix)
+                sh = (pix, pix)
+                maxsh = (pix, pix)
+                chunks = (pix, pix)
             elif exType == 'focalseries':
-                sh = (self.numDF,self.numPerDF, pix, pix)
-                maxsh = (self.numDF,self.numPerDF, pix, pix)
-                chunks = (1,1, pix, pix)
+                if self.numPerDF > 1:
+                    sh = (self.numDF, self.numPerDF, pix, pix)
+                    maxsh = (self.numDF, self.numPerDF, pix, pix)
+                    chunks = (1, 1, pix, pix)
+                else:
+                    sh = (self.numDF, pix, pix)
+                    maxsh = (self.numDF, pix, pix)
+                    chunks = (1, pix, pix)
             else:
                 sh = (self.Rep, pix, pix)
                 maxsh = (self.Rep, pix, pix)
                 chunks = (1, pix, pix)
 
             # Initialize the data set
-            dset = dataTop.create_dataset('data',sh,'<u2',maxshape=maxsh,chunks=chunks)
-            #print(sh)
+            dataTop.create_dataset('data',sh,'<u2',maxshape=maxsh,chunks=chunks)
+            
             # Create the EMD dimension datasets
             _ = self.createDims(dataTop, exType, pix)
-             
+            
             microscope = f.create_group('microscope')
-            microscope.attrs['name'] = self.microscopeName
+            microscope.attrs['microscope name'] = self.microscopeName
             microscope.attrs['high tension'] = self._microscope.Gun.HTValue
             microscope.attrs['spot size'] = self.Ill.SpotsizeIndex
             microscope.attrs['magnification'] = self.Ill.StemMagnification
@@ -918,12 +930,10 @@ class TEAMFrame(wx.Frame):
             microscope.attrs['convergence angle'] = self.Ill.ConvergenceAngle
             microscope.attrs['camera length'] = self.Proj.CameraLength
             microscope.attrs['binning'] = self.Bin
-            microscope.attrs['max binning'] = self.maxBin
+            # microscope.attrs['max binning'] = self.maxBin
             microscope.attrs['dwell time'] = self.Dwell
-            
-            stage = f.create_group('stage')
-            stage.attrs['type'] = self.stageName
-            stage.attrs['position'] = self.getPosition()
+            microscope.attrs['stage type'] = self.stageName
+            microscope.attrs['stage position'] = self.getPosition()
 
             user = f.create_group('user')
             user.attrs['user name'] = self._iUser.GetValue()
@@ -931,7 +941,7 @@ class TEAMFrame(wx.Frame):
             sample = f.create_group('sample')
             sample.attrs['sample name'] = self._iSample.GetValue()
             
-        #Close the file
+        # Close the file
     
     def createDims(self, dataTop, exType, pix):
         
@@ -944,12 +954,20 @@ class TEAMFrame(wx.Frame):
             dim1.attrs['units'] = np.string_('n_m')
             #dims = (dim1,dim2)
         elif exType == 'focalseries':
-            dim4 = dataTop.create_dataset('dim4',(pix,),'f')
-            dim4.attrs['name'] = np.string_('X')
-            dim4.attrs['units'] = np.string_('n_m')
-            dim3 = dataTop.create_dataset('dim3',(pix,),'f')
-            dim3.attrs['name'] = np.string_('Y')
-            dim3.attrs['units'] = np.string_('n_m')
+            if self.numPerDF > 1:
+                dim4 = dataTop.create_dataset('dim4',(pix,),'f')
+                dim4.attrs['name'] = np.string_('X')
+                dim4.attrs['units'] = np.string_('n_m')
+                dim3 = dataTop.create_dataset('dim3',(pix,),'f')
+                dim3.attrs['name'] = np.string_('Y')
+                dim3.attrs['units'] = np.string_('n_m')
+            else:
+                dim3 = dataTop.create_dataset('dim3', (pix,), 'f')
+                dim3.attrs['name'] = np.string_('X')
+                dim3.attrs['units'] = np.string_('n_m')
+                dim2 = dataTop.create_dataset('dim2', (pix,), 'f')
+                dim2.attrs['name'] = np.string_('Y')
+                dim2.attrs['units'] = np.string_('n_m')
         else:
             dim3 = dataTop.create_dataset('dim3',(pix,),'f')
             dim3.attrs['name'] = np.string_('X')
@@ -967,12 +985,17 @@ class TEAMFrame(wx.Frame):
             dim1.attrs['name'] = np.string_('time')
             dim1.attrs['units'] = np.string_('sec')
         elif exType == 'focalseries':
-            dim1 = dataTop.create_dataset('dim1',(self.numDF,),'f')
-            dim1.attrs['name'] = np.string_('defocus')
-            dim1.attrs['units'] = np.string_('n_m')
-            dim2 = dataTop.create_dataset('dim2',(self.numPerDF,),'f')
-            dim2.attrs['name'] = np.string_('')
-            dim2.attrs['units'] = np.string_('')
+            if self.numPerDF > 1:
+                dim1 = dataTop.create_dataset('dim1',(self.numDF,),'f')
+                dim1.attrs['name'] = np.string_('defocus')
+                dim1.attrs['units'] = np.string_('n_m')
+                dim2 = dataTop.create_dataset('dim2',(self.numPerDF,),'f')
+                dim2.attrs['name'] = np.string_('')
+                dim2.attrs['units'] = np.string_('')
+            else:
+                dim1 = dataTop.create_dataset('dim1',(self.numDF,),'f')
+                dim1.attrs['name'] = np.string_('defocus')
+                dim1.attrs['units'] = np.string_('n_m')
 
         return 1
     
@@ -980,7 +1003,7 @@ class TEAMFrame(wx.Frame):
         with h5py.File(self.fullName + '.emd','a') as f:
             dataroot = f['data']
             dataTop = dataroot[exType]
-            dims = [dataTop['dim1'],dataTop['dim2']]
+            dims = [dataTop['dim1'], dataTop['dim2']]
             try:
                 # Get third dim if it exists
                 dims.append(dataTop['dim3'])
@@ -993,9 +1016,9 @@ class TEAMFrame(wx.Frame):
                 pass
                 
             dset = dataTop['data']
-            stage = f['stage']
-            user = f['user']
-            sample = f['sample']
+            # stage = f['stage']
+            # user = f['user']
+            # sample = f['sample']
             
             imageShape = self.imageData.shape[-2:]
             xdim = np.linspace(0,(imageShape[0]-1)*self.calX*1e9,imageShape[0]) #multiply by 1e9 for nanometers
@@ -1003,23 +1026,55 @@ class TEAMFrame(wx.Frame):
             dims[-1][:] = xdim
             dims[-2][:] = ydim
             dims[-2][:] = ydim
+            print('Debug: Why is dims[-2] written twice?')
+            
+            # Add as attribute so loading in Fiji provides pixel size
+            # Note: Must be 3D so set the first element to 1
+            fiji_element_size = (1, self.calY*1e6, self.calX*1e6)
             
             if len(dims) > 2:
                 if exType == 'drift':
                     if self.rotSetting == 0:
-                        dims[0][:] = (0,90)
+                        dims[0][:] = (0, 90)
+                        fiji_element_size = (90, self.calY*1e6, self.calX*1e6)
                     elif self.rotSetting == 1:
-                        dims[0][:] = (0,90,45,135)
+                        dims[0][:] = (0, 45, 90, 135)
+                    fiji_element_size = (45, self.calY*1e6, self.calX*1e6)
                 elif exType == 'timeseries':
-                    dims[0][:] = self.times - self.times[0]
+                    tt = self.times - self.times[0] # relative times
+                    dims[0][:] = tt
+                    fiji_element_size = (tt[1], self.calY*1e6, self.calX*1e6)
+                    print(fiji_element_size)
                 elif exType == 'focalseries':
                     dims[0][:] = self.dfList
-                    dims[1][:] = range(self.numPerDF)
-
+                    if self.numPerDF > 1:
+                        dims[1][:] = range(self.numPerDF)
+                    # Fiji only reads 3 elements from this attribute
+                    fiji_element_size = (self.dfList[1] - self.dfList[0],
+                                        self.calY*1e6, self.calX*1e6)
+            
+            # Write the acquisition times as a data set
             dataTop.create_dataset('acquisition times', data = self.times)
+            
+            # Create the dimension scales and attach them
+            #for ii, d in enumerate(dims):
+            #    d.make_scale(name=d.attrs['name'])
+            #    dataTop.dims[ii].attach_scale(d)
             
             self.sb.SetStatusText('Writing image(s)...')
             dset[:] = self.imageData
+            
+            # Create an attribute for easy loading into Fiji using HDF5 import
+            dset.attrs['element_size_um'] = np.asarray(fiji_element_size).astype(np.float32)
+            print('Fiji attribute added = {}'.format(fiji_element_size))
+            
+            # OR Write element size for simple Fiji loading (1, 1, y, x)
+            # if len(dims) == 3:
+            #    dset.attrs['element_size_um'] = (1.0, 
+            #                                      self.calY*1e6, self.calX*1e6)
+            # if len(dims) == 4:
+            #    dset.attrs['element_size_um'] = (1.0, 1.0, 
+            #                                     self.calY*1e6, self.calX*1e6)
             
             self.imageData = 0 # set the image data to 0 to free memory
 # Parse the arguments
