@@ -550,6 +550,10 @@ def emdReader(filename, dsetNum=0):
         d, dims = emd0.get_emdgroup(dsetNum, memmap=False)  # memmap must be false. File is closed
         out = {'data': d, 'filename': filename, 'pixelSize': []}
 
+        # Get the group name
+        name = emd0.list_emds[dsetNum].name.split('/')[-1]
+        out['name'] = name
+
         for dim in dims:
             try:
                 d = dim[0][1] - dim[0][0]
