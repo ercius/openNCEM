@@ -1224,3 +1224,67 @@ def latticeDisplacements(peaks, u, v, origin):
         # p0_disp_r_theta_linalg[ii, :] = (np.sqrt((pp[0] - rref[0]) ** 2 + (pp[1] - rref[1]) ** 2),
         #                                  np.arctan2((pp[1] - rref[1]), (pp[0] - rref[0])))
     return p0_disp_linalg
+
+
+def calculate_unit_cell(image, lattice, u, v, unit_cell_size):
+    """ IN PROGRESS
+    Calculate a unit cell using the input lattice and lattice parameters. Any unit cell at the edge of the image is not
+    used as part of the unit cell will be invalid.
+
+    Parameters
+    ----------
+    image : ndarray
+        The image containing the unit cell in a regular pattern (i.e. a lattice)
+    lattice: ndarray
+        The starting position of each unit cell in the image.
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    unit_cell_size : int or tuple
+        If int then this is the number of pixels in the unit cell along the u vector. The size of the v vector will be
+        automatically calculated to make the unit cell pixels square. If tuple then the number of pixels along each
+        u and v dimension are used directly.
+
+    Returns
+    -------
+    : ndarray
+        An array of size unit_cell_size which contains the average value of each position in the unit cell for each
+        peak position and u,v, lattice point.
+    """
+    print('Warning, untested code. Work in progress.')
+    if isinstance(unit_cell_size, int):
+        num_u = unit_cell_size
+        num_v = int(num_u * (np.linalg.norm(v) / np.linalg.norm(u)))
+    elif isinstance(unit_cell_size, tuple):
+        num_u, num_v = unit_cell_size
+    else:
+        raise TypeError('unit_cell_size must be int or 2-tuple')
+
+    # Ensure image is floating point for interpolation
+    if np.issubdtype(image.dtype, np.floating):
+        image2 = image.copy()
+    else:
+        image2 = image.astype(np.float32)
+
+    uu = [ii / num_u for ii in u]
+    vv = [ii / num_v for ii in v]
+
+    # Create a centered set of sub-lattice coordinates
+    sub_lattice = lattice2D(uu, vv, 1, 1, (0, 0), (num_u, num_v))  # starts at (0, 0). Then offset for each peak.
+
+    unit_cell = np.zeros((num_v, num_u), dtype=image2.dtype)
+    cur_cell = np.zeros((num_v * num_u,), dtype=image2.dtype)
+    num = 0  # number of unit cells used (edges are not used)
+    for ii, peak in enumerate(lattice):
+        cur_XX = sub_lattice[:, 0] + peak[0]
+        cur_YY = sub_lattice[:, 1] + peak[1]
+        ndimage.map_coordinates(image2, (cur_XX.ravel(), cur_YY.ravel()), order=3, output=cur_cell)
+        if not np.any(np.isnan(cur_cell)):
+            # Avoid unit cells on the edge of the image. Otherwise the mean is corrupted
+            unit_cell += cur_cell.reshape((num_v, num_u))
+            num += 1
+
+    # Normalize by the number of unit cells used
+    unit_cell /= num
+
+    # Rotate to match the image
+    return unit_cell.T
