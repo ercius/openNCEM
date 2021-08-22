@@ -59,10 +59,11 @@ class Test_peak_find:
         assert np.all(peaks == ((10, 11), (33, 14)))
 
     def test_lattice2D_norm(self):
-        # (u, v, a, b, origin, num_points)
         u = (1, 0)
-        v = (0, 2)
+        v = (0, 1)
         a = 1.5
         b = 1.75
+        n = (3, 3)
+        lat = ncempy.algo.peak_find.lattice2D_norm(u, v, a, b, (0, 0), n)
+        assert np.allclose(lat[1, :], (1.5, 0))
 
-        lat = ncempy.algo.peak_find.lattice2D_norm()

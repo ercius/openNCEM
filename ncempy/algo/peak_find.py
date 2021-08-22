@@ -414,9 +414,8 @@ def lattice2D_norm(u, v, a, b, origin, num_points):
             The set of points in the lattice. Size (num_points[0] * num_points[1], 2)
     """
 
-    if np.linalg.norm(u) != 1.0 or np.linalg.norm(v) != 1.0:
-        print('u and v must be normalized. Exiting.')
-        return 0
+    assert np.linalg.norm(u) == 1
+    assert np.linalg.norm(v) == 1
 
     totalNumPoints = np.prod(num_points)
 
