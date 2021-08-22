@@ -1167,3 +1167,60 @@ def fit_peaks_gauss3d(volume, peaks, cutOut, init, bounds, remove_edge_peaks=Tru
         fittingValues = fittingValues
 
     return optPoints, optI, fittingValues
+
+
+def match_lattice_peaks(peaks, u, v, origin):
+    """ Find the matching lattice points to the experimental peaks. This is useful to generate all fitted lattice points
+    for a set of experimental peaks. This can then be used directly to calculate displacements for example.
+
+    Parameters
+    ----------
+    peaks : ndarray
+        The experimental peaks as a (num_peaks, 2) ndarray
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    origin : tuple
+        The origin of the fitted lattice for u, v vectors
+
+    Returns
+    -------
+    : ndarray
+        An array of shape (num_peaks, 2) where each coordinate is the closest lattice point for each input peak.
+    """
+
+    uv = np.asarray((u, v))
+    ab_nearest = np.dot(peaks - origin, np.linalg.inv(uv))
+
+    return ab_nearest
+
+
+def latticeDisplacements(peaks, u, v, origin):
+    """ Find the displacements of the experimental peaks to the fitted lattice parameters
+
+    Parameters
+    ----------
+    peaks : ndarray
+        The experimental peaks with shape (num_peaks, 2). For example, the output of fit_peaks_gauss2d.
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    origin : tuple
+        The origin of the fitted lattice for u, v vectors
+
+    Returns
+    -------
+    : ndarray
+        The displacement of each peak from the expected lattice position.
+    """
+    ab_nearest = match_lattice_peaks(peaks, u, v, origin)
+
+    uv = np.asarray((u, v))
+
+    p0_disp_linalg = np.zeros(peaks.shape)
+    # p0_disp_r_theta_linalg = np.zeros(peaks.shape)
+    for ii in range(peaks.shape[0]):
+        pp = peaks[ii, :]
+        rref = np.dot(np.round(ab_nearest[ii, :]), uv) + origin
+        p0_disp_linalg[ii, :] = pp - rref
+        # p0_disp_r_theta_linalg[ii, :] = (np.sqrt((pp[0] - rref[0]) ** 2 + (pp[1] - rref[1]) ** 2),
+        #                                  np.arctan2((pp[1] - rref[1]), (pp[0] - rref[0])))
+    return p0_disp_linalg
