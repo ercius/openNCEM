@@ -1,6 +1,9 @@
 """
 Module to find local maxima in 2D and 3D data such as images and density maps.
 
+Many functions are based on work by Colin Ophus, cophus@lbl.gov and his excellent
+RealSpaceLattice01.m code.
+
 author: Peter Ercius, percius@lbl.gov
 """
 
@@ -385,10 +388,10 @@ def peaksToImage(peakList, imShape, gaussSigma, gaussSize, indexing='ij'):
     return sim_image
 
 
-def lattice2D_norm(u, v, a, b, xy0, num_points):
+def lattice2D_norm(u, v, a, b, origin, num_points):
     """
     Returns a set of points in a lattice according to the u, v unit vectors (vectors are normalized internally)
-    and lengths a,b centered at xy0. The lattice has num_points along each u,v
+    and lengths a,b centered at origin. The lattice has num_points along each u,v
     vector.
     
     Parameters
@@ -399,7 +402,7 @@ def lattice2D_norm(u, v, a, b, xy0, num_points):
         a, b : float
             values to multiply each vector by (if u,v are not normalized then set these to 1)
 
-        xy0 : 2-tuple
+        origin : 2-tuple
             The origin in the format (x0, y0)
 
         num_points : 2-tuple
@@ -423,13 +426,13 @@ def lattice2D_norm(u, v, a, b, xy0, num_points):
     Y = Y2D.reshape(totalNumPoints)
 
     xy = np.zeros((np.prod(num_points), 2))
-    xy[:, 0] = xy0[0] + a * X * u[0] + b * Y * v[0]
-    xy[:, 1] = xy0[1] + a * X * u[1] + b * Y * v[1]
+    xy[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0]
+    xy[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1]
 
     return xy
 
 
-def lattice2D(u, v, a, b, xy0, num_points):
+def lattice2D(u, v, a, b, origin, num_points):
     """
     A modified version of peakFind.lattice2D_norm which can use non normalized u,v,vectors
     
@@ -441,7 +444,7 @@ def lattice2D(u, v, a, b, xy0, num_points):
         a, b : float
             values to multiply each vector by (if u,v,w are not normalized then set these to 1)
 
-        xy0 : tuple
+        origin : tuple
             The origin in the format (x0,y0)
 
         num_points : tuple
@@ -460,8 +463,8 @@ def lattice2D(u, v, a, b, xy0, num_points):
     Y = Y2D.reshape(totalNumPoints)
 
     xy = np.zeros((np.prod(num_points), 2))
-    xy[:, 0] = xy0[0] + a * X * u[0] + b * Y * v[0]
-    xy[:, 1] = xy0[1] + a * X * u[1] + b * Y * v[1]
+    xy[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0]
+    xy[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1]
 
     return xy
 
@@ -469,7 +472,7 @@ def lattice2D(u, v, a, b, xy0, num_points):
 def lattice3D(u, v, w, a, b, c, origin, num_points):
     """
     Returns a set of points in a lattice according to the u, v, w vectors
-    and lengths a,b centered at xy0. The lattice has num_points along each u,v,w
+    and lengths a,b centered at origin. The lattice has num_points along each u,v,w
     vector.
 
     Parameters
@@ -538,6 +541,7 @@ def applyLatticeLimit(lattice, bounds):
     return lattice[goodUVs, :]
 
 
+# noinspection PyArgumentList
 def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     """
     Plot a set of peaks in a 3D plot using matplotlib. See the example below for how to set up a figure as input
@@ -571,10 +575,10 @@ def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     and set up a figure for use with this function.
     >>> import matplotlib.pyplot as plt
     >>> import mpl_toolkits.mplot3d
-    >>> from ncempy.algo import peakFind
+    >>> from ncempy.algo import peak_find
     >>> fg1 = plt.figure()
     >>> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
-    >>> peakFind.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
+    >>> peak_find.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
     """
 
     import matplotlib.pyplot as plt
