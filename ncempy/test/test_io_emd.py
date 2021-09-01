@@ -84,3 +84,12 @@ class Testemd:
 
         out = ncempy.io.emd.emdReader(data_location / Path('emd_type1_stringDims.h5'))
         assert out['data'].ndim == 4
+
+    def test_file_exists(self, temp_file):
+        dd = np.zeros((10, 11, 12))
+        ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3))
+        assert temp_file.exists()
+        try:
+            ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), overwrite=True)
+        except FileExistsError:
+            assert False

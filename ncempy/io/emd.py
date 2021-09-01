@@ -561,7 +561,7 @@ def emdReader(filename, dsetNum=0):
         return out
 
 
-def emdWriter(filename, data, pixel_size=None):
+def emdWriter(filename, data, pixel_size=None, overwrite=False):
     """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
     size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
 
@@ -573,7 +573,8 @@ def emdWriter(filename, data, pixel_size=None):
         The data as an ndarray to write to the file.
     pixel_size : tuple
         A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
-
+    overwrite : boolean
+        If file exists, overwrite it.
     """
     if isinstance(filename, str):
         filename = Path(filename)
@@ -583,6 +584,10 @@ def emdWriter(filename, data, pixel_size=None):
             assert len(pixel_size) == data.ndim
         except ValueError:
             raise ValueError('pixel_size length must match the number of dimensions of data.')
+
+    # Delete the file if it exists and overwrite is true
+    if filename.exists() and overwrite:
+        filename.unlink()
 
     if not filename.exists():
         with fileEMD(filename, readonly=False) as emd0:
