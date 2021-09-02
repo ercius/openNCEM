@@ -895,7 +895,7 @@ def generateLatticeFromRefinement(origin, u, v, ab, fraction=(1, 1)):
         fraction : tuple
             The fraction used in refineLattice2D. 2-tuple
         ab : np.ndarray
-            The set of positions on terms of u and v lattice vectors. (number, position) (M, 2)
+            The set of positions in terms of u and v lattice vectors. (number, position) (M, 2)
         fraction : tuple
             The fractional coordinates for the unit cell. 2-tuple
     
