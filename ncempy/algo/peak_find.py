@@ -706,12 +706,7 @@ def refineLattice2D(or0, u0, v0, pos, fraction=(1, 1), max_iter=30,
     """ Refine lattice based on measurements and initial
     guess at lattice vectors. This code is designed to work only with
     square lattices. Hexagonal and more complex lattice might not work.
-    
-    Warning
-    -------
-        Tested code but not production yet. Probably should just call
-        latticeRefine3D with w0 = [0, 0, 0]
-    
+
     Parameters
     ----------
         or0 : tuple
