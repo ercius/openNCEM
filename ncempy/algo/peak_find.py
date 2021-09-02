@@ -197,55 +197,6 @@ def enforceMinDist(positions, intensities, minDistance):
     return validPeaks.astype(np.int)
 
 
-def peaksToVolume_old(peakList, volShape, gaussParams):
-    """ Convolve peak positions by a 3D gaussian to compare with original volume.
-    
-    Note
-    ----
-        The x0, y0 and z0 values in gaussParams should all be 0. This will be fixed in a later version.
-    
-    Parameters
-    ----------
-        peakList : np.ndarray
-            Array of peak positions of size (numPeaks,3). The peakList will be set to integer voxel positions
-        
-        volShape : tuple
-            Shape of the volume containing the peaks
-        
-        gaussParams : tuple
-            Parameters for gaussND.gauss3D() function (x0,y0,z0,sigX,sigY,sigZ)
-        
-    Returns
-    -------
-        : np.ndarray
-            A volume containing gaussian peaks at each position indicated in peakList parameter.
-    
-    """
-
-    # Todo: Set x0,y0,z0 = 0 and change the code to reflect this before releasing
-    print('Set x0,y0,z0 = 0 and change the code to reflect this before releasing')
-
-    simVol = np.zeros(volShape, dtype=np.float32)
-
-    # Should allow the peaks to be subSampled into a large volume:
-    # simVol[np.int32(peakList[:,0]*volShape[0]/peakList[:,0].max()),
-    #       np.int32(peakList[:,1]*volShape[1]/peakList[:,1].max()),
-    #       np.int32(peakList[:,2]*volShape[2]/peakList[:,2].max())] = 1.0
-    simVol[np.int32(peakList[:, 0]),
-           np.int32(peakList[:, 1]),
-           np.int32(peakList[:, 2])] = 1.0
-
-    Y3D, X3D, Z3D = np.meshgrid(np.arange(simVol.shape[1]) - (simVol.shape[1] - 1) / 2.,
-                                np.arange(simVol.shape[0]) - (simVol.shape[0] - 1) / 2.,
-                                np.arange(simVol.shape[2]) - (simVol.shape[2] - 1) / 2.,
-                                indexing=default_indexing)
-    gg3 = gaussND.gauss3D(X3D, Y3D, Z3D,
-                          gaussParams[0], gaussParams[1], gaussParams[2],
-                          gaussParams[3], gaussParams[4], gaussParams[5])
-    sim_convolve = sig.fftconvolve(gg3, simVol, mode='same')
-    return sim_convolve
-
-
 def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
     """ Place 3D Gaussian at a set of peak positions.
     
@@ -296,50 +247,6 @@ def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
                    pos_loc[1] - sz[1]:pos_loc[1] + sz[1] + 1,
                    pos_loc[2] - sz[2]:pos_loc[2] + sz[2] + 1] += gg3
     return sim_volume
-
-
-def peaksToImage_old(peakList, vol_shape, gaussParams):
-    """Convolve peak positions by a 2D gaussian to compare with original image.
-
-    Note
-    ----
-        Deprecated. Use peaksToImage
-
-    Parameters
-    -----------
-        peakList : np.ndarray
-            Array of peak positions of size (numPeaks, 2). The peakList will be 
-            set to integer pixel positions.
-        
-        vol_shape : tuple
-            Shape of the volume containing the peaks
-        
-        gaussParams : tuple
-            Sigma parameters for gaussND.gauss2D() function (sigX,sigY).
-            
-    Returns
-    -----------
-        : np.ndarray
-            A volume containing gaussian peaks at each position indicated in peakList parameter.
-    
-    """
-
-    simIm = np.zeros(vol_shape)
-    simIm[np.int32(peakList[:, 0]), np.int32(peakList[:, 1])] = 1.0
-
-    # Should allow the peaks to be subSampled into a large volume:
-    # simVol[np.int32(peakList[:,0]*volShape[0]/peakList[:,0].max()),
-    #       np.int32(peakList[:,1]*volShape[1]/peakList[:,1].max()),
-    #       np.int32(peakList[:,2]*volShape[2]/peakList[:,2].max())] = 1.0
-
-    Y3D, X3D = np.meshgrid(np.arange(simIm.shape[1]) - (simIm.shape[1] - 1) / 2.,
-                           np.arange(simIm.shape[0]) - (simIm.shape[0] - 1) / 2.,
-                           indexing=default_indexing)
-    gg2 = gaussND.gauss2D(X3D, Y3D,
-                          0, 0,
-                          gaussParams[0], gaussParams[1])
-    sim_convolve = sig.fftconvolve(gg2, simIm, mode='same')
-    return sim_convolve
 
 
 def peaksToImage(peakList, imShape, gaussSigma, gaussSize, indexing='ij'):
@@ -545,7 +452,9 @@ def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     """
     Plot a set of peaks in a 3D plot using matplotlib. See the example below for how to set up a figure as input
     to this function using matplotlib Axes3D.
-    
+
+    todo: move this to viz
+
     Parameters
     -----------
         X : np.ndarray
@@ -604,7 +513,9 @@ def peak3View(fg, vol, peak_positions):
     Plot 3 orthogonal slices and the corresponding peaks in each slice.
     
     Not fully test. Unsure whether the slices and peaks are exactly the same.
-    
+
+    todo: move this to viz
+
     Parameters
     -----------
         fg : matplotlib figure
@@ -673,7 +584,9 @@ def remove_xrays(imageOriginal, threshold, size_median_filter=(3, 3)):
 def writeXYZ(filename, XYZ, element, comment):
     """
     Write out a set of XYZ coordinates that can be read by various crystal viewing software such as Vesta.
-    
+
+    todo: Move this to io
+
     Parameters
     ----------
         filename : str
