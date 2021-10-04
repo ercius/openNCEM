@@ -10,7 +10,6 @@ author: Peter Ercius, percius@lbl.gov
 from . import gaussND
 
 import numpy as np
-from scipy import signal as sig
 import scipy.optimize as opt
 from scipy import ndimage
 
