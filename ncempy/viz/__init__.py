@@ -90,8 +90,8 @@ def imfft(im, d=1.0, ax=None):
     This example shows how to display a 2D ndarray (image) as a
     diffractogram. The image has a real space pixel size of 0.1 nanometer.
 
-    >>> imageFFT = np.fft.fft2(im)
-    >>> ncempy.viz.imfft(imageFFT, d = 0.1)
+    >> imageFFT = np.fft.fft2(im)
+    >> ncempy.viz.imfft(imageFFT, d = 0.1)
 
     """
 

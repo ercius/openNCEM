@@ -221,9 +221,8 @@ def imageShifter(g1, xy_shift):
 
     Example
     -------
-
-        >>> shiftIm0 = np.real(np.fft.ifft2(multicorr.imageShifter(np.fft.fft2(im0),[11.1,22.2])))
-        >>> plt.imshow(shiftIm0)
+        >> shiftIm0 = np.real(np.fft.ifft2(multicorr.imageShifter(np.fft.fft2(im0),[11.1,22.2])))
+        >> plt.imshow(shiftIm0)
 
     """
     # Check that the inputs are complex FFTs (common error)
