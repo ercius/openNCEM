@@ -93,3 +93,22 @@ class Testemd:
             ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), overwrite=True)
         except FileExistsError:
             assert False
+
+    def test_memmap(self, data_location):
+
+        emd1 = ncempy.io.emd.fileEMD(data_location / Path('Acquisition_18.emd'))
+        d, dims = emd1.get_memmap(0)
+        del emd1
+        assert d[0, 0] == 12487
+
+    def test_memmap_in_function(self, data_location):
+        f = data_location / Path('Acquisition_18.emd')
+
+        def load_memmap(fpath, N):
+            f0 = ncempy.io.emd.fileEMD(fpath)
+            data0, dims0 = f0.get_memmap(N)
+            return data0, dims0
+
+        data, dims = load_memmap(f, 0)
+        assert data[0,0] == 12487
+
