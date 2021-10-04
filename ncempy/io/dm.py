@@ -195,7 +195,7 @@ class fileDM:
         self._encodedTypeSizes = {0: 0, 8: 1, 9: 1, 10: 1,
                                   2: 2, 4: 2,
                                   3: 4, 5: 4, 6: 4,
-                                  7: 8, 12: 8}
+                                  7: 8, 11: 8, 12: 8}
 
         self._DM2NPDataTypes = {1: np.int16, 2: np.float32,
                                 3: np.complex64, 6: np.uint8,
