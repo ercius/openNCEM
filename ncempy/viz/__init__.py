@@ -63,6 +63,7 @@ def im_calibrated(im, d):
     ax.imshow(im, extent=ext)
     return fg
 
+
 def imfft(im, d=1.0, ax=None):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
