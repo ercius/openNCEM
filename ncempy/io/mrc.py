@@ -439,11 +439,10 @@ def mrcReader(file_name, verbose=False):
     Example
     -------
         Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
-
-            >>> from ncempy.io import mrc
-            >>> import matplotlib.pyplot as plt
-            >>> mrc1 = mrc.mrcReader('filename.mrc')
-            >>> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
+        >> from ncempy.io import mrc
+        >> import matplotlib.pyplot as plt
+        >> mrc1 = mrc.mrcReader('filename.mrc')
+        >> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
     """
     with fileMRC(file_name, verbose) as f1:  # open the file and init the class
         im1 = f1.getDataset()  # read in the dataset

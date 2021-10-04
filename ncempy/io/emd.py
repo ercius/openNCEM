@@ -52,11 +52,10 @@ class fileEMD:
     --------
     Open an Berkeley EMD file using the *advanced* interface. See the emdReader function for a more convenient
     way to load the data. We show how to list the available data sets, load a 3D data set and plot the first image.
-
-        >>> from ncempy.io import emd
-        >>> with emd.fileEMD('filename.emd') as emd1:
-        >>>     [print(dataGroup.name) for dataGroup in emd1.list_emds] # print all available EMD datasets
-        >>>     data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
+    >> from ncempy.io import emd
+    >> with emd.fileEMD('filename.emd') as emd1:
+    >>     [print(dataGroup.name) for dataGroup in emd1.list_emds] # print all available EMD datasets
+    >>     data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
     """
 
     def __init__(self, filename, readonly=True):

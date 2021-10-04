@@ -70,15 +70,13 @@ class fileDM:
     Examples
     --------
     Read data from a file containing a single image into memory
-
-    >>> from ncempy.io import dm
-    >>> with dm.fileDM('filename.dm4') as dmFile1:
-    >>>     dataSet = dmFile1.getDataset(0)
+    >> from ncempy.io import dm
+    >> with dm.fileDM('filename.dm4') as dmFile1:
+    >>     dataSet = dmFile1.getDataset(0)
 
     Example of reading a full multi-image DM3 file into memory:
-
-    >>> with dm.fileDM('imageSeries.dm3')as dmFile2:
-    >>>     series = dmFile2.getDataset(0)
+    >> with dm.fileDM('imageSeries.dm3')as dmFile2:
+    >>     series = dmFile2.getDataset(0)
     """
 
     __slots__ = ('filename', 'fid', '_on_memory', '_v', 'xSize', 'ySize',
@@ -1182,10 +1180,10 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
 
     Example
     -------
-        Load all data from a single image dm3 file and display it
-            >>> from ncempy.io import dm
-            >>> im0 = dm.dmReader('filename.dm3')
-            >>> plt.imshow(im0['data']) #show the single image from the data file
+        Load data from a single image dm3 file and display it
+        >> from ncempy.io import dm
+        >> im0 = dm.dmReader('filename.dm3')
+        >> plt.imshow(im0['data']) #show the single image from the data file
     """
     # Open the file
     with fileDM(filename, verbose, on_memory=on_memory) as f1:

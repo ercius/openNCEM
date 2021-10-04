@@ -54,19 +54,17 @@ class fileSER:
     Examples
     --------
     Read data from a single image into memory using the low level API.
-
-    >>> import matplotlib.pyplot as plt
-    >>> import ncempy.io as nio
-    >>> with nio.ser.fileSER('filename.ser') as ser1:
-    >>>    data, metadata = ser1.getDataset(0)
+    >> import matplotlib.pyplot as plt
+    >> import ncempy.io as nio
+    >> with nio.ser.fileSER('filename.ser') as ser1:
+    >>    data, metadata = ser1.getDataset(0)
 
     SER files are internally structured such that each image in a series is a
     different data set. Thus, time series data should be read as the
     following:
-
-    >>> with ser.fileSER('filename_1.ser') as ser1:
-    >>>     image0, metadata0 = ser1.getDataset(0)
-    >>>     image1, metadata1 = ser1.getDataset(1)
+    >> with ser.fileSER('filename_1.ser') as ser1:
+    >>     image0, metadata0 = ser1.getDataset(0)
+    >>     image1, metadata1 = ser1.getDataset(1)
     """
 
     _dictByteOrder = {0x4949: 'little endian'}
@@ -1052,10 +1050,9 @@ def serReader(filename):
     Examples
     --------
         Load a single image data set and show the image:
-
-            >>> import ncempy.io as nio
-            >>> ser1 = nio.ser.serReader('filename_1.ser')
-            >>> plt.imshow(ser1['data'])  # show the single image from the data file
+        >> import ncempy.io as nio
+        >> ser1 = nio.ser.serReader('filename_1.ser')
+        >> plt.imshow(ser1['data'])  # show the single image from the data file
     """
     # Open the file and init the class
     with fileSER(filename) as f1:

@@ -44,11 +44,10 @@ class fileEMDVelox:
     Examples
     --------
     Open an EMD Velox file containing 1 image.
-
-    >>> import ncempy.io as nio
-    >>> with nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd') as emd1:
-    >>>     print(emd1) # print information about the file
-    >>>     im0, metadata0 = emd1.get_dataset(0)
+    >> import ncempy.io as nio
+    >> with nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd') as emd1:
+    >>     print(emd1) # print information about the file
+    >>     im0, metadata0 = emd1.get_dataset(0)
     """
     
     def __init__(self, filename):
