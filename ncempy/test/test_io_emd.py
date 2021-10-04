@@ -64,7 +64,7 @@ class Testemd:
             dd2, dims2 = emd1.get_emdgroup(0)
         assert dd2.shape == (10, 11, 12)
 
-    def test_emdwrtier(self, temp_file):
+    def test_emd_writer(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
         ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3))
         with ncempy.io.emd.fileEMD(temp_file) as emd0:
