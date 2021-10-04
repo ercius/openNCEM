@@ -480,12 +480,12 @@ def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     -------
     This function requires the input of a Axes3D to plot a set of peaks. See below how to import
     and set up a figure for use with this function.
-    >>> import matplotlib.pyplot as plt
-    >>> import mpl_toolkits.mplot3d
-    >>> from ncempy.algo import peak_find
-    >>> fg1 = plt.figure()
-    >>> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
-    >>> peak_find.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
+    >> import matplotlib.pyplot as plt
+    >> import mpl_toolkits.mplot3d
+    >> from ncempy.algo import peak_find
+    >> fg1 = plt.figure()
+    >> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
+    >> peak_find.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
     """
 
     import matplotlib.pyplot as plt
@@ -603,7 +603,7 @@ def writeXYZ(filename, XYZ, element, comment):
     Example
     -------
         # Write out the peak positions as Carbon atoms:
-        >>> writeXYZ('name.xyz', positions, ['C',] * len(positions), 'writeXYZ example carbon atoms')
+        >> writeXYZ('name.xyz', positions, ['C',] * len(positions), 'writeXYZ example carbon atoms')
     """
     numAtoms = XYZ.shape[0]
     with open(filename, 'w') as f1:
