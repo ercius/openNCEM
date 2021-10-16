@@ -109,23 +109,26 @@ class fileDM:
             improve reading in all cases.
 
         """
-        self.filename = filename
+
+        # Add a top level variable to indicate verbose output for debugging
+        self._v = verbose
 
         # necessary declarations, if something fails
         self.fid = None
-
         self._on_memory = on_memory
 
         # check filename type
         if isinstance(filename, str):
-            pass
+            filename = Path(filename)
         elif isinstance(filename, Path):
-            filename = str(filename)
+            pass
+        #elif isinstance(filename, FILE_OBJECT):
+        #    self.fid = filename
         else:
             raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
-        # Add a top level variable to indicate verbose output for debugging
-        self._v = verbose
+        #if not self.fid:
+        self.filename = str(filename)
 
         # try opening the file
         try:
@@ -143,12 +146,13 @@ class fileDM:
                         self.fid = mmap.mmap(_fid.fileno(), 0,
                                              prot=mmap.PROT_READ)  # , flags=mmap.MAP_PRIVATE)
                     self._buffer_size = filestats(filename).st_size
-
         except IOError:
             print('Error reading file: "{}"'.format(filename))
             raise
         except:
             raise
+        #else:
+        #   filename = self.fid.name
 
         if not self._validDM():
             raise IOError('Can not read file: {}'.format(filename))
