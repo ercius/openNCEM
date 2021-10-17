@@ -93,3 +93,10 @@ class Testemd:
             ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), overwrite=True)
         except FileExistsError:
             assert False
+
+    def test_file_object(self, data_location):
+        # Test fileEMD class input with file object
+        file_name = data_location / Path('Acquisition_18.emd')
+        fid = open(file_name, 'rb')
+        emd0 = ncempy.io.emd.fileEMD(fid)
+        assert hasattr(emd0, 'file_hdl')
