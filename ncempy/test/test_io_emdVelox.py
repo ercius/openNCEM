@@ -61,3 +61,10 @@ class TestEMDVelox:
         assert dd.ndim == 2
         assert md['pixelSizeUnit'][0] == '1/m'
         assert md['pixelUnit'][0] == '1/m'
+
+    def test_file_object(self, data_location):
+        # Test fileSER class input with file object
+        file_name = data_location / Path('STEM HAADF-DF4-DF2-BF Diffraction Micro.emd')
+        fid = open(file_name, 'rb')
+        emd0 = ncempy.io.emdVelox.fileEMDVelox(fid)
+        assert hasattr(emd0, '_file_hdl')
