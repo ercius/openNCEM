@@ -45,8 +45,8 @@ class fileDM:
         by seeking to this byte number.
     dataShape : list
         The total number of dimensions in eahc dataset. Similar to numpy's ndims attribute for an ndarray.
-    filename : str
-        The path to the file as a string
+    filename : pathlib.Path
+        pathlib.Path object pointing to the filesystem location of the file.
     fid : file
         The file handle.
     numObjects : list
@@ -96,7 +96,7 @@ class fileDM:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
+        filename : str or pathlib.Path or file object
             String pointing to the filesystem location of the file.
 
         verbose : bool, optional, default False
@@ -113,46 +113,49 @@ class fileDM:
         # Add a top level variable to indicate verbose output for debugging
         self._v = verbose
 
-        # necessary declarations, if something fails
-        self.fid = None
-        self._on_memory = on_memory
+        # Check for read() to determine if this is a file object
+        if hasattr(filename, 'read'):
+            self.fid = filename
+            self._on_memory = False
+            try:
+                self.filename = self.fid.name
+            except AttributeError:
+                self.filename = None
 
-        # check filename type
-        if isinstance(filename, str):
-            filename = Path(filename)
-        elif isinstance(filename, Path):
-            pass
-        #elif isinstance(filename, FILE_OBJECT):
-        #    self.fid = filename
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            self._on_memory = on_memory
 
-        #if not self.fid:
-        self.filename = str(filename)
+            # check filename type. Prefer pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
-        # try opening the file
-        try:
-            if not self._on_memory:
-                self.fid = open(filename, 'rb')
-            if self._on_memory:
-                self._buffer_offset = 0
-                # Pre-load the file as a memory map that supports operations
-                # similar to a file.
-                with open(filename, 'rb') as _fid:
-                    if os.name == 'nt':
-                        self.fid = mmap.mmap(_fid.fileno(), 0,
-                                             access=mmap.ACCESS_READ)
-                    else:
-                        self.fid = mmap.mmap(_fid.fileno(), 0,
-                                             prot=mmap.PROT_READ)  # , flags=mmap.MAP_PRIVATE)
-                    self._buffer_size = filestats(filename).st_size
-        except IOError:
-            print('Error reading file: "{}"'.format(filename))
-            raise
-        except:
-            raise
-        #else:
-        #   filename = self.fid.name
+            self.filename = filename
+
+            # try opening the file
+            try:
+                if not self._on_memory:
+                    self.fid = open(filename, 'rb')
+                if self._on_memory:
+                    self._buffer_offset = 0
+                    # Pre-load the file as a memory map that supports operations
+                    # similar to a file.
+                    with open(filename, 'rb') as _fid:
+                        if os.name == 'nt':
+                            self.fid = mmap.mmap(_fid.fileno(), 0,
+                                                 access=mmap.ACCESS_READ)
+                        else:
+                            self.fid = mmap.mmap(_fid.fileno(), 0,
+                                                 prot=mmap.PROT_READ)  # , flags=mmap.MAP_PRIVATE)
+                        self._buffer_size = filestats(filename).st_size
+            except IOError:
+                print('Error reading file: "{}"'.format(filename))
+                raise
+            except:
+                raise
 
         if not self._validDM():
             raise IOError('Can not read file: {}'.format(filename))
@@ -856,8 +859,6 @@ class fileDM:
         else:
             out_directory = file_name.parent
 
-        print(out_directory)
-
         try:
             # open a text file to write out the tags
             with open(out_directory / new_file_name, 'w') as fid_out:
@@ -1210,3 +1211,6 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     del im1['pixelOrigin']
 
     return im1  # return the dataset and metadata as a dictionary
+
+if __name__ == '__main__':
+    print('hi')

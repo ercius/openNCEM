@@ -60,22 +60,20 @@ class fileMRC:
     Examples
     --------
     Read in all data and metadata into memory.
-
-    >>> import ncempy.io as nio
-    >>> mrc0 = nio.mrc.mrcReader('file.mrc')
+    >> import ncempy.io as nio
+    >> mrc0 = nio.mrc.mrcReader('file.mrc')
 
     Low level operations to get 1 slice of the 3D data
-
-    >>> import ncempy.io as nio
-    >>> with nio.mrc.fileMRC('file.mrc') as f1:
-    >>>     single_slice = f1.getSlice(0)
+    >> import ncempy.io as nio
+    >> with nio.mrc.fileMRC('file.mrc') as f1:
+    >>     single_slice = f1.getSlice(0)
     """
 
     def __init__(self, filename, verbose=False):
         """
         Parameters
         -----------
-            filename: str or pathlib.Path
+            filename : str or pathlib.Path
                 String or pathlib.Path object pointing to the filesystem location of the file.
             verbose : bool
                 If True, debug information is printed.
