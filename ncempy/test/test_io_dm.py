@@ -174,7 +174,7 @@ class Testdm3:
         assert round(dm0['coords'][1][-1], ndigits=1) == round(444.7, ndigits=1)
 
     def test_file_object(self, data_location):
-        # Test fileDM class input with fiel object
+        # Test fileDM class input with file object
         file_name = data_location / Path('08_carbon.dm3')
         fid = open(file_name, 'rb')
         dm0 = ncempy.io.dm.fileDM(fid)

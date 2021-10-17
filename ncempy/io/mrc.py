@@ -73,24 +73,39 @@ class fileMRC:
         """
         Parameters
         -----------
-            filename : str or pathlib.Path
-                String or pathlib.Path object pointing to the filesystem location of the file.
+            filename : str or pathlib.Path or file object
+                String or pathlib.Path of file object pointing to the filesystem location of the file.
             verbose : bool
                 If True, debug information is printed.
 
         """
         # check filename type
-        if isinstance(filename, str):
-            pass
-        elif isinstance(filename, Path):
-            filename = str(filename)
+        if hasattr(filename, 'read'):
+            self.fid = filename
+            try:
+                self.file_path = Path(self.fid.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_name = None
+                self.file_path = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or readable file object')
 
-        self.filename = filename
+            self.file_path = filename
+            self.file_name = filename.name
+
+            # Open the file and quit if the file does not exist
+            try:
+                self.fid = open(self.file_path, 'rb')
+            except IOError as e:
+                print("I/O error({0}): {1}".format(e.errno, e.strerror))
 
         # necessary declarations, if something fails
-        self.fid = None
         self.mrcType = None
         self.dataType = None
         self.dataSize = None
@@ -109,15 +124,6 @@ class fileMRC:
         # Add a top level variable to indicate verbose output for debugging
         self.v = verbose
 
-        # Open the file and quit if the file does not exist
-        try:
-            self.fid = open(self.filename, 'rb')
-        except IOError as e:
-            print("I/O error({0}): {1}".format(e.errno, e.strerror))
-
-        # Store the original filename
-        self.dataOut['filename'] = self.filename
-
         self.parseHeader()
 
     def __del__(self):
@@ -126,7 +132,7 @@ class fileMRC:
         """
         if not self.fid.closed:
             if self.v:
-                print('Closing input file: {}'.format(self.filename))
+                print('Closing input file: {}'.format(str(self.file_path)))
             self.fid.close()
         return None
 
@@ -309,7 +315,7 @@ class fileMRC:
         # Add relevant information (metadata) to the output dictionary
         self.dataOut = {'pixelSize': self.voxelSize, 'voxelSize': self.voxelSize,
                         'cellAngles': self.cellAngles, 'axisOrientations': self.axisOrientations,
-                        'filename': self.filename}
+                        'filename': self.file_name}
         if self.extra[1] != 0:
             self.dataOut['FEIinfo'] = self.FEIinfo
 
@@ -442,9 +448,13 @@ def mrcReader(file_name, verbose=False):
         >> mrc1 = mrc.mrcReader('filename.mrc')
         >> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
     """
+    if isinstance(file_name, 'str'):
+        file_name = Path(file_name)
+
     with fileMRC(file_name, verbose) as f1:  # open the file and init the class
         im1 = f1.getDataset()  # read in the dataset
 
+    im1['filename'] = file_name.name
     im1['pixelUnit'] = 'A'
 
     return im1  # return the data and metadata as a dictionary
