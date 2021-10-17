@@ -45,8 +45,10 @@ class fileDM:
         by seeking to this byte number.
     dataShape : list
         The total number of dimensions in eahc dataset. Similar to numpy's ndims attribute for an ndarray.
-    filename : pathlib.Path
-        pathlib.Path object pointing to the filesystem location of the file.
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     fid : file
         The file handle.
     numObjects : list

@@ -30,7 +30,10 @@ class fileEMD:
 
     Attributes
     ----------
-
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     file_hdl : h5py.File
         The h5py file handle which provides direct access to the underlying h5py file structure.
     version : tuple

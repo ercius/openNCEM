@@ -25,6 +25,10 @@ class fileMRC:
 
     Attributes
     ----------
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     fid : file
         The file handle to the opened MRC file.
     mrcType : int

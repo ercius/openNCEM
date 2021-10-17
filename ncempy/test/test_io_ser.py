@@ -61,3 +61,10 @@ class Testser():
         dd = ncempy.io.ser.serReader(data_location / Path('16_STOimage_1.ser'))
 
         assert dd['data'][0, 0] == 18024
+
+    def test_file_object(self, data_location):
+        # Test fileSER class input with file object
+        file_name = data_location / Path('16_STOimage_1.ser')
+        fid = open(file_name, 'rb')
+        ser0 = ncempy.io.ser.fileSER(fid)
+        assert hasattr(ser0, '_file_hdl')
