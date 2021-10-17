@@ -5,10 +5,6 @@ Tests for the ser io module.
 import pytest
 
 from pathlib import Path
-import os
-import os.path
-
-import numpy as np
 
 import ncempy.io.ser
 
