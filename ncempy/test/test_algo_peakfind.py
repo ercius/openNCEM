@@ -51,7 +51,7 @@ class Test_peak_find:
 
     def test_tripleRoll(self, one_peak_3d):
         assert one_peak_3d[31, 15, 7] == 1
-        one_peak_roll = ncempy.algo.peak_find.doubleRoll(one_peak_3d, (1, 1))
+        one_peak_roll = ncempy.algo.peak_find.tripleRoll(one_peak_3d, (1, 1, 1))
         assert one_peak_roll[32, 16, 8] == 1
 
     def test_peakFind2D(self, one_gaussian_2d):
