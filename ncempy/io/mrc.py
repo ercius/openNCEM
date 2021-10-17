@@ -452,7 +452,7 @@ def mrcReader(file_name, verbose=False):
         >> mrc1 = mrc.mrcReader('filename.mrc')
         >> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
     """
-    if isinstance(file_name, 'str'):
+    if isinstance(file_name, str):
         file_name = Path(file_name)
 
     with fileMRC(file_name, verbose) as f1:  # open the file and init the class
