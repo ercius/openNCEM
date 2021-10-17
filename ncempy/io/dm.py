@@ -79,7 +79,7 @@ class fileDM:
     >>     series = dmFile2.getDataset(0)
     """
 
-    __slots__ = ('filename', 'fid', '_on_memory', '_v', 'xSize', 'ySize',
+    __slots__ = ('file_name', 'file_path', 'fid', '_on_memory', '_v', 'xSize', 'ySize',
                  'zSize', 'zSize2', 'dataType', 'dataSize', 'dataOffset',
                  'dataShape', 'numObjects', 'thumbnail', '_curGroupLevel',
                  '_maxDepth', '_curGroupAtLevelX', '_curGroupNameAtLevelX',
@@ -118,10 +118,9 @@ class fileDM:
             self.fid = filename
             self._on_memory = False
             try:
-                self.filename = self.fid.name
+                self.file_name = self.fid.name
             except AttributeError:
-                self.filename = None
-
+                self.file_name = None
         else:
             self._on_memory = on_memory
 
@@ -133,32 +132,33 @@ class fileDM:
             else:
                 raise TypeError('Filename is supposed to be a string or pathlib.Path')
 
-            self.filename = filename
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
             # try opening the file
             try:
                 if not self._on_memory:
-                    self.fid = open(filename, 'rb')
+                    self.fid = open(self.file_path, 'rb')
                 if self._on_memory:
                     self._buffer_offset = 0
                     # Pre-load the file as a memory map that supports operations
                     # similar to a file.
-                    with open(filename, 'rb') as _fid:
+                    with open(self.file_path, 'rb') as _fid:
                         if os.name == 'nt':
                             self.fid = mmap.mmap(_fid.fileno(), 0,
                                                  access=mmap.ACCESS_READ)
                         else:
                             self.fid = mmap.mmap(_fid.fileno(), 0,
                                                  prot=mmap.PROT_READ)  # , flags=mmap.MAP_PRIVATE)
-                        self._buffer_size = filestats(filename).st_size
+                        self._buffer_size = filestats(self.file_path).st_size
             except IOError:
-                print('Error reading file: "{}"'.format(filename))
+                print('Error reading file: "{}"'.format(self.file_apth))
                 raise
             except:
                 raise
 
         if not self._validDM():
-            raise IOError('Can not read file: {}'.format(filename))
+            raise IOError('Can not read file: {}'.format(self.file_path))
 
         # Lists that will contain information about binary data arrays
         self.xSize = []
@@ -228,7 +228,7 @@ class fileDM:
         """
         if not self.fid.closed:
             if self._v:
-                print('Closing input file: {}'.format(self.filename))
+                print('Closing input file: {}'.format(self.file_path))
             self.fid.close()
 
     def __enter__(self):
@@ -849,15 +849,14 @@ class fileDM:
                 Allow user to define a different path than the directory of the current file.
 
         """
-        file_name = Path(self.filename)
-        new_file_name = Path(file_name.stem + '_tags').with_suffix('.txt')
+        new_file_name = Path(self.file_path.stem + '_tags').with_suffix('.txt')
 
         # Change output path
         if new_folder_path_for_tags:
             print('choosing different path')
             out_directory = Path(new_folder_path_for_tags)
         else:
-            out_directory = file_name.parent
+            out_directory = self.file_path.parent
 
         try:
             # open a text file to write out the tags
@@ -964,7 +963,7 @@ class fileDM:
 
         outputDict = {}
 
-        outputDict['filename'] = os_basename(self.filename)
+        outputDict['filename'] = self.file_name
 
         # Parse the dataset to see what type it is (image, image series, spectra, etc.)
         if self.xSize[ii] > 0:
@@ -1061,7 +1060,7 @@ class fileDM:
 
         self.seek(self.fid, self.dataOffset[ii], 0)  # Seek to start of dataset from beginning of the file
 
-        outputDict = {'filename': os_basename(self.filename)}
+        outputDict = {'filename': self.file_name}
 
         # Parse the dataset to see what type it is (image, 3D image series, spectra, 4D, etc.)
         if self.xSize[ii] > 0:
@@ -1149,7 +1148,7 @@ class fileDM:
         sh0 = (self.zSize2[ii], self.zSize[ii], self.ySize[ii], self.xSize[ii])
         sh1 = tuple([ii for ii in sh0 if ii > 1])  # shape must be a tuple
 
-        mm = np.memmap(self.filename, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r',
+        mm = np.memmap(self.file_path, dtype=self._DM2NPDataType(self.dataType[ii]), mode='r',
                        offset=self.dataOffset[ii], shape=sh1)
 
         return mm
