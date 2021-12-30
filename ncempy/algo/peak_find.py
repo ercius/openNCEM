@@ -33,6 +33,7 @@ def doubleRoll(image, vec):
             : np.ndarray
                 The rolled image.
     """
+    assert len(vec) == 2
     return np.roll(np.roll(image, vec[0], axis=0), vec[1], axis=1)
 
 
@@ -53,6 +54,7 @@ def tripleRoll(vol, vec):
             : ndarray
                 The rolled volume.
     """
+    assert len(vec) == 3
     return np.roll(np.roll(np.roll(vol, vec[0], axis=0), vec[1], axis=1), vec[2], axis=2)
 
 
