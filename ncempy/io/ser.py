@@ -39,8 +39,10 @@ class fileSER:
         The open file as a raw stream.
     _emi : dict
         A dictionary of metadata from the EMI file accompanying the SER file.
-    filename : str
-        A string of the file name of the SER file.
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     head : dict
         Header information for the SER file as a dictionary. Provides direct access to data offsets and other
         internal file information.
@@ -98,25 +100,37 @@ class fileSER:
         # necessary declarations, if something fails
         self._file_hdl = None
         self._emi = None
-        self.filename = filename
+        self.file_name = None
+        self.file_path = None
         self.head = None
 
-        # check filename type
-        if isinstance(self.filename, str):
-            pass
-        elif isinstance(self.filename, Path):
-            self.filename = str(self.filename)
+        if hasattr(filename, 'read'):
+            self._file_hdl = filename
+            try:
+                self.file_path = Path(filename.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_path = None
+                self.file_name = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            # check filename type, change to pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
-        # try opening the file
-        try:
-            self._file_hdl = open(filename, 'rb')
-        except IOError:
-            print('Error reading file: "{}"'.format(filename))
-            raise
-        except:
-            raise
+            # try opening the file
+            try:
+                self._file_hdl = open(self.file_path, 'rb')
+            except IOError:
+                print('Error reading file: "{}"'.format(self.file_name))
+                raise
+            except:
+                raise
 
         # read header
         self.head = self.readHeader(verbose)
@@ -568,21 +582,20 @@ class fileSER:
         return dim
 
     def _read_emi(self):
-        # Generate emi file string
-        # and test for file existence.
+        """ Generate emi file string and test for file existence."""
 
-        emi_file = self.filename[:-6] + '.emi'
-        if not os.path.exists(emi_file):
+        emi_file_path = self.file_path.parent / (self.file_path.stem[:-2] + '.emi')
+        if not emi_file_path.exists():
             self._emi = None
         else:
-            self._emi = read_emi(emi_file)
+            self._emi = read_emi(emi_file_path)
 
     def writeEMD(self, filename):
         """ Write SER data to an EMD file.
 
         Parameters
         ----------
-            filename: str
+            filename: str or pathlib.Path
                 Name of the EMD file.
 
         """

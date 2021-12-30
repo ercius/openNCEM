@@ -94,6 +94,14 @@ class Testemd:
         except FileExistsError:
             assert False
 
+
+    def test_file_object(self, data_location):
+        # Test fileEMD class input with file object
+        file_name = data_location / Path('Acquisition_18.emd')
+        fid = open(file_name, 'rb')
+        emd0 = ncempy.io.emd.fileEMD(fid)
+        assert hasattr(emd0, 'file_hdl')
+
     def test_memmap(self, data_location):
 
         emd1 = ncempy.io.emd.fileEMD(data_location / Path('Acquisition_18.emd'))
@@ -111,4 +119,3 @@ class Testemd:
 
         data, dims = load_memmap(f, 0)
         assert data[0,0] == 12487
-
