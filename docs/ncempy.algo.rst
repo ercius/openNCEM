@@ -75,3 +75,19 @@ ncempy.algo.rebin module
    :members:
    :undoc-members:
    :show-inheritance:
+
+ncempy.algo.gaussND module
+--------------------------
+
+.. automodule:: ncempy.algo.gaussND
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ncempy.algo.peak_find module
+----------------------------
+
+.. automodule:: ncempy.algo.peak_find
+   :members:
+   :undoc-members:
+   :show-inheritance:
