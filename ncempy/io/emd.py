@@ -24,13 +24,16 @@ import h5py
 
 
 class fileEMD:
-    """Class to represent Berkelely EMD files.
+    """Class to represent Berkeley EMD files.
 
     Implemented for spec 0.2 using the recommended layout for metadata.
 
     Attributes
     ----------
-
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     file_hdl : h5py.File
         The h5py file handle which provides direct access to the underlying h5py file structure.
     version : tuple
@@ -38,7 +41,7 @@ class fileEMD:
     data : h5py.Group
         A link to the data group in the EMD file.
     microscope : h5py.Group
-        A link to the microsocpe EMD group with metadata.
+        A link to the microscope EMD group with metadata.
     sample : h5py.Group
         A link to the sample EMD group with metadata.
     user : h5py.Group
@@ -63,8 +66,8 @@ class fileEMD:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
-            Path to the EMD file.
+        filename : str or pathlib.Path or file object
+            The EMD file to open.
         readonly : bool, default True
             Set to False to allow writing to the file.
 
@@ -82,13 +85,23 @@ class fileEMD:
         self.comments = None
         self.list_emds = []  # list of HDF5 groups with emd_data_type type 1
 
-        # check filename type, change to string
-        if isinstance(filename, str):
-            pass
-        elif isinstance(filename, Path):
-            filename = str(filename)
+        if hasattr(filename, 'read'):
+            try:
+                self.file_path = Path(filename.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_path = None
+                self.file_name = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            # check filename type, change to pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
         # try opening the file
         if readonly:
@@ -561,6 +574,10 @@ def emdReader(filename, dsetNum=0):
     with fileEMD(filename, readonly=True) as emd0:
         d, dims = emd0.get_emdgroup(dsetNum)  # memmap must be false. File is closed
         out = {'data': d, 'filename': filename, 'pixelSize': []}
+
+        # Get the group name
+        name = emd0.list_emds[dsetNum].name.split('/')[-1]
+        out['name'] = name
 
         for dim in dims:
             try:
