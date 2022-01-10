@@ -154,7 +154,7 @@ class fileDM:
                                                  prot=mmap.PROT_READ)  # , flags=mmap.MAP_PRIVATE)
                         self._buffer_size = filestats(self.file_path).st_size
             except IOError:
-                print('Error reading file: "{}"'.format(self.file_apth))
+                print('Error reading file: "{}"'.format(self.file_path))
                 raise
             except:
                 raise
