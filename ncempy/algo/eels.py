@@ -1,79 +1,44 @@
 # EELS background fitting and analysis functions
 import numpy as np
+from .gaussND import gauss1D
+from .gaussND import lorentz1D
 
 
 def powerFit(sig, box):
-    """A powerlaw fit"""
+    """Fit a power low function to a signal inside a designated range.
+
+    Parameters
+    ----------
+    sig: ndarray, 1D
+        The signal to fit the power law to. Usually the spectral intensity.
+    box: 2-tuple
+        The range to fit of the form (low, high) where low and high are in terms of the lowest and highest pixel number
+        to include in the range to fit.
+
+    Returns
+    -------
+    : tuple
+        A tuple is returned. The first element contains the values of the power law background fit for all pixel values above the lowest pixel
+        in the range and the end of the spectrum. The second element are the pixel positions of the fit.
+    """
     eLoss = np.linspace(box[0], box[1] - 1, int(np.abs(box[1] - box[0])))
     try:
-        yy = sig  # .copy()#[int(box.left()):int(box.right())]
+        yy = sig.copy()
         yy[yy < 0] = 0
         yy += 1
 
         pp = np.polyfit(np.log(eLoss), np.log(yy[box[0]:box[1]]), 1)  # log-log fit
     except:
         print('fitting problem')
-        pp = (0, 0)
         raise
-    fullEloss = np.linspace(box[0], sig.shape[0], np.int(np.abs(sig.shape[0] - box[0])))
+
+    pixel_range = np.linspace(box[0], sig.shape[0], np.int(np.abs(sig.shape[0] - box[0])))
     try:
-        bgnd = np.exp(pp[1]) * fullEloss ** pp[0]
+        background = np.exp(pp[1]) * pixel_range ** pp[0]
     except:
-        print('bgnd creation problem')
-        bgnd = np.zeros_like(fullEloss)
-    return bgnd, fullEloss
-
-
-def gauss1D(x, x0, sigma):
-    """ Returns the value of a gaussian at a 2D set of points for the given standard deviation with maximum
-    normalized to 1.
-
-    Parameters
-    ----------
-        x: ndarray
-            A vector of size (N,) of points for the x values
-        x0: float
-            The center of the Gaussian.
-        sigma: float
-            Standard deviation of the Gaussian.
-
-    Returns
-    -------
-        g: ndarray
-            A vector of size (N,) of the Guassian distribution evaluated
-            at the input x values.
-
-    Note
-    ----
-        Calculate the Half width at half maximum as
-        HWHM = sqrt(2*log(2))*stDev ~ 1.18*stDev or
-        0.5*size(x)*stDev if x goes from -1 to 1
-
-    """
-    return np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
-
-
-def lorentz1D(x, x0, w):
-    """ Returns the probability density function of the Lorentzian (aka Cauchy) function with maximum at 1.
-
-    Parameters
-    ----------
-        x: ndarray or list
-            A 1D vector of points for the dependent variable
-        x0: float
-            The center of the peak maximum
-        w: float
-            The parameter that modifies the width of the distribution.
-
-    Returns
-    -------
-        l: ndarray
-            A vector of size (N,) of the Lorentzian distribution evaluated
-            at the input x values.
-
-    """
-    return w ** 2 / ((x - x0) ** 2 + (w) ** 2)
-
+        print('background creation problem')
+        background = np.zeros_like(pixel_range)
+    return background, pixel_range
 
 def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters):
     """Fit to pre and post edge. Most useufl for low loss EELS"""
