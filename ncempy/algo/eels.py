@@ -81,6 +81,7 @@ def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .1
     sig_fit = np.concatenate((spectra[pre[0]:pre[1]], spectra[post[0]:post[1]]))
 
     # Gaussian-Lorentz fit to the pre- and post-edge
+    # TODO allow for other functions
     GL = lambda x, x0, sigma, w, n, C: n * gauss1D(x, x0, sigma) + (1 - n) * lorentz1D(x, x0, w) + C
     pp, r = opt.curve_fit(GL, eLoss_fit, sig_fit, p0=initial_parameters, maxfev=20000)
 
@@ -91,3 +92,19 @@ def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .1
     # Subtract the background from the signal
     sig_subtracted = spectra[pre[0]:post[1]] - bgnd
     return bgnd_eloss, sig_subtracted
+
+
+def adaptive_background():
+    """An adaptive background which sum pixels in a neighborhood of each probe position to improve SNR for the
+    background fit. This should only be used when the sampling is higher than the variation in the background signal."""
+    pass
+
+
+def map_background():
+    """Fit background to a SI map and subtract it."""
+    pass
+
+
+def signal_sum():
+    """Sum the signal within the desired region. Used to create compositional maps and line scans."""
+    pass
