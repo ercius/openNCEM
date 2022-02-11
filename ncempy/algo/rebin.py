@@ -5,19 +5,19 @@ def rebin(im, f, funcType='sum'):
     This should be used carefully. There is not antialiasing applied which could
     produce odd effects for some data sets (such as high resolution data)
 
-        Parameters
-        ----------
-            im : ndarray
-                2D array to reduce
-            f : int
-                The factor to rebin by. Must be integer
-            funcType : str
-                The type of reduction. mean or sum are implemented.
+    Parameters
+    ----------
+    im : ndarray
+        2D array to reduce
+    f : int
+        The factor to rebin by. Must be integer
+    funcType : str
+        The type of reduction. mean or sum are implemented.
 
-        Returns
-        -------
-            : ndarray
-                The 2D array with the new size.
+    Returns
+    -------
+    : ndarray
+        The 2D array with the new size.
     """
 
     nbig = im.shape
@@ -38,11 +38,3 @@ def rebin(im, f, funcType='sum'):
         small = im_reshape.sum(3).sum(1)
 
     return small
-
-if __name__ == '__main__':
-    import numpy as np
-    aa = np.ones((10, 10))
-
-    bb = rebin(aa, 2, funcType='mean')
-
-    print(bb)
