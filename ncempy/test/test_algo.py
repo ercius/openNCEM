@@ -9,23 +9,7 @@ import ncempy.algo as nalgo
 import ncempy.io as nio
 from ncempy.eval.stack_align import stack_align
 from ncempy.algo import stack_align as stack_align_algo
-from ncempy.algo import rebin
 
-
-def test_rebin():
-    aa = np.ones((50, 50), dtype='<u2')
-
-    # Test sum and uint16
-    bb = rebin(aa, 2, funcType='sum')
-
-    assert bb[0, 0] == 4
-
-    aa = np.ones((50, 50), dtype='f')
-
-    # Test mean and float
-    bb = rebin(aa, 2, funcType='mean')
-
-    assert bb[0, 0] == 1.0
 
 @pytest.fixture
 def data_location():
@@ -34,6 +18,21 @@ def data_location():
     root_path = test_path.parents[1]
     return root_path / Path('data')
 
+
+def test_rebin():
+    aa = np.ones((50, 50), dtype='<u2')
+
+    # Test sum and uint16
+    bb = nalgo.rebin(aa, 2, funcType='sum')
+
+    assert bb[0, 0] == 4
+
+    aa = np.ones((50, 50), dtype='f')
+
+    # Test mean and float
+    bb = nalgo.rebin(aa, 2, funcType='mean')
+
+    assert bb[0, 0] == 1.0
 
 def test_stack_align_multicorr(data_location):
     up = 2
