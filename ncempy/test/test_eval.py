@@ -52,3 +52,30 @@ def test_lineprofile():
     print(profile[0:5])
     assert np.allclose(profile[0:3],(0,1,2))
 
+def test_stack_align_multicorr(data_location):
+    up = 2
+    method0 = 'hybrid'
+
+    with nio.emd.fileEMD(data_location / Path('Acquisition_18.emd')) as f0:
+        dd, md = f0.get_emdgroup(f0.list_emds[0])
+
+    stack0 = np.zeros((3, *dd.shape), dtype=dd.dtype)
+    shifts0 = np.asarray(((range(0, -6, -2)), (range(0, 6, 2)))).T
+    for ii, s in enumerate(shifts0):
+        stack0[ii, :, :] = ndimage.shift(dd, s, mode='mirror')
+
+    # Test static alignment (reference is first image in stack)
+    out_stack, out_stack_shifts = neval.stack_align(stack0, align_type='static',
+                                                    upsample_factor=up, method=method0)
+
+    for sh_static, known_shift in zip(shifts0, out_stack_shifts):
+        assert sh_static[0] == -known_shift[0]
+        assert sh_static[1] == -known_shift[1]
+
+    # Test dynamic alignment (reference is n-1 image in stack)
+    out_stack, out_stack_shifts = neval.stack_align(stack0, align_type='dynamic',
+                                                    upsample_factor=up, method=method0)
+
+    for sh_dynamic, known_shift in zip(shifts0, out_stack_shifts):
+        assert sh_dynamic[0] == -known_shift[0]
+        assert sh_dynamic[1] == -known_shift[1]
