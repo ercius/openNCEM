@@ -7,7 +7,7 @@ import numpy as np
 
 import ncempy.io as nio
 from ncempy.eval.stack_align import stack_align
-from ncempy.algo.align import stack_align as stack_align_algo
+from ncempy.algo import stack_align as stack_align_algo
 
 
 @pytest.fixture
