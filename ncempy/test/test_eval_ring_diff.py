@@ -74,7 +74,7 @@ class TestRingdiff():
                 #    assert comp.all() is True
 
     def test_eval_full(self, temp_file):
-        with ncempy.io.emd.fileEMD(temp_file) as emd0:
+        with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd0:
             # full settings with all parameters set
             settings_full = {'lmax_r': 10,
                              'lmax_thresh': 600,
@@ -116,7 +116,7 @@ class TestRingdiff():
         with ncempy.io.emd.fileEMD(data_location / Path('Pt_SAED_D910mm_single.emd')) as emd0:
             emdgrp = emd0.list_emds[0]
 
-            with ncempy.io.emd.fileEMD(temp_file) as emd1:
+            with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd1:
                 # write evaluation details
                 grp_eva = emd1.file_hdl.create_group('evaluation')
 
