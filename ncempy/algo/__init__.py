@@ -2,7 +2,6 @@
 import numpy as np
 from scipy import ndimage
 
-from . import multicorr_funcs
 from . import radial_profile
 from . import peak_find
 
