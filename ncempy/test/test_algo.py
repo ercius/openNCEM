@@ -5,12 +5,12 @@ from pathlib import Path
 from scipy import ndimage
 import numpy as np
 
+import ncempy.algo as nalgo
 import ncempy.io as nio
 from ncempy.eval.stack_align import stack_align
 from ncempy.algo import stack_align as stack_align_algo
 from ncempy.algo import rebin
-import ncempy.algo as nalgo
-from ncempy.algo import fourier_operations
+
 
 def test_rebin():
     aa = np.ones((50, 50), dtype='<u2')
@@ -99,8 +99,8 @@ def test_moments():
     # Create a a simple line
     aa = np.zeros((101, 101))
     aa[50, 1:-1] = 1
-    aa = fourier_operations.rotateImage(aa, ang * np.pi / 180.)
-    aa = fourier_operations.shiftImage(aa, sh)
+    aa = nalgo.rotateImage(aa, ang * np.pi / 180.)
+    aa = nalgo.shiftImage(aa, sh)
 
     M = nalgo.moments(aa)
     mc = nalgo.moments_central(aa)
@@ -126,3 +126,31 @@ def test_moments_dtype():
 
     assert int(c1[0]) == int(c2[0])
     assert int(c1[1]) == int(c2[1])
+
+
+def test_fourierShift():
+    """Test on a simple dataset"""
+
+    im = np.eye(10, 10)
+    im_sh = nalgo.shiftImage(im, (2, 0))
+    assert np.round(im_sh[2, 0]) == 1
+    im_sh = nalgo.shiftImage(im, (0, 2))
+    assert np.round(im_sh[0, 2]) == 1
+
+
+def test_fourierRotate():
+    """Test that it works"""
+    im = np.eye(10, 10)
+
+    theta = 3 * np.pi / 180.
+    im_rot = nalgo.rotateImage(im, theta)
+
+    im_rot = nalgo.rotateImage(im, theta, pad=True)
+    assert im_rot.shape[0] == 12
+
+
+def test_fourierShear():
+    """Test that it works"""
+    im = np.eye(10, 10)
+
+    im_shear = nalgo.shearImage(im, 0, 0.5)
