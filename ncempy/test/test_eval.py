@@ -43,3 +43,12 @@ def test_mutlicorr(data_location):
     out_hybrid = neval.multicorr(np.fft.fft2(G1), np.fft.fft2(G2), 'hybrid', 3)
     out_hybrid = list(out_hybrid)
     assert np.allclose(out_hybrid, [10, -5.0], rtol=1e-6)
+
+def test_lineprofile():
+    XX, YY = np.mgrid[0:100,0:100]
+    #RR = np.sqrt((XX-50)**2 + (YY-50)**2)
+
+    profile, (xx, yy) = neval.line_profile(XX, (0,0), (99, 99), 100)
+    print(profile[0:5])
+    assert np.allclose(profile[0:3],(0,1,2))
+
