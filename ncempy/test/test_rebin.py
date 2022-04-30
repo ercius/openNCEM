@@ -1,6 +1,6 @@
 import pytest
 
-from ncempy.algo.rebin import rebin
+from ncempy.algo import rebin
 
 import numpy as np
 
