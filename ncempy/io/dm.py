@@ -21,6 +21,7 @@ On Memory mode:
 
 from pathlib import Path
 import mmap
+import copy
 import os
 from os import stat as filestats
 from os.path import basename as os_basename
@@ -353,8 +354,8 @@ class fileDM:
         aa = self.fromfile(self.fid, dtype=np.dtype([('fileSize', self._specialType),
                                                      ('endianType', '>u4')]), count=1)
 
-        self.fileSize = aa['fileSize']
-        self._endianType = aa['endianType']
+        self.fileSize = copy.deepcopy(aa['fileSize'])
+        self._endianType = copy.deepcopy(aa['endianType'])
 
         if self._endianType != 1:
             # print('File is not written Little Endian (PC) format and can not be read by this program.')
