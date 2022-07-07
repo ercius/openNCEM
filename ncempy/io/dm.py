@@ -1208,7 +1208,16 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
             eLoss = np.round(np.linspace(0, pixel_size * (sh - 1), sh) + pixel_origin, decimals=4)
             coords.append(eLoss)
     im1['coords'] = coords
-
+    
+    # Add calibrated intensity
+    prefix1 = 'ImageList.{}.ImageData.Calibrations.Brightness.'.format(dsetNum+1)
+    for kk,vv in self.allTags.items():
+        pos1 = kk.find(prefix1)
+        if pos1 > -1:
+            if kk.split(',')[-1] is 'Origin':
+                print('origin)
+        
+    
     # Remove confusing pixelOrigin. Use coords instead
     del im1['pixelOrigin']
 
