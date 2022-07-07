@@ -32,11 +32,11 @@ def multicorr(g1, g2, method='cross', upsample_factor=1, verbose=False):
         Cross correlate two images already stored as ndarrays. You must input the FFT
         of the images.
 
-        >>> import ncempy.algo as neval
-        >>> import numpy as np
-        >>> im0FFT = np.fft.fft2(im0)
-        >>> im1FFT = np.fft.fft2(im1)
-        >>> shifts = neval.multicorr(im0FFT, im1FFT)
+        >> import ncempy.algo as neval
+        >> import numpy as np
+        >> im0FFT = np.fft.fft2(im0)
+        >> im1FFT = np.fft.fft2(im1)
+        >> shifts = neval.multicorr(im0FFT, im1FFT)
     """
 
     # Check to make sure both G1 and G2 are arrays

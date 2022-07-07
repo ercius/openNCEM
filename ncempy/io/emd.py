@@ -24,13 +24,16 @@ import h5py
 
 
 class fileEMD:
-    """Class to represent Berkelely EMD files.
+    """Class to represent Berkeley EMD files.
 
     Implemented for spec 0.2 using the recommended layout for metadata.
 
     Attributes
     ----------
-
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     file_hdl : h5py.File
         The h5py file handle which provides direct access to the underlying h5py file structure.
     version : tuple
@@ -38,7 +41,7 @@ class fileEMD:
     data : h5py.Group
         A link to the data group in the EMD file.
     microscope : h5py.Group
-        A link to the microsocpe EMD group with metadata.
+        A link to the microscope EMD group with metadata.
     sample : h5py.Group
         A link to the sample EMD group with metadata.
     user : h5py.Group
@@ -52,11 +55,10 @@ class fileEMD:
     --------
     Open an Berkeley EMD file using the *advanced* interface. See the emdReader function for a more convenient
     way to load the data. We show how to list the available data sets, load a 3D data set and plot the first image.
-
-        >>> from ncempy.io import emd
-        >>> with emd.fileEMD('filename.emd') as emd1:
-        >>>     [print(dataGroup.name) for dataGroup in emd1.list_emds] # print all available EMD datasets
-        >>>     data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
+    >> from ncempy.io import emd
+    >> with emd.fileEMD('filename.emd') as emd1:
+    >>     [print(dataGroup.name) for dataGroup in emd1.list_emds] # print all available EMD datasets
+    >>     data1, dims1 = emd1.get_emdgroup(0) # load the first full data array and dimension information
     """
 
     def __init__(self, filename, readonly=True):
@@ -64,8 +66,8 @@ class fileEMD:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
-            Path to the EMD file.
+        filename : str or pathlib.Path or file object
+            The EMD file to open.
         readonly : bool, default True
             Set to False to allow writing to the file.
 
@@ -83,13 +85,23 @@ class fileEMD:
         self.comments = None
         self.list_emds = []  # list of HDF5 groups with emd_data_type type 1
 
-        # check filename type, change to string
-        if isinstance(filename, str):
-            pass
-        elif isinstance(filename, Path):
-            filename = str(filename)
+        if hasattr(filename, 'read'):
+            try:
+                self.file_path = Path(filename.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_path = None
+                self.file_name = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            # check filename type, change to pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
         # try opening the file
         if readonly:
@@ -262,16 +274,18 @@ class fileEMD:
         dims = tuple(dims)
         return dims
 
-    def get_emdgroup(self, group, memmap=False):
+    def get_emdgroup(self, group):
         """Get the emd data saved in the requested group.
+
+        Note
+        ____
+        The memmap keyword has been removed. Please use get_memmap().
 
         Parameters
         ----------
             group: h5py._hl.group.Group or int
                 Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
                 is loaded
-            memmap: bool
-                Return the data as a memmap instead of loading everything into memory
 
         Returns
         -------
@@ -299,15 +313,9 @@ class fileEMD:
         if not group.attrs['emd_group_type'] == 1:
             raise TypeError('group is not a emd_group_type group!')
 
-        # retrieve data
+        # retrieve data and dims
         try:
-            # get the data
-            if memmap:
-                data = group['data']
-            else:
-                data = group['data'][:]
-
-            # get the dimensions.
+            data = group['data'][:]
             dims = self.get_emddims(group)
 
             return data, dims
@@ -316,6 +324,34 @@ class fileEMD:
             print('Content of "{}" does not seem to be in emd specified shape'.format(group.name))
 
             return None
+
+    def get_memmap(self, group):
+        """ Opens a new fileEMD object and returns the requested EMD group. This prevents the file from being closed.
+        The original HDF5 file is left open. The file pointer is lost, but it will be closed once the EMD group
+        is deleted or removed. See also get_emdgroup().
+
+
+        Parameters
+        ----------
+        group: h5py._hl.group.Group or int
+                Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
+                is loaded
+
+        """
+        f = h5py.File(self.file_hdl.filename, 'r')
+
+        # check input
+        if not isinstance(group, h5py.Group):
+            if isinstance(group, int):
+                try:
+                    group = self.list_emds[group]
+                except IndexError:
+                    print('group does not exist')
+                    return
+            else:
+                raise TypeError('group needs to refer to a valid HDF5 group!')
+        data = f[group.name + '/data']
+        return data, self.get_emddims(group)
 
     def write_dim(self, label, dim, parent):
         """Auxiliary function to write a dim dataset to parent.
@@ -467,17 +503,6 @@ class fileEMD:
         else:
             # create new entry
             self.comments.attrs[timestamp] = np.string_(msg)
-            
-    def get_memmap(self, group):
-        """ Get the emd group data as a memmap so that the data
-        is not loaded into memory. Essentially calls get_emdgroup()
-        with the keyword memmap keyword equals True.
-        
-        See get_emdgroup() for parameters and return values.
-        
-        
-        """
-        return self.get_emdgroup(group, memmap=True)
         
 
 def defaultDims(data, pixel_size=None):
@@ -547,8 +572,12 @@ def emdReader(filename, dsetNum=0):
 
     """
     with fileEMD(filename, readonly=True) as emd0:
-        d, dims = emd0.get_emdgroup(dsetNum, memmap=False)  # memmap must be false. File is closed
+        d, dims = emd0.get_emdgroup(dsetNum)  # memmap must be false. File is closed
         out = {'data': d, 'filename': filename, 'pixelSize': []}
+
+        # Get the group name
+        name = emd0.list_emds[dsetNum].name.split('/')[-1]
+        out['name'] = name
 
         for dim in dims:
             try:
@@ -561,7 +590,7 @@ def emdReader(filename, dsetNum=0):
         return out
 
 
-def emdWriter(filename, data, pixel_size=None):
+def emdWriter(filename, data, pixel_size=None, overwrite=False):
     """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
     size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
 
@@ -573,7 +602,8 @@ def emdWriter(filename, data, pixel_size=None):
         The data as an ndarray to write to the file.
     pixel_size : tuple
         A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
-
+    overwrite : boolean
+        If file exists, overwrite it.
     """
     if isinstance(filename, str):
         filename = Path(filename)
@@ -583,6 +613,10 @@ def emdWriter(filename, data, pixel_size=None):
             assert len(pixel_size) == data.ndim
         except ValueError:
             raise ValueError('pixel_size length must match the number of dimensions of data.')
+
+    # Delete the file if it exists and overwrite is true
+    if filename.exists() and overwrite:
+        filename.unlink()
 
     if not filename.exists():
         with fileEMD(filename, readonly=False) as emd0:

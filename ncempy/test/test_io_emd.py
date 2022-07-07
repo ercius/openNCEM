@@ -64,7 +64,7 @@ class Testemd:
             dd2, dims2 = emd1.get_emdgroup(0)
         assert dd2.shape == (10, 11, 12)
 
-    def test_emdwrtier(self, temp_file):
+    def test_emd_writer(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
         ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3))
         with ncempy.io.emd.fileEMD(temp_file) as emd0:
@@ -84,3 +84,38 @@ class Testemd:
 
         out = ncempy.io.emd.emdReader(data_location / Path('emd_type1_stringDims.h5'))
         assert out['data'].ndim == 4
+
+    def test_file_exists(self, temp_file):
+        dd = np.zeros((10, 11, 12))
+        ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3))
+        assert temp_file.exists()
+        try:
+            ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), overwrite=True)
+        except FileExistsError:
+            assert False
+
+
+    def test_file_object(self, data_location):
+        # Test fileEMD class input with file object
+        file_name = data_location / Path('Acquisition_18.emd')
+        fid = open(file_name, 'rb')
+        emd0 = ncempy.io.emd.fileEMD(fid)
+        assert hasattr(emd0, 'file_hdl')
+
+    def test_memmap(self, data_location):
+
+        emd1 = ncempy.io.emd.fileEMD(data_location / Path('Acquisition_18.emd'))
+        d, dims = emd1.get_memmap(0)
+        del emd1
+        assert d[0, 0] == 12487
+
+    def test_memmap_in_function(self, data_location):
+        f = data_location / Path('Acquisition_18.emd')
+
+        def load_memmap(fpath, N):
+            f0 = ncempy.io.emd.fileEMD(fpath)
+            data0, dims0 = f0.get_memmap(N)
+            return data0, dims0
+
+        data, dims = load_memmap(f, 0)
+        assert data[0,0] == 12487

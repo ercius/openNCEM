@@ -1,7 +1,6 @@
 h5py
 numpy
 scipy
-h5py
 matplotlib
 glob2[edstomo]
 scipy[edstomo]

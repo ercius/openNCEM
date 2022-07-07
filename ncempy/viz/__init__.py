@@ -6,6 +6,7 @@ useful for S/TEM data visualization.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import colors
 
 import ncempy.algo
 from ncempy.algo.distortion import rad_dis
@@ -62,6 +63,7 @@ def im_calibrated(im, d):
     ax.imshow(im, extent=ext)
     return fg
 
+
 def imfft(im, d=1.0, ax=None):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
@@ -89,8 +91,8 @@ def imfft(im, d=1.0, ax=None):
     This example shows how to display a 2D ndarray (image) as a
     diffractogram. The image has a real space pixel size of 0.1 nanometer.
 
-    >>> imageFFT = np.fft.fft2(im)
-    >>> ncempy.viz.imfft(imageFFT, d = 0.1)
+    >> imageFFT = np.fft.fft2(im)
+    >> ncempy.viz.imfft(imageFFT, d = 0.1)
 
     """
 
@@ -98,8 +100,8 @@ def imfft(im, d=1.0, ax=None):
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    imax = ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2)),
-                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
+    imax = ax.imshow(np.fft.fftshift(np.abs(im) ** 2),
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
     return imax
 
 
@@ -125,8 +127,8 @@ def imrfft(im, d=1.0, ax=None):
     fftFreq0 = np.fft.rfftfreq(im.shape[0], d)
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    axim = ax.imshow(np.fft.fftshift(np.log(1 + .001 * np.abs(im) ** 2), axes=0),
-              extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]))
+    axim = ax.imshow(np.fft.fftshift(np.abs(im) ** 2), axes=0,
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
 
     return axim
 

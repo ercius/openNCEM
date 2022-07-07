@@ -39,8 +39,10 @@ class fileSER:
         The open file as a raw stream.
     _emi : dict
         A dictionary of metadata from the EMI file accompanying the SER file.
-    filename : str
-        A string of the file name of the SER file.
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     head : dict
         Header information for the SER file as a dictionary. Provides direct access to data offsets and other
         internal file information.
@@ -54,19 +56,17 @@ class fileSER:
     Examples
     --------
     Read data from a single image into memory using the low level API.
-
-    >>> import matplotlib.pyplot as plt
-    >>> import ncempy.io as nio
-    >>> with nio.ser.fileSER('filename.ser') as ser1:
-    >>>    data, metadata = ser1.getDataset(0)
+    >> import matplotlib.pyplot as plt
+    >> import ncempy.io as nio
+    >> with nio.ser.fileSER('filename.ser') as ser1:
+    >>    data, metadata = ser1.getDataset(0)
 
     SER files are internally structured such that each image in a series is a
     different data set. Thus, time series data should be read as the
     following:
-
-    >>> with ser.fileSER('filename_1.ser') as ser1:
-    >>>     image0, metadata0 = ser1.getDataset(0)
-    >>>     image1, metadata1 = ser1.getDataset(1)
+    >> with ser.fileSER('filename_1.ser') as ser1:
+    >>     image0, metadata0 = ser1.getDataset(0)
+    >>     image1, metadata1 = ser1.getDataset(1)
     """
 
     _dictByteOrder = {0x4949: 'little endian'}
@@ -100,25 +100,37 @@ class fileSER:
         # necessary declarations, if something fails
         self._file_hdl = None
         self._emi = None
-        self.filename = filename
+        self.file_name = None
+        self.file_path = None
         self.head = None
 
-        # check filename type
-        if isinstance(self.filename, str):
-            pass
-        elif isinstance(self.filename, Path):
-            self.filename = str(self.filename)
+        if hasattr(filename, 'read'):
+            self._file_hdl = filename
+            try:
+                self.file_path = Path(filename.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_path = None
+                self.file_name = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            # check filename type, change to pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
-        # try opening the file
-        try:
-            self._file_hdl = open(filename, 'rb')
-        except IOError:
-            print('Error reading file: "{}"'.format(filename))
-            raise
-        except:
-            raise
+            # try opening the file
+            try:
+                self._file_hdl = open(self.file_path, 'rb')
+            except IOError:
+                print('Error reading file: "{}"'.format(self.file_name))
+                raise
+            except:
+                raise
 
         # read header
         self.head = self.readHeader(verbose)
@@ -570,21 +582,20 @@ class fileSER:
         return dim
 
     def _read_emi(self):
-        # Generate emi file string
-        # and test for file existence.
+        """ Generate emi file string and test for file existence."""
 
-        emi_file = self.filename[:-6] + '.emi'
-        if not os.path.exists(emi_file):
+        emi_file_path = self.file_path.parent / (self.file_path.stem[:-2] + '.emi')
+        if not emi_file_path.exists():
             self._emi = None
         else:
-            self._emi = read_emi(emi_file)
+            self._emi = read_emi(emi_file_path)
 
     def writeEMD(self, filename):
         """ Write SER data to an EMD file.
 
         Parameters
         ----------
-            filename: str
+            filename: str or pathlib.Path
                 Name of the EMD file.
 
         """
@@ -1052,10 +1063,9 @@ def serReader(filename):
     Examples
     --------
         Load a single image data set and show the image:
-
-            >>> import ncempy.io as nio
-            >>> ser1 = nio.ser.serReader('filename_1.ser')
-            >>> plt.imshow(ser1['data'])  # show the single image from the data file
+        >> import ncempy.io as nio
+        >> ser1 = nio.ser.serReader('filename_1.ser')
+        >> plt.imshow(ser1['data'])  # show the single image from the data file
     """
     # Open the file and init the class
     with fileSER(filename) as f1:

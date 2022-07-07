@@ -20,5 +20,9 @@ Overview of contents with short description:
 +--------------------+--------------------------------------------------------------------+
 | radial_profile     | Calculate azimuthally averaged radial profiles of images.          |
 +--------------------+--------------------------------------------------------------------+
-| multicorr          | Perform a correlation function to arbitrary precision using phase, cross, or hybrid correlation.          |
+| multicorr_funcs    | Helper functions for multicorr phase and cross correlation         |
++--------------------+--------------------------------------------------------------------+
+| peak_find          | Find peaks in images, fit to a lattice, calcualte unit calls       |
++--------------------+--------------------------------------------------------------------+
+| gaussND            | Multi-dimensional Gaussian (and Lorentz) functions for fitting.    |
 +--------------------+--------------------------------------------------------------------+

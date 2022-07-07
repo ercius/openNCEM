@@ -1,6 +1,9 @@
 """
 Module to find local maxima in 2D and 3D data such as images and density maps.
 
+Many functions are based on work by Colin Ophus, cophus@lbl.gov and his excellent
+RealSpaceLattice01.m code.
+
 author: Peter Ercius, percius@lbl.gov
 """
 
@@ -15,7 +18,6 @@ except:
     
 
 import numpy as np
-from scipy import signal as sig
 import scipy.optimize as opt
 from scipy import ndimage
 
@@ -39,6 +41,7 @@ def doubleRoll(image, vec):
             : np.ndarray
                 The rolled image.
     """
+    assert len(vec) == 2
     return np.roll(np.roll(image, vec[0], axis=0), vec[1], axis=1)
 
 
@@ -59,6 +62,7 @@ def tripleRoll(vol, vec):
             : ndarray
                 The rolled volume.
     """
+    assert len(vec) == 3
     return np.roll(np.roll(np.roll(vol, vec[0], axis=0), vec[1], axis=1), vec[2], axis=2)
 
 
@@ -202,55 +206,6 @@ def enforceMinDist(positions, intensities, minDistance):
     return validPeaks.astype(np.int)
 
 
-def peaksToVolume_old(peakList, volShape, gaussParams):
-    """ Convolve peak positions by a 3D gaussian to compare with original volume.
-    
-    Note
-    ----
-        The x0, y0 and z0 values in gaussParams should all be 0. This will be fixed in a later version.
-    
-    Parameters
-    ----------
-        peakList : np.ndarray
-            Array of peak positions of size (numPeaks,3). The peakList will be set to integer voxel positions
-        
-        volShape : tuple
-            Shape of the volume containing the peaks
-        
-        gaussParams : tuple
-            Parameters for gaussND.gauss3D() function (x0,y0,z0,sigX,sigY,sigZ)
-        
-    Returns
-    -------
-        : np.ndarray
-            A volume containing gaussian peaks at each position indicated in peakList parameter.
-    
-    """
-
-    # Todo: Set x0,y0,z0 = 0 and change the code to reflect this before releasing
-    print('Set x0,y0,z0 = 0 and change the code to reflect this before releasing')
-
-    simVol = np.zeros(volShape, dtype=np.float32)
-
-    # Should allow the peaks to be subSampled into a large volume:
-    # simVol[np.int32(peakList[:,0]*volShape[0]/peakList[:,0].max()),
-    #       np.int32(peakList[:,1]*volShape[1]/peakList[:,1].max()),
-    #       np.int32(peakList[:,2]*volShape[2]/peakList[:,2].max())] = 1.0
-    simVol[np.int32(peakList[:, 0]),
-           np.int32(peakList[:, 1]),
-           np.int32(peakList[:, 2])] = 1.0
-
-    Y3D, X3D, Z3D = np.meshgrid(np.arange(simVol.shape[1]) - (simVol.shape[1] - 1) / 2.,
-                                np.arange(simVol.shape[0]) - (simVol.shape[0] - 1) / 2.,
-                                np.arange(simVol.shape[2]) - (simVol.shape[2] - 1) / 2.,
-                                indexing=default_indexing)
-    gg3 = gaussND.gauss3D(X3D, Y3D, Z3D,
-                          gaussParams[0], gaussParams[1], gaussParams[2],
-                          gaussParams[3], gaussParams[4], gaussParams[5])
-    sim_convolve = sig.fftconvolve(gg3, simVol, mode='same')
-    return sim_convolve
-
-
 def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
     """ Place 3D Gaussian at a set of peak positions.
     
@@ -303,50 +258,6 @@ def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
     return sim_volume
 
 
-def peaksToImage_old(peakList, vol_shape, gaussParams):
-    """Convolve peak positions by a 2D gaussian to compare with original image.
-
-    Note
-    ----
-        Deprecated. Use peaksToImage
-
-    Parameters
-    -----------
-        peakList : np.ndarray
-            Array of peak positions of size (numPeaks, 2). The peakList will be 
-            set to integer pixel positions.
-        
-        vol_shape : tuple
-            Shape of the volume containing the peaks
-        
-        gaussParams : tuple
-            Sigma parameters for gaussND.gauss2D() function (sigX,sigY).
-            
-    Returns
-    -----------
-        : np.ndarray
-            A volume containing gaussian peaks at each position indicated in peakList parameter.
-    
-    """
-
-    simIm = np.zeros(vol_shape)
-    simIm[np.int32(peakList[:, 0]), np.int32(peakList[:, 1])] = 1.0
-
-    # Should allow the peaks to be subSampled into a large volume:
-    # simVol[np.int32(peakList[:,0]*volShape[0]/peakList[:,0].max()),
-    #       np.int32(peakList[:,1]*volShape[1]/peakList[:,1].max()),
-    #       np.int32(peakList[:,2]*volShape[2]/peakList[:,2].max())] = 1.0
-
-    Y3D, X3D = np.meshgrid(np.arange(simIm.shape[1]) - (simIm.shape[1] - 1) / 2.,
-                           np.arange(simIm.shape[0]) - (simIm.shape[0] - 1) / 2.,
-                           indexing=default_indexing)
-    gg2 = gaussND.gauss2D(X3D, Y3D,
-                          0, 0,
-                          gaussParams[0], gaussParams[1])
-    sim_convolve = sig.fftconvolve(gg2, simIm, mode='same')
-    return sim_convolve
-
-
 def peaksToImage(peakList, imShape, gaussSigma, gaussSize, indexing='ij'):
     """ Place 2D Gaussian at a set of peak positions.
     
@@ -393,10 +304,10 @@ def peaksToImage(peakList, imShape, gaussSigma, gaussSize, indexing='ij'):
     return sim_image
 
 
-def lattice2D_norm(u, v, a, b, xy0, num_points):
+def lattice2D_norm(u, v, a, b, origin, num_points):
     """
     Returns a set of points in a lattice according to the u, v unit vectors (vectors are normalized internally)
-    and lengths a,b centered at xy0. The lattice has num_points along each u,v
+    and lengths a,b centered at origin. The lattice has num_points along each u,v
     vector.
     
     Parameters
@@ -407,7 +318,7 @@ def lattice2D_norm(u, v, a, b, xy0, num_points):
         a, b : float
             values to multiply each vector by (if u,v are not normalized then set these to 1)
 
-        xy0 : 2-tuple
+        origin : 2-tuple
             The origin in the format (x0, y0)
 
         num_points : 2-tuple
@@ -419,9 +330,8 @@ def lattice2D_norm(u, v, a, b, xy0, num_points):
             The set of points in the lattice. Size (num_points[0] * num_points[1], 2)
     """
 
-    if np.linalg.norm(u) != 1.0 or np.linalg.norm(v) != 1.0:
-        print('u and v must be normalized. Exiting.')
-        return 0
+    assert np.linalg.norm(u) == 1
+    assert np.linalg.norm(v) == 1
 
     totalNumPoints = np.prod(num_points)
 
@@ -431,13 +341,13 @@ def lattice2D_norm(u, v, a, b, xy0, num_points):
     Y = Y2D.reshape(totalNumPoints)
 
     xy = np.zeros((np.prod(num_points), 2))
-    xy[:, 0] = xy0[0] + a * X * u[0] + b * Y * v[0]
-    xy[:, 1] = xy0[1] + a * X * u[1] + b * Y * v[1]
+    xy[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0]
+    xy[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1]
 
     return xy
 
 
-def lattice2D(u, v, a, b, xy0, num_points):
+def lattice2D(u, v, a, b, origin, num_points):
     """
     A modified version of peakFind.lattice2D_norm which can use non normalized u,v,vectors
     
@@ -449,7 +359,7 @@ def lattice2D(u, v, a, b, xy0, num_points):
         a, b : float
             values to multiply each vector by (if u,v,w are not normalized then set these to 1)
 
-        xy0 : tuple
+        origin : tuple
             The origin in the format (x0,y0)
 
         num_points : tuple
@@ -468,8 +378,8 @@ def lattice2D(u, v, a, b, xy0, num_points):
     Y = Y2D.reshape(totalNumPoints)
 
     xy = np.zeros((np.prod(num_points), 2))
-    xy[:, 0] = xy0[0] + a * X * u[0] + b * Y * v[0]
-    xy[:, 1] = xy0[1] + a * X * u[1] + b * Y * v[1]
+    xy[:, 0] = origin[0] + a * X * u[0] + b * Y * v[0]
+    xy[:, 1] = origin[1] + a * X * u[1] + b * Y * v[1]
 
     return xy
 
@@ -477,7 +387,7 @@ def lattice2D(u, v, a, b, xy0, num_points):
 def lattice3D(u, v, w, a, b, c, origin, num_points):
     """
     Returns a set of points in a lattice according to the u, v, w vectors
-    and lengths a,b centered at xy0. The lattice has num_points along each u,v,w
+    and lengths a,b centered at origin. The lattice has num_points along each u,v,w
     vector.
 
     Parameters
@@ -546,11 +456,14 @@ def applyLatticeLimit(lattice, bounds):
     return lattice[goodUVs, :]
 
 
+# noinspection PyArgumentList
 def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     """
     Plot a set of peaks in a 3D plot using matplotlib. See the example below for how to set up a figure as input
     to this function using matplotlib Axes3D.
-    
+
+    todo: move this to viz
+
     Parameters
     -----------
         X : np.ndarray
@@ -577,12 +490,12 @@ def peakPlot3D(X, Y, Z, mkr, myAxes3D):
     -------
     This function requires the input of a Axes3D to plot a set of peaks. See below how to import
     and set up a figure for use with this function.
-    >>> import matplotlib.pyplot as plt
-    >>> import mpl_toolkits.mplot3d
-    >>> from ncempy.algo import peakFind
-    >>> fg1 = plt.figure()
-    >>> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
-    >>> peakFind.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
+    >> import matplotlib.pyplot as plt
+    >> import mpl_toolkits.mplot3d
+    >> from ncempy.algo import peak_find
+    >> fg1 = plt.figure()
+    >> ax1 = mpl_toolkits.mplot3d.Axes3D(fg1)
+    >> peak_find.peakPlot3D(peakList[:,2], peakList[:,1], peakList[:,0], 'go', ax1)
     """
 
     import matplotlib.pyplot as plt
@@ -609,7 +522,9 @@ def peak3View(fg, vol, peak_positions):
     Plot 3 orthogonal slices and the corresponding peaks in each slice.
     
     Not fully test. Unsure whether the slices and peaks are exactly the same.
-    
+
+    todo: move this to viz
+
     Parameters
     -----------
         fg : matplotlib figure
@@ -678,7 +593,9 @@ def remove_xrays(imageOriginal, threshold, size_median_filter=(3, 3)):
 def writeXYZ(filename, XYZ, element, comment):
     """
     Write out a set of XYZ coordinates that can be read by various crystal viewing software such as Vesta.
-    
+
+    todo: Move this to io
+
     Parameters
     ----------
         filename : str
@@ -696,7 +613,7 @@ def writeXYZ(filename, XYZ, element, comment):
     Example
     -------
         # Write out the peak positions as Carbon atoms:
-        >>> writeXYZ('name.xyz', positions, ['C',] * len(positions), 'writeXYZ example carbon atoms')
+        >> writeXYZ('name.xyz', positions, ['C',] * len(positions), 'writeXYZ example carbon atoms')
     """
     numAtoms = XYZ.shape[0]
     with open(filename, 'w') as f1:
@@ -711,12 +628,7 @@ def refineLattice2D(or0, u0, v0, pos, fraction=(1, 1), max_iter=30,
     """ Refine lattice based on measurements and initial
     guess at lattice vectors. This code is designed to work only with
     square lattices. Hexagonal and more complex lattice might not work.
-    
-    Warning
-    -------
-        Tested code but not production yet. Probably should just call
-        latticeRefine3D with w0 = [0, 0, 0]
-    
+
     Parameters
     ----------
         or0 : tuple
@@ -900,7 +812,7 @@ def generateLatticeFromRefinement(origin, u, v, ab, fraction=(1, 1)):
         fraction : tuple
             The fraction used in refineLattice2D. 2-tuple
         ab : np.ndarray
-            The set of positions on terms of u and v lattice vectors. (number, position) (M, 2)
+            The set of positions in terms of u and v lattice vectors. (number, position) (M, 2)
         fraction : tuple
             The fractional coordinates for the unit cell. 2-tuple
     
@@ -1172,3 +1084,124 @@ def fit_peaks_gauss3d(volume, peaks, cutOut, init, bounds, remove_edge_peaks=Tru
         fittingValues = fittingValues
 
     return optPoints, optI, fittingValues
+
+
+def match_lattice_peaks(peaks, u, v, origin):
+    """ Find the matching lattice points to the experimental peaks. This is useful to generate all fitted lattice points
+    for a set of experimental peaks. This can then be used directly to calculate displacements for example.
+
+    Parameters
+    ----------
+    peaks : ndarray
+        The experimental peaks as a (num_peaks, 2) ndarray
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    origin : tuple
+        The origin of the fitted lattice for u, v vectors
+
+    Returns
+    -------
+    : ndarray
+        An array of shape (num_peaks, 2) where each coordinate is the closest lattice point for each input peak.
+    """
+
+    uv = np.asarray((u, v))
+    ab_nearest = np.dot(peaks - origin, np.linalg.inv(uv))
+
+    return ab_nearest
+
+
+def latticeDisplacements(peaks, u, v, origin):
+    """ Find the displacements of the experimental peaks to the fitted lattice parameters
+
+    Parameters
+    ----------
+    peaks : ndarray
+        The experimental peaks with shape (num_peaks, 2). For example, the output of fit_peaks_gauss2d.
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    origin : tuple
+        The origin of the fitted lattice for u, v vectors
+
+    Returns
+    -------
+    : ndarray
+        The displacement of each peak from the expected lattice position.
+    """
+    ab_nearest = match_lattice_peaks(peaks, u, v, origin)
+
+    uv = np.asarray((u, v))
+
+    p0_disp_linalg = np.zeros(peaks.shape)
+    # p0_disp_r_theta_linalg = np.zeros(peaks.shape)
+    for ii in range(peaks.shape[0]):
+        pp = peaks[ii, :]
+        rref = np.dot(np.round(ab_nearest[ii, :]), uv) + origin
+        p0_disp_linalg[ii, :] = pp - rref
+        # p0_disp_r_theta_linalg[ii, :] = (np.sqrt((pp[0] - rref[0]) ** 2 + (pp[1] - rref[1]) ** 2),
+        #                                  np.arctan2((pp[1] - rref[1]), (pp[0] - rref[0])))
+    return p0_disp_linalg
+
+
+def calculate_unit_cell(image, lattice, u, v, unit_cell_size):
+    """ IN PROGRESS
+    Calculate a unit cell using the input lattice and lattice parameters. Any unit cell at the edge of the image is not
+    used as part of the unit cell will be invalid.
+
+    Parameters
+    ----------
+    image : ndarray
+        The image containing the unit cell in a regular pattern (i.e. a lattice)
+    lattice: ndarray
+        The starting position of each unit cell in the image.
+    u, v : tuple
+        The u and v vectors for the fitted lattice
+    unit_cell_size : int or tuple
+        If int then this is the number of pixels in the unit cell along the u vector. The size of the v vector will be
+        automatically calculated to make the unit cell pixels square. If tuple then the number of pixels along each
+        u and v dimension are used directly.
+
+    Returns
+    -------
+    : ndarray
+        An array of size unit_cell_size which contains the average value of each position in the unit cell for each
+        peak position and u,v, lattice point.
+    """
+    print('Warning, untested code. Work in progress.')
+    if isinstance(unit_cell_size, int):
+        num_u = unit_cell_size
+        num_v = int(num_u * (np.linalg.norm(v) / np.linalg.norm(u)))
+    elif isinstance(unit_cell_size, tuple):
+        num_u, num_v = unit_cell_size
+    else:
+        raise TypeError('unit_cell_size must be int or 2-tuple')
+
+    # Ensure image is floating point for interpolation
+    if np.issubdtype(image.dtype, np.floating):
+        image2 = image.copy()
+    else:
+        image2 = image.astype(np.float32)
+
+    uu = [ii / num_u for ii in u]
+    vv = [ii / num_v for ii in v]
+
+    # Create a centered set of sub-lattice coordinates
+    sub_lattice = lattice2D(uu, vv, 1, 1, (0, 0), (num_u, num_v))  # starts at (0, 0). Then offset for each peak.
+
+    unit_cell = np.zeros((num_v, num_u), dtype=image2.dtype)
+    cur_cell = np.zeros((num_v * num_u,), dtype=image2.dtype)
+    num = 0  # number of unit cells used (edges are not used)
+    for ii, peak in enumerate(lattice):
+        cur_XX = sub_lattice[:, 0] + peak[0]
+        cur_YY = sub_lattice[:, 1] + peak[1]
+        ndimage.map_coordinates(image2, (cur_XX.ravel(), cur_YY.ravel()), order=3, output=cur_cell)
+        if not np.any(np.isnan(cur_cell)):
+            # Avoid unit cells on the edge of the image. Otherwise the mean is corrupted
+            unit_cell += cur_cell.reshape((num_v, num_u))
+            num += 1
+
+    # Normalize by the number of unit cells used
+    unit_cell /= num
+
+    # Rotate to match the image
+    return unit_cell.T

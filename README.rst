@@ -2,11 +2,11 @@
 openNCEM
 ========
 
-A collection of packages and tools for electron microscopy data analysis supported by the National Center for Electron Microscopy facility of the Molecular Foundry.
+A collection of packages, scripts, and tools for electron microscopy data analysis supported by the National Center for Electron Microscopy facility of the Molecular Foundry.
 
 Read the documentation: https://openncem.readthedocs.io/en/latest/.
 
-Installation of ncempy package
+Installation of the ncempy package
 ==============================
 
 The newest version can be installed using pip:

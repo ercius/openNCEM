@@ -33,22 +33,22 @@ class fileEMDVelox:
     ----------
     list_data : list
         A list containing each h5py data group that can be loaded.
-
-    file_hdl : h5py.File
+    _file_hdl : h5py.File
         The File handle from h5py.File.
-
     metaDataJSON : dict
         The full metadata for the most recently loaded data set. Note that you have to load a data set for this to be
         populated or run parseMetaData(num).
-
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
     Examples
     --------
     Open an EMD Velox file containing 1 image.
-
-    >>> import ncempy.io as nio
-    >>> with nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd') as emd1:
-    >>>     print(emd1) # print information about the file
-    >>>     im0, metadata0 = emd1.get_dataset(0)
+    >> import ncempy.io as nio
+    >> with nio.emdVelox.fileEMDVelox('1435 1.2 Mx STEM HAADF-DF4-DF2-BF.emd') as emd1:
+    >>     print(emd1) # print information about the file
+    >>     im0, metadata0 = emd1.get_dataset(0)
     """
     
     def __init__(self, filename):
@@ -63,24 +63,36 @@ class fileEMDVelox:
         """
         
         # necessary declaration in case something goes wrong
-        self.file_hdl = None
+        self._file_hdl = None
+        self.file_name = None
+        self.file_path = None
         self.metaDataJSON = None
         self.list_data = None
         self.list_emds = None  # this will be identical to list_data
 
-        # check filename type
-        if isinstance(filename, str):
-            pass
-        elif isinstance(filename, Path):
-            filename = str(filename)
+        if hasattr(filename, 'read'):
+            try:
+                self.file_path = Path(filename.name)
+                self.file_name = self.file_path.name
+            except AttributeError:
+                self.file_path = None
+                self.file_name = None
         else:
-            raise TypeError('Filename is supposed to be a string or pathlib.Path')
+            # check filename type, change to pathlib.Path
+            if isinstance(filename, str):
+                filename = Path(filename)
+            elif isinstance(filename, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
+            self.file_path = filename
+            self.file_name = self.file_path.name
 
         # try opening the file
         try:
-            self.file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760)  # rdcc_nbytes = 10*1024**2
+            self._file_hdl = h5py.File(filename, 'r', rdcc_nbytes=10485760)  # rdcc_nbytes = 10*1024**2
         except:
-            print('Error opening file for readonly: "{}"'.format(filename))
+            print('Error opening file: "{}"'.format(filename))
             raise
             
         self._find_groups()
@@ -92,7 +104,7 @@ class fileEMDVelox:
 
         """
         # close the file
-        self.file_hdl.close()
+        self._file_hdl.close()
 
     def __enter__(self):
         """ Implement python's with statement
@@ -130,7 +142,7 @@ class fileEMDVelox:
         """
         try:
             # Get all of the groups in the Image group
-            self.list_data = list(self.file_hdl['Data/Image'].values())
+            self.list_data = list(self._file_hdl['Data/Image'].values())
         except:
             self.list_data = []
             raise
