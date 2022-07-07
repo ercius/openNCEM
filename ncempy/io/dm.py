@@ -1196,7 +1196,8 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     with fileDM(filename, verbose, on_memory=on_memory) as f1:
         # Get the requested dataset
         im1 = f1.getDataset(dSetNum)
-
+        allTags = f1.allTags
+        
     # Now prepare nice coordinates (like energy loss axis for spectra)
     coords = []
     for pixel_size, pixel_origin, pixel_unit, sh in zip(im1['pixelSize'], im1['pixelOrigin'], im1['pixelUnit'],
@@ -1210,13 +1211,10 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     im1['coords'] = coords
     
     # Add calibrated intensity
-    prefix1 = 'ImageList.{}.ImageData.Calibrations.Brightness.'.format(dsetNum+1)
-    for kk,vv in self.allTags.items():
-        pos1 = kk.find(prefix1)
-        if pos1 > -1:
-            if kk.split(',')[-1] is 'Origin':
-                print('origin)
-        
+    prefix1 = '.ImageList.{}.ImageData.Calibrations.Brightness.'.format(dSetNum+1)
+    im1['intensityScale'] = allTags[prefix1 + 'Scale']
+    im1['intensityUnits'] = allTags[prefix1 + 'Units']
+    im1['intensityOrigin'] = allTags[prefix1 + 'Origin']
     
     # Remove confusing pixelOrigin. Use coords instead
     del im1['pixelOrigin']
