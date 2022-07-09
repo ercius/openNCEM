@@ -92,7 +92,7 @@ class fileDM:
                  '_endianType', 'origin', '_encodedTypeSizes',
                  '_buffer_offset', '_buffer_size', '_DM2NPDataTypes',
                  '_TagType2NPDataTypes', 'on_memory', 'verbose',
-                 '_EncodedTypeDTypes')
+                 '_EncodedTypeDTypes','metadata')
 
     def __init__(self, filename, verbose=False, on_memory=True):
         """
@@ -173,6 +173,7 @@ class fileDM:
         self.dataOffset = []
         self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set (like numpy.ndim)
         self.allTags = {}
+        self.metadata = {}
 
         # lists that will contain scale information (pixel size)
         self.scale = []
@@ -385,38 +386,48 @@ class fileDM:
         else:  # this file only contains tags (such as a GTG file)
             self.thumbnail = False
 
-        ''' Determine useful meta data UNTESTED
-        self.metaData = {}
-        for kk,ii in self.allTags.items():
-            prefix1 = 'ImageList.{}.ImageTags.'.format(md.numObjects)
-            prefix2 = 'ImageList.{}.ImageData.'.format(md.numObjects)
+    def getMetadata(self, index):
+        """ Get the useful metadata in the file. This parses the allTags dictionary and retrieves only the useful
+        information about hte experimental parameters.
+
+        Parameters
+        ----------
+        index : int
+            The number of the dataset to get the metadata from.
+        """
+
+        # Determine useful meta data UNTESTED
+        # self.metadata = {}
+        for kk, ii in self.allTags.items():
+            prefix1 = 'ImageList.{}.ImageTags.'.format(index + 1)
+            prefix2 = 'ImageList.{}.ImageData.'.format(index + 1)
             pos1 = kk.find(prefix1)
             pos2 = kk.find(prefix2)
             if pos1 > -1:
-                sub = kk[pos1+len(prefix):]
-                self.metaData[sub] = ii
+                sub = kk[pos1+len(prefix1):]
+                self.metadata[sub] = ii
             elif pos2 > -1:
-                sub = kk[pos2+len(prefix):]
-                self.metaData[sub] = ii
-            
-            #Remove some unneeded keys
-            for jj in list(self.metaData):
-                if jj.find('frame sequence')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Private')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Reference Images')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Frame.Intensity')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Area.Transform')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Parameters.Objects')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Device.Parameters')>-1:
-                    del self.metaData[jj]
-        return metaData
-        '''
+                sub = kk[pos2+len(prefix2):]
+                self.metadata[sub] = ii
+
+            # Remove some unneeded keys
+            for jj in list(self.metadata):
+                if jj.find('frame sequence') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Private') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Reference Images') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Frame.Intensity') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Area.Transform') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Parameters.Objects') > -1:
+                    del self.metadata[jj]
+                elif jj.find('Device.Parameters') > -1:
+                    del self.metadata[jj]
+
+        return self.metadata
 
     def _readTagGroup(self):
         """Read a tag group in a DM file.
@@ -1007,6 +1018,12 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
+            # Add calibrated intensity
+            #prefix1 = '.ImageList.{}.ImageData.Calibrations.Brightness.'.format(ii)
+            #outputDict['intensityScale'] = self.brightnessScale
+            #outputDict['intensityUnits'] = self.brightnessUnit
+            #outputDict['intensityOrigin'] = self.brightnessOrigin
+
         # Ensure the data is loaded into memory from the buffer
         if self._on_memory:
             outputDict['data'] = np.array(outputDict['data'])
@@ -1209,12 +1226,6 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
             eLoss = np.round(np.linspace(0, pixel_size * (sh - 1), sh) + pixel_origin, decimals=4)
             coords.append(eLoss)
     im1['coords'] = coords
-    
-    # Add calibrated intensity
-    prefix1 = '.ImageList.{}.ImageData.Calibrations.Brightness.'.format(dSetNum+1)
-    im1['intensityScale'] = allTags[prefix1 + 'Scale']
-    im1['intensityUnits'] = allTags[prefix1 + 'Units']
-    im1['intensityOrigin'] = allTags[prefix1 + 'Origin']
     
     # Remove confusing pixelOrigin. Use coords instead
     del im1['pixelOrigin']
