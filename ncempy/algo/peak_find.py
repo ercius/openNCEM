@@ -100,7 +100,7 @@ def peakFind2D(image, threshold):
              (image > threshold * np.max(image))
 
     positions = np.array(np.where(pLarge * image)).T.copy()  # return array as [num,posXY]
-    return positions.astype(np.int)
+    return positions.astype(int)
 
 
 def peakFind3D(vol, threshold):
