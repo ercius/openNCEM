@@ -391,6 +391,10 @@ class fileDM:
         information about hte experimental parameters. This is a (useful) subset of the information contains in the
         allTags attribute.
 
+        Note: some DM files contain extra information called the Tecnai Microscope Info. This is added to the metadata
+        dictionary as a string.
+
+
         Parameters
         ----------
         index : int
@@ -422,18 +426,18 @@ class fileDM:
                     new_key = ' '.join(kk_split[4:])
                     self.metadata[new_key] = ii
 
-            # if 'Tecnai.Microscope Info.arrayOffset' in kk:
-            #     try:
-            #         offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
-            #         size = self.allTags[prefix1 + 'Tecnai.Microscope Info.arraySize']
-            #         dtype = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayType']
-            #         cur_offset = self.fid.tell()
-            #         self.seek(self.fid, offset)
-            #         stringData = self.fromfile(self.fid, count=size, dtype=np.uint8)
-            #         tecnai = self._bin2str(stringData)
-            #         print(tecnai)
-            #     except KeyError:
-            #         print('key error')
+            if 'Tecnai.Microscope Info.arrayOffset' in kk:
+                try:
+                    offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
+                    size = self.allTags[prefix1 + 'Tecnai.Microscope Info.arraySize']
+                    dtype = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayType']
+                    cur_offset = self.fid.tell()
+                    self.seek(self.fid, offset)
+                    string_data = self.fromfile(self.fid, count=size, dtype=np.uint16)
+                    tecnai = ''.join([chr(ii) for ii in string_data]).replace('\u2028', ';')  # replace new line with ;
+                    self.metadata['Tecnai Microscope Info'] = tecnai
+                except KeyError:
+                    print('Tecnai parse error')
 
         return self.metadata
 
