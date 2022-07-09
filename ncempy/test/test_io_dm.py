@@ -184,4 +184,4 @@ class Testdm3:
         file_name = data_location / Path('08_carbon.dm3')
         with ncempy.io.dm.fileDM(file_name) as dm0:
             _ = dm0.getMetadata(0)
-            print(_)
+            print(_['Calibrations Brightness Scale'])

@@ -388,7 +388,8 @@ class fileDM:
 
     def getMetadata(self, index):
         """ Get the useful metadata in the file. This parses the allTags dictionary and retrieves only the useful
-        information about hte experimental parameters.
+        information about hte experimental parameters. This is a (useful) subset of the information contains in the
+        allTags attribute.
 
         Parameters
         ----------
@@ -396,36 +397,43 @@ class fileDM:
             The number of the dataset to get the metadata from.
         """
 
-        # Determine useful meta data UNTESTED
-        # self.metadata = {}
-        for kk, ii in self.allTags.items():
-            prefix1 = 'ImageList.{}.ImageTags.'.format(index + 1)
-            prefix2 = 'ImageList.{}.ImageData.'.format(index + 1)
-            pos1 = kk.find(prefix1)
-            pos2 = kk.find(prefix2)
-            if pos1 > -1:
-                sub = kk[pos1+len(prefix1):]
-                self.metadata[sub] = ii
-            elif pos2 > -1:
-                sub = kk[pos2+len(prefix2):]
-                self.metadata[sub] = ii
+        # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
+        # metadata indexing starts at 1 but the index keyword starts at 0
+        if self.numObjects == 1:
+            index = 1  # the first data set will have a 1 in the metadata
+        else:
+            index += 2  # the thumbnail is index = 1. The actual data will needs to start at 2.
 
-            # Remove some unneeded keys
-            for jj in list(self.metadata):
-                if jj.find('frame sequence') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Private') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Reference Images') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Frame.Intensity') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Area.Transform') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Parameters.Objects') > -1:
-                    del self.metadata[jj]
-                elif jj.find('Device.Parameters') > -1:
-                    del self.metadata[jj]
+        # Check that the dataset exists.
+        try:
+            self._checkIndex(index)
+        except:
+            raise
+
+        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', ]
+
+        # Determine useful meta data UNTESTED
+        prefix1 = '.ImageList.{}.ImageTags.'.format(index)
+        prefix2 = '.ImageList.{}.ImageData.'.format(index)
+        for kk, ii in self.allTags.items():
+            if prefix1 in kk or prefix2 in kk:
+                kk_split = kk.split('.')
+                if kk_split[4] in good_keys:
+                    new_key = ' '.join(kk_split[4:])
+                    self.metadata[new_key] = ii
+
+            # if 'Tecnai.Microscope Info.arrayOffset' in kk:
+            #     try:
+            #         offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
+            #         size = self.allTags[prefix1 + 'Tecnai.Microscope Info.arraySize']
+            #         dtype = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayType']
+            #         cur_offset = self.fid.tell()
+            #         self.seek(self.fid, offset)
+            #         stringData = self.fromfile(self.fid, count=size, dtype=np.uint8)
+            #         tecnai = self._bin2str(stringData)
+            #         print(tecnai)
+            #     except KeyError:
+            #         print('key error')
 
         return self.metadata
 
