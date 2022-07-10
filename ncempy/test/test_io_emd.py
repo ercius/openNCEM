@@ -119,3 +119,21 @@ class Testemd:
 
         data, dims = load_memmap(f, 0)
         assert data[0,0] == 12487
+
+    def test_bad_dims(self, temp_file):
+        import h5py
+        with h5py.File(temp_file, 'w') as f0:
+            gg = f0.create_group('/data/temp')
+            gg.attrs['emd_group_type'] = 1
+            dd = gg.create_dataset('data', data=np.zeros((10, 10)))
+            dim1 = gg.create_dataset('dim1', data=(0, 1))
+            # dim1.attrs['name'] = 'X'
+            dim1.attrs['units'] = 'n_m'
+            dim2 = gg.create_dataset('dim2', data=(0, 1))
+            dim2.attrs['name'] = 'Y'
+            # dim2.attrs['units'] = 'pixels'
+
+        with ncempy.io.emd.fileEMD(temp_file) as f0:
+            _, dims = f0.get_emdgroup(0)
+        assert dims[0][1] == 'dim1'
+        assert dims[1][2] is 'pixels'

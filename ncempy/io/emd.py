@@ -249,15 +249,21 @@ class fileEMD:
             dim = group['dim{}'.format(ii + 1)]
             # save them as (vector, name, units)
 
-            if isinstance(dim.attrs['name'], np.ndarray):
-                name = dim.attrs['name'][0]
+            if 'name' in dim.attrs:
+                if isinstance(dim.attrs['name'], np.ndarray):
+                    name = dim.attrs['name'][0]
+                else:
+                    name = dim.attrs['name']
             else:
-                name = dim.attrs['name']
+                name = 'dim{}'.format(ii + 1)
 
-            if isinstance(dim.attrs['units'], np.ndarray):
-                units = dim.attrs['units'][0]
+            if 'units' in dim.attrs:
+                if isinstance(dim.attrs['units'], np.ndarray):
+                    units = dim.attrs['units'][0]
+                else:
+                    units = dim.attrs['units']
             else:
-                units = dim.attrs['units']
+                units = 'pixels'
 
             # Handle bytes objects by decoding them to strings
             # If something goes wrong, the original attribute is left as-is
