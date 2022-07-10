@@ -1030,7 +1030,7 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
-            # Add calibrated intensity
+            # Add calibrated intensity (this should be in getMetadata
             #prefix1 = '.ImageList.{}.ImageData.Calibrations.Brightness.'.format(ii)
             #outputDict['intensityScale'] = self.brightnessScale
             #outputDict['intensityUnits'] = self.brightnessUnit
