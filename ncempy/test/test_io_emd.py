@@ -32,7 +32,7 @@ class Testemd:
     @pytest.fixture
     def temp_file(self):
         tt = tempfile.NamedTemporaryFile(mode='wb')
-        tt.close() # need to close the file to use it later
+        tt.close()  # need to close the file to use it later
         return Path(tt.name)
 
     def test_read_emd_2d(self, data_location):
@@ -94,7 +94,6 @@ class Testemd:
         except FileExistsError:
             assert False
 
-
     def test_file_object(self, data_location):
         # Test fileEMD class input with file object
         file_name = data_location / Path('Acquisition_18.emd')
@@ -103,7 +102,6 @@ class Testemd:
         assert hasattr(emd0, 'file_hdl')
 
     def test_memmap(self, data_location):
-
         emd1 = ncempy.io.emd.fileEMD(data_location / Path('Acquisition_18.emd'))
         d, dims = emd1.get_memmap(0)
         del emd1
@@ -112,10 +110,29 @@ class Testemd:
     def test_memmap_in_function(self, data_location):
         f = data_location / Path('Acquisition_18.emd')
 
-        def load_memmap(fpath, N):
+        def load_memmap(fpath, n):
             f0 = ncempy.io.emd.fileEMD(fpath)
-            data0, dims0 = f0.get_memmap(N)
+            data0, dims0 = f0.get_memmap(n)
             return data0, dims0
 
         data, dims = load_memmap(f, 0)
-        assert data[0,0] == 12487
+        assert data[0, 0] == 12487
+
+    def test_bad_dims(self, temp_file):
+        import h5py
+        # Create a data set with missing attributes in the dim vectors
+        with h5py.File(temp_file, 'w') as f0:
+            gg = f0.create_group('/data/temp')
+            gg.attrs['emd_group_type'] = 1
+            gg.create_dataset('data', data=np.zeros((10, 10)))
+            dim1 = gg.create_dataset('dim1', data=(0, 1))
+            # dim1.attrs['name'] = 'X'
+            dim1.attrs['units'] = 'n_m'
+            dim2 = gg.create_dataset('dim2', data=(0, 1))
+            dim2.attrs['name'] = 'Y'
+            # dim2.attrs['units'] = 'n_m'
+
+        with ncempy.io.emd.fileEMD(temp_file) as f0:
+            _, dims = f0.get_emdgroup(0)
+        assert dims[0][1] == 'dim1'
+        assert dims[1][2] is 'pixels'
