@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import ncempy.io as nio
+import ncempy
 
 
 @pytest.fixture
@@ -23,6 +24,12 @@ def temp_file():
     tt = tempfile.NamedTemporaryFile(mode='wb')
     tt.close() # need to close the file to use it later
     return Path(tt.name)
+
+
+def test_import(data_location):
+    emd_path = data_location / Path('Acquisition_18.emd')
+    dd = ncempy.read(emd_path)
+    assert 'data' in dd
 
 
 def test_emd_berkeley(data_location):
