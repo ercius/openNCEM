@@ -13,7 +13,7 @@ def test_multicorr():
     """
     Test to check if the correlation is working.
     """
-    g2 = np.zeros((3, 3), dtype=np.float)
+    g2 = np.zeros((3, 3), dtype=np.float32)
     test = neval.multicorr(np.fft.fft2(g2), np.fft.fft2(g2), 'phase', 3)
     assert list(test) == [0, 0]
 

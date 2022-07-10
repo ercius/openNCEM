@@ -179,3 +179,10 @@ class Testdm3:
         fid = open(file_name, 'rb')
         dm0 = ncempy.io.dm.fileDM(fid)
         assert hasattr(dm0, 'fid')
+
+    def test_metadata(self, data_location):
+        file_name = data_location / Path('08_carbon.dm3')
+        with ncempy.io.dm.fileDM(file_name) as dm0:
+            _ = dm0.getMetadata(0)
+            print(_['Calibrations Brightness Scale'])
+
