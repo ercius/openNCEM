@@ -167,8 +167,8 @@ class TilterFrame(wx.Frame):
                                     size=(300,20))
         self._lStage = wx.StaticText(setupPage, wx.ID_ANY, 'Stage type')
         self._iStage = wx.RadioBox(setupPage, wx.ID_ANY,
-                              label='stage type', choices=('alpha-gamma',
-                                                           'alpha-beta'))
+                                   label='stage type', choices=('alpha-gamma',
+                                                                'alpha-beta'))
 
         setupbox.Add(self._lUser)
         setupbox.Add(self._iUser)
@@ -510,27 +510,38 @@ class TilterFrame(wx.Frame):
             
     
     def calc_tilts(self, x, y):
+        """ Pass through function which is based on alpha-gamma or 
+        alpha-beta radio button.
+        
+        Parameters
+        ----------
+        x, y : float, pixels
+            The location clicked on the diffraction pattern image.
+        
+        """
+        print(self._iStage.GetSelection())
+        if self._iStage.GetSelection() == 0:
+            out = self.calc_tilts_ag(x, y)
+        else:
+            out = self.calc_tilts_ab(x, y)
+        return out
+        
+        
+    def calc_tilts_ag(self, x, y):
         """ Calculate tilts for alpha gamma TEAM stage. Values are
-        returned are the new stage coordinates to rotate to in
+        returned are the new stage angles to rotate to in
         radians.
         
-            Parameters
-            ----------
-            x, y : float, pixels
-                The location clicked on the image
+        Parameters
+        ----------
+        x, y : float, pixels
+            The location clicked on the diffraction pattern image
             
-            cbedXY ; 2-tuple
-                The location of the center of the pattern to calcualte
-                the relative tilts
-                
-            verbose : bool, default False
-                Print out information about tilting
-                
-            Returns
-            -------
-                : float
-                    The alpha and gamm tilt to bring the axis to the 
-                    beam orientation. In radians.
+        Returns
+        -------
+        : 2-tuple
+            The alpha and gamm tilt to bring the axis to the 
+            beam orientation. In radians.
         """
         alpha_orientation = self.alpha_orientation * np.pi / 180.
         
@@ -603,6 +614,7 @@ class TilterFrame(wx.Frame):
         new_alpha_quaternion = np.arccos(axisV_TSframe[2]) # this loses the sign
         new_alpha = tsAlpha + theta # directly from the calculated theta value
         new_gamma = np.arctan(axisV_TSframe[0]/(axisV_TSframe[1] + 1e-5))
+        print('TRY ARCTAN2 HERE for TEAM STAGE')
         
         if self.v:
             print("axis in world frame = {}".format(axisV))
@@ -610,6 +622,87 @@ class TilterFrame(wx.Frame):
             print("new gamma quaternion = {:0.3}".format(new_gamma * 180/np.pi))
             print("new alpha from theta = {:0.3}".format((tsAlpha + theta)*180/np.pi))
         return new_alpha, new_gamma
+    
+    def calc_tilts_ab(self, x, y):
+        """ Calculate tilts for alpha beta double tilt holder. Values are
+        returned are the new stage angles to rotate to in
+        radians.
+        
+            Parameters
+            ----------
+            x, y : float, pixels
+                The location clicked on the image diffraction pattern
+            
+            cbedXY : 2-tuple
+                The location of the center of the pattern to calculate
+                the relative tilts
+                
+            verbose : bool, default False
+                Print out information about the calculation
+                
+            Returns
+            -------
+            : 2-tuple
+                The alpha and beta tilt to bring the axis to the 
+                beam orientation. In radians.
+        """
+        alpha_orientation = self.alpha_orientation * np.pi / 180. # beta orientation is assumed to be orthogonal
+        
+        pos = self.getPosition()
+        stage_alpha = pos[3] * np.pi / 180
+        stage_gamma = pos[4] * np.pi / 180
+        
+        # both in pixels
+        axisXY = (x, y) # where clicked
+        cbedXY = self.cbedXY # where the zero beam is
+        
+        if self.v:
+            print('cbedXY = {}'.format(cbedXY))
+            print('axisXY = {}'.format(axisXY))
+        
+        # Find x and y distance on the plot
+        deltaXY = [x1 - x2 for (x1, x2) in zip(axisXY, cbedXY)]
+        
+        # Reverse X to get beta direction correct
+        print('Check beta direction reversal')
+        deltaXY[0] *= -1
+        
+        # Rotate the delta vector to accommodate the alpha axis rotation
+        rot = np.array(((np.cos(alpha_orientation), -np.sin(alpha_orientation)), 
+                        (np.sin(alpha_orientation), np.cos(alpha_orientation))))
+        deltaXY = np.dot(deltaXY, rot)
+        
+        if self.v:
+            print("deltaXY = {0[0]:0.3}, {0[1]:0.3}".format(deltaXY))
+        
+        # Determine if positive or negative alpha
+        if deltaXY[1] <= 0:
+            alpha_sign = self.alpha_polarity
+        else:
+            alpha_sign = -self.alpha_polarity
+        if self.v:
+            print('alpha sign = {}'.format(alpha_sign))
+        
+        # Determine positive or negative beta
+        self.beta_polarity = 1
+        print('beta_polarity set to +1')
+        if deltaXY[1] <= 0:
+            beta_sign = self.beta_polarity
+        else:
+            beta_sign = -self.beta_polarity
+        if self.v:
+            print('alpha sign = {}'.format(alpha_sign))
+        
+        alpha = alpha_sign * deltaXY[0] * self.cbed_pixel_size * np.pi/180
+        beta  = beta_sign * deltaXY[1] * self.cbed_pixel_size * np.pi/180
+        
+        new_alpha = stage_alpha + alpha
+        new_beta = stage_alpha + beta
+        
+        if self.v:
+            print('alpha, beta = {}, {}'.format(alpha, beta))
+            print('new_alpha, new_beta = {}, {}'.format(new_alpha, new_beta))
+        return new_alpha, new_beta
         
     def getPosition_compustage(self):
         """ Get compustage position

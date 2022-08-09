@@ -8,7 +8,7 @@ author: Peter Ercius, percius@lbl.gov
 
 import uuid
 import argparse
-version = 1.1 #version number for this program
+version = 1.2 # version number for this program
 
 import numpy as np
 import socket
@@ -30,8 +30,8 @@ except:
 # Main window
 class TEAMFrame(wx.Frame):
     def __init__(self, parent, title, stagetype = 'compustage'):
+        
         #Import only necessary modules from matplotlib
-
         from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
         from matplotlib.figure import Figure
         try:
@@ -51,6 +51,10 @@ class TEAMFrame(wx.Frame):
         self.times = None # acquisition time(s)
         
         self.calX = self.calY = 0
+        
+        self.setA = {}
+        self.setB = {}
+        self.setC = {}
         
         # Set the update stage position to either
         # compustage or teamstage function
@@ -89,6 +93,7 @@ class TEAMFrame(wx.Frame):
         focalbox = wx.BoxSizer(wx.VERTICAL)
         driftbox = wx.BoxSizer(wx.VERTICAL)
         seriesbox = wx.BoxSizer(wx.VERTICAL)
+        setbox = wx.BoxSizer(wx.VERTICAL)
 
         notebook = wx.Notebook(self)
         
@@ -98,6 +103,7 @@ class TEAMFrame(wx.Frame):
         focalPage = wx.Panel(notebook) # focal series
         driftPage = wx.Panel(notebook) # 0-90 degree drift compensation
         timeSeriesPage = wx.Panel(notebook) # time series
+        setPage = wx.Panel(notebook) # STEM settings save / set
         reviewpage = wx.Panel(notebook) # review previous data
         
         # Figure
@@ -134,7 +140,6 @@ class TEAMFrame(wx.Frame):
         setupbox.Add(self._iSample)
         
         # Single image acquisition page
-        self._lLabel00 = wx.StaticText(acquirePage, wx.ID_ANY, 'File Parameters')
         self._lFprefix0 = wx.StaticText(acquirePage, wx.ID_ANY, 'File name prefix')
         self._iFprefix0 = wx.TextCtrl(acquirePage,wx.ID_ANY,value='Acquisition')
         
@@ -144,7 +149,7 @@ class TEAMFrame(wx.Frame):
         self._lBin0 = wx.StaticText(acquirePage, wx.ID_ANY, 'Binning')
         self._iBin0 = wx.TextCtrl(acquirePage,wx.ID_ANY,value='8')
         self._btnAcqSingle = wx.Button(acquirePage, label='Acquire')
-        acquirebox.Add(self._lLabel00)
+        
         acquirebox.Add(self._lFprefix0)
         acquirebox.Add(self._iFprefix0)
         acquirebox.Add(self._lLabel01)
@@ -157,7 +162,6 @@ class TEAMFrame(wx.Frame):
         # Focal series acquisition page
         self._lFprefix1 = wx.StaticText(focalPage, wx.ID_ANY, 'File name prefix')
         self._iFprefix1 = wx.TextCtrl(focalPage,wx.ID_ANY,value='FocalSeries')
-        
         self._lLabel10 = wx.StaticText(focalPage, wx.ID_ANY, 'Acquire parameters')
         self._lDwell1 = wx.StaticText(focalPage, wx.ID_ANY, 'Dwell time (usec)')
         self._iDwell1 = wx.TextCtrl(focalPage,wx.ID_ANY,value='1')
@@ -203,9 +207,9 @@ class TEAMFrame(wx.Frame):
         self._iRot2.SetSelection(0)
         self._btnAcqDrift = wx.Button(driftPage, label = 'Acquire')
         
-        driftbox.Add(self._lLabel20)
         driftbox.Add(self._lFprefix2)
         driftbox.Add(self._iFprefix2)
+        driftbox.Add(self._lLabel20)
         driftbox.Add(self._lDwell2)
         driftbox.Add(self._iDwell2)
         driftbox.Add(self._lBin2)
@@ -227,10 +231,11 @@ class TEAMFrame(wx.Frame):
         self._iRep3 = wx.TextCtrl(timeSeriesPage,wx.ID_ANY,value='3')
         self._lDel3 = wx.StaticText(timeSeriesPage, wx.ID_ANY, 'Delay between images (sec)')
         self._iDel3 = wx.TextCtrl(timeSeriesPage,wx.ID_ANY,value='0')
-        
         self._btnAcqTimeSeries = wx.Button(timeSeriesPage, label='Acquire')
+        
         seriesbox.Add(self._lFprefix3)
         seriesbox.Add(self._iFprefix3)
+        seriesbox.Add(self._lLabel30)
         seriesbox.Add(self._lDwell3)
         seriesbox.Add(self._iDwell3)
         seriesbox.Add(self._lBin3)
@@ -240,6 +245,52 @@ class TEAMFrame(wx.Frame):
         seriesbox.Add(self._lDel3)
         seriesbox.Add(self._iDel3)
         seriesbox.Add(self._btnAcqTimeSeries)
+        
+        self._lSetTop = wx.StaticText(setPage, wx.ID_ANY, 'Restore settings')
+        self._lSetA = wx.StaticText(setPage, wx.ID_ANY, 'STEM Parameters A')
+        self._lSetAName = wx.TextCtrl(setPage, wx.ID_ANY, value='HAADF')
+        self._btnSetASet = wx.Button(setPage, label='A: Set')
+        self._btnSetASetAcq = wx.Button(setPage, label='A: Set + Acquire')
+        self._lSetB = wx.StaticText(setPage, wx.ID_ANY, 'STEM Parameters B')
+        self._lSetBName = wx.TextCtrl(setPage, wx.ID_ANY, value='LAADF')
+        self._btnSetBSet = wx.Button(setPage, label='B: Set')
+        self._btnSetBSetAcq = wx.Button(setPage, label='B: Set + Acquire')
+        self._lSetC = wx.StaticText(setPage, wx.ID_ANY, 'STEM Parameters C')
+        self._lSetCName = wx.TextCtrl(setPage, wx.ID_ANY, value='4D Camera')
+        self._btnSetCSet = wx.Button(setPage, label='C: Set')
+        self._btnSetCSetAcq = wx.Button(setPage, label='C: Set + Acquire')
+        
+        self._lSaveSet = wx.StaticText(setPage, wx.ID_ANY, 'Save current settings as')
+        self._btnSetASave = wx.Button(setPage, label='A: Save')
+        self._btnSetBSave = wx.Button(setPage, label='B: Save')
+        self._btnSetCSave = wx.Button(setPage, label='C: Save')
+        
+        setbox.Add(self._lSetTop)
+        setbox.Add(self._lSetA)
+        setbox.Add(self._lSetAName)
+        setbox.Add(self._btnSetASet)
+        setbox.Add(self._btnSetASetAcq)
+        setbox.Add(self._lSetB)
+        setbox.Add(self._lSetBName)
+        setbox.Add(self._btnSetBSet)
+        setbox.Add(self._btnSetBSetAcq)
+        setbox.Add(self._lSetC)
+        setbox.Add(self._lSetCName)
+        setbox.Add(self._btnSetCSet)
+        setbox.Add(self._btnSetCSetAcq)
+        
+        setbox.Add(self._lSaveSet)
+        setbox.Add(self._btnSetASave)
+        setbox.Add(self._btnSetBSave)
+        setbox.Add(self._btnSetCSave)
+        
+        # Disable buttons that should not be clicked
+        self._btnSetASet.Disable()
+        self._btnSetBSet.Disable()
+        self._btnSetCSet.Disable()
+        self._btnSetASetAcq.Disable()
+        self._btnSetBSetAcq.Disable()
+        self._btnSetCSetAcq.Disable()
         
         # Review page
         '''
@@ -260,6 +311,8 @@ class TEAMFrame(wx.Frame):
         displayvalbox.Add(imagebuttonbox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=20)
         '''
         
+        self.setFonts(1)
+        
         #Set color
         self.SetBackgroundColour("0000FF")
         
@@ -270,7 +323,17 @@ class TEAMFrame(wx.Frame):
         self._btnAcqFocal.Bind(wx.EVT_BUTTON, self.onAcquireFocal) #bind the button event
         self._btnAcqTimeSeries.Bind(wx.EVT_BUTTON, self.onAcquireTimeSeries) #bind the button event
         self._btnAcqDrift.Bind(wx.EVT_BUTTON, self.onAcquireDrift) #bind the button event
-
+        
+        self._btnSetASave.Bind(wx.EVT_BUTTON, self.onSetSave)
+        self._btnSetASet.Bind(wx.EVT_BUTTON, self.onSetSet)
+        self._btnSetASetAcq.Bind(wx.EVT_BUTTON, self.onSetSetAcq)
+        self._btnSetBSave.Bind(wx.EVT_BUTTON, self.onSetSave)
+        self._btnSetBSet.Bind(wx.EVT_BUTTON, self.onSetSet)
+        self._btnSetBSetAcq.Bind(wx.EVT_BUTTON, self.onSetSetAcq)
+        self._btnSetCSave.Bind(wx.EVT_BUTTON, self.onSetSave)
+        self._btnSetCSet.Bind(wx.EVT_BUTTON, self.onSetSet)
+        self._btnSetCSetAcq.Bind(wx.EVT_BUTTON, self.onSetSetAcq)
+        
         # Eanble Mouse events
         #self.canvas.mpl_connect('button_press_event', self.onClick) #bind the left click event
                 
@@ -290,6 +353,7 @@ class TEAMFrame(wx.Frame):
         focalPage.SetSizer(focalbox)
         driftPage.SetSizer(driftbox)
         timeSeriesPage.SetSizer(seriesbox)
+        setPage.SetSizer(setbox)
         #reviewpage.SetSizer(displayvalbox)
         
         # add the pages to the notebook with the label to show on the tab
@@ -298,6 +362,7 @@ class TEAMFrame(wx.Frame):
         notebook.AddPage(focalPage, 'Focal')
         notebook.AddPage(driftPage, 'Rotation')
         notebook.AddPage(timeSeriesPage, 'Time series')
+        notebook.AddPage(setPage, 'Set')
         #notebook.AddPage(reviewpage, 'Review')
         
         mainbox.Add(imagecolumnbox, proportion=1, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
@@ -308,6 +373,8 @@ class TEAMFrame(wx.Frame):
         self.sb = self.CreateStatusBar()
         self.sb.SetStatusText('Idle...')
         
+        
+        
         self.onConnect()
         
         self.Show(True) #show the frame
@@ -317,6 +384,14 @@ class TEAMFrame(wx.Frame):
         self.TS.TS_Disconnect()
         
     def drawPlot(self, imArray):
+        """ Draw an image in the GUI
+        
+        Parameters
+        ----------
+        imArray : ndarray
+            The ndarray to show using plt.imshow()
+        
+        """
         #print('Draw plot')
         
         # Need to add updates to the color limits. Not sure how to do that.
@@ -331,6 +406,10 @@ class TEAMFrame(wx.Frame):
     
     #Connect to the microscope and setup STEM detectors
     def onConnect(self):
+        """ Connects to the microscope, TIA scanning software, and TEAM Stage (if applicable)
+        
+        
+        """
         # connect using comtypes
         try:
             self._microscope = CreateObject('TEMScripting.Instrument')
@@ -348,11 +427,14 @@ class TEAMFrame(wx.Frame):
         if self.stagetype == 'teamstage':
             #Connect to TEAM stage
             try:
+                print('Attempt to connect to TEAM Stage')
+                print('Clear TEAM Stage GUI errors if frozen')
                 self.TS = TEAMstageclass.TEAMstage()
                 self.TS.TS_Connect('localhost',5557)
             except Exception as e:
                 print('Error with TEAM Stage connection. Exception type is %s' % e)
-            
+        print('TEAM Stage connection successful')
+        
         try:
             # Get microscope interfaces
             self.Acq = self._microscope.Acquisition
@@ -369,42 +451,31 @@ class TEAMFrame(wx.Frame):
         self._microscope.Acquisition.AddAcqDevice(self.detector0)
         
         self.determineMaxBinning()
-        print('Max binning = {}'.format(self.maxBin))
-
-    def setFonts(self,ed):
+        
+    def setFonts(self, ed):
+        """ Set the fonts for the labels and text buttons
+        
+        Parameters
+        ----------
+        ed : bool
+            Make editable or not (deprecated)
+        
+        """
         if ed:
-            fontTopLabels = wx.Font(14, wx.DEFAULT, wx.NORMAL,wx.BOLD)
+            fontTopLabels = wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD)
             fontLabels = wx.Font(12, wx.DEFAULT, wx.NORMAL,wx.BOLD)
         else:
             fontTopLabels = wx.Font(14, wx.DEFAULT, wx.ITALIC,wx.BOLD)
             fontLabels = wx.Font(12, wx.DEFAULT, wx.ITALIC,wx.BOLD)
-
-        self._lLabel1.SetFont(fontTopLabels)
-        self._lLabel3.SetFont(fontTopLabels)
-        self._lFprefix.SetFont(fontLabels)
-        self._lDir.SetFont(fontLabels)
-        self._lDwell.SetFont(fontLabels)
-        self._lBin.SetFont(fontLabels)
-        self._lRep.SetFont(fontLabels)
-        self._lRot.SetFont(fontLabels)
-        self._lDel.SetFont(fontLabels)
-    
-    ''' OLD
-    def createDims(self, dataTop, type, pix):
-        if type == 'single':
-            dim2 = dataTop.create_dataset('dim2',(pix,),'f')
-            dim2.attrs['name'] = np.string_('X')
-            dim2.attrs['units'] = np.string_('n_m')
-            dim1 = dataTop.create_dataset('dim1',(pix,),'f')
-            dim1.attrs['name'] = np.string_('Y')
-            dim1.attrs['units'] = np.string_('n_m')
-            dims = (dim1,dim2)
-        else:
-            dims = None
-        return dims
-    '''
+        
+        for ii in (self._lLabel10, self._lLabel20, self._lLabel30, self._lLabel01,
+                   self._lSetTop, self._lSaveSet,
+                   self._lDir, self._lSample, self._lUser):
+            ii.SetFont(fontLabels)
     
     def setStemAcqVals(self):
+        """ Set the STEM acquisition values in the self.myStemAcqParams object.
+        """
         self.myStemAcqParams = self.Acq.Detectors.AcqParams
         self.myStemAcqParams.Binning = self.Bin
         self.myStemAcqParams.ImageSize = 0 #self._microscope.ACQIMAGESIZE_FULL
@@ -419,6 +490,15 @@ class TEAMFrame(wx.Frame):
         self.Acq.Detectors.AcqParams = self.myStemSearchParams
         
     def getUsrAcqVals(self, exType):
+        """ Retrieves the user acquisition values for each experiment type
+        
+        Parameters
+        ----------
+        exType : str
+            The experiment type to retrieve the values from.
+        
+        
+        """
         self.Fdir = self._iDir.GetValue()
         
         if exType == 'drift':
@@ -434,7 +514,7 @@ class TEAMFrame(wx.Frame):
             self.Del = int(self._iDel3.GetValue())
             self.Dwell = float(self._iDwell3.GetValue()) * 1e-6 #Change to microseconds
             self.Bin = int(self._iBin3.GetValue())
-            print('timeseries repeats = {}'.format(self.Rep))
+            # print('timeseries repeats = {}'.format(self.Rep))
         elif exType == 'single':
             self.Fprefix = self._iFprefix0.GetValue()
             self.fullName = self.Fdir + os.sep + self.Fprefix
@@ -455,7 +535,9 @@ class TEAMFrame(wx.Frame):
         #print('self.expectedImageShape = {}'.format(self.expectedImageShape))
         
     def onClick(self,event):
-        # Determine mouse position and move stage. xdata = x coord of mouse in data coords
+        """ Determine mouse position and move stage. xdata = x coord of mouse in data coords.
+        Not user currently.
+        """
         if ((self.imagevalid ==0) or (event.xdata == None) or (event.ydata == None)):
             pass
         else:
@@ -525,6 +607,7 @@ class TEAMFrame(wx.Frame):
         pass
             
     def step(self, steps, size):
+        """ Take a step using the TEAM Stage"""
         self.TS.TS_Connect('localhost',5557)
         xsteps = steps[0]
         if xsteps < 0:
@@ -547,7 +630,6 @@ class TEAMFrame(wx.Frame):
     def getPosition_compustage(self):
         ''' Get compustage position
         
-        
         '''
         stageObj = self.Stage.Position
         posArray = (stageObj.X,stageObj.Y,stageObj.Z,stageObj.A,stageObj.B)
@@ -562,14 +644,25 @@ class TEAMFrame(wx.Frame):
         self.TS.TS_Disconnect()
         return self.TS.coords
     
-    def getFinePosition(self):   
+    def getFinePosition(self):  
+        """ Get the fine position (the sliders) of the TEAM Stage software.
+        """
         # Get the TEAM stage fine position coordinates
         self.TS.TS_Connect('localhost',5557)
         self.TS.TS_GetFinePosition()
         self.TS.TS_Disconnect()
         return self.TS.finecoords
 
-    def setFinePosition(self, newSliders):  
+    def setFinePosition(self, newSliders):
+        """ Sets the fine position of the TEAM Stage.
+        
+        Parameters
+        ----------
+        newSliders : tuple
+            A 3-tuple of the values for the fine position of the TEAM Stage. All values should be
+            > -100 and < 100
+        
+        """
         #Set the TEAM Stage fine coordinates
         self.TS.TS_Connect('localhost',5557)
         self.TS.TS_SetFinePosition(newSliders)
@@ -577,36 +670,25 @@ class TEAMFrame(wx.Frame):
         return self.TS.finecoords
     
     def updatePositionSIM(self):
-        # For testing offline
+        """ For testing offline """
         print("using simulated Stage Positions")
         return (0,1,2,3,4)
-        
-    #def updatePosition(self):
-    #    ''' Update the TEAM Stage position. Class holds the position.
-    #
-    #    '''
-    #    
-    #    self.TS.TS_Connect('localhost',5557)
-    #    self.TS.TS_GetPosition()
-    #    self.TS.TS_GetFinePosition()
-    #    self.TS.TS_Disconnect()
-    #    return 1
     
     def getPixelSize(self):
-        # Get the pixel calibration from TIA
+        """ Get the pixel calibration from TIA """
         window1 = self.TIA.ActiveDisplayWindow()
         Im1 = window1.FindDisplay(window1.DisplayNames[0]) #returns an image display object
         unit1 = Im1.SpatialUnit #returns SpatialUnit object
         self.unitName = unit1.unitstring #returns a string (such as nm)
-        print('Image calibration = {}, {}'.format(Im1.image.calibration.deltaX,Im1.image.calibration.deltay))
+        # print('Image calibration = {}, {}'.format(Im1.image.calibration.deltaX,Im1.image.calibration.deltay))
         #self.calX = Im1.image.calibration.deltaX #returns the x calibration in meters
         #self.calY = Im1.image.calibration.deltaY
-        print('Scan resolution = {}'.format(self.TIA.ScanningServer().ScanResolution))
+        # print('Scan resolution = {}'.format(self.TIA.ScanningServer().ScanResolution))
         self.calX = self.TIA.ScanningServer().ScanResolution
         self.calY = self.TIA.ScanningServer().ScanResolution
         
     def quickimage(self):
-        #Stop and ongiong acquisition
+        """ Stop an ongoing acquisition and acquire a seatch image """
         self.stopAcqusition()
         
         #Acquire a quick image
@@ -626,12 +708,15 @@ class TEAMFrame(wx.Frame):
         self.imagevalid =1
     
     def determineMaxBinning(self):
+        """ Acquire an image with a certain binning number. The resulting image size provides 
+        the image size with binning == 1. """
         print('Determine maximum STEM binning')
         
-        #Stop and ongiong acquisition
+        # Stop and ongiong acquisition
         self.stopAcqusition()
+        self.Ill.BeamBlanked = True
         
-        #Acquire a quick image
+        # Acquire a quick image
         self.setStemSearchVals()
         acquiredImageSet = self.Acq.AcquireImages()
 
@@ -687,14 +772,13 @@ class TEAMFrame(wx.Frame):
             self.TIA.AcquisitionManager().Stop()
     
     def onAcquireFocal(self, event):
-
+        """ Acquire a STEM focal series"""
         self.getUsrAcqVals('focalseries')
         self.setStemAcqVals()
         
         # Setup focal series list
         initialDF = self.Proj.Defocus
         self.dfList = (np.arange(self.numDF)-(self.numDF-1)/2)*self.stepDF + initialDF
-        print(self.dfList)
         self.initializeEMDFile(exType = 'focalseries')
 
         if self.numPerDF > 1:
@@ -707,7 +791,7 @@ class TEAMFrame(wx.Frame):
                                
             # Set the defocus value
             self.Proj.Defocus = df
-            print('Acquire at focus: {} nm'.format(np.round(df*1e9)))
+            # print('Acquire at focus: {} nm'.format(np.round(df*1e9)))
 
             for jj in range(self.numPerDF):
                 # Update the GUI
@@ -806,7 +890,7 @@ class TEAMFrame(wx.Frame):
         self.sb.SetStatusText('Finished drift acquisition...')
     
     def onAcquireSingle(self, event):
-
+        """ Acquire a single image """
         self.getUsrAcqVals('single')
         self.setStemAcqVals()
         self.Rep = 1 # only 1 image will be acquired
@@ -821,6 +905,54 @@ class TEAMFrame(wx.Frame):
         
         self.sb.SetStatusText('Finished single acquisition...')
     
+    def onSetSave(self, event):
+        """ Stores the camera length, diffraction alignment, contrast, brightness """
+        lbl = event.GetEventObject().GetLabel()
+        
+        cur_set = {'CL':self.Proj.CameraLengthIndex,
+                   'diff':(self.Proj.DiffractionShift.X, self.Proj.DiffractionShift.Y),
+                   'contrast':self.detector0.Info.Contrast,
+                   'brightness':self.detector0.Info.Brightness}
+        if 'A:' in lbl:
+            self.setA = cur_set
+            self._btnSetASet.Enable()
+            self._btnSetASetAcq.Enable()
+        elif 'B:' in lbl:
+            self.setB = cur_set
+            self._btnSetBSet.Enable()
+            self._btnSetBSetAcq.Enable()
+        elif 'C:' in lbl:
+            self.setC = cur_set
+            self._btnSetCSet.Enable()
+            self._btnSetCSetAcq.Enable()
+        
+    def onSetSet(self, event):
+        """ Sets the stored camera length, diffraction alignment, contrast, brightness """
+        lbl = event.GetEventObject().GetLabel()
+        if 'A:' in lbl:
+            cur_set = self.setA
+        elif 'B:' in lbl:
+            cur_set = self.setB
+        elif 'C:' in lbl:
+            cur_set = self.setC
+        
+        if 'CL' in cur_set:
+            self.Proj.CameraLengthIndex = cur_set['CL']
+            temp = self.Proj.DiffractionShift
+            temp.X = cur_set['diff'][0]
+            temp.y = cur_set['diff'][1]
+            self.Proj.DiffractionShift = temp
+            self.detector0.Info.Contrast = cur_set['contrast']
+            self.detector0.Info.Brightness = cur_set['brightness']
+        else:
+            print('Invalid STEM settings')
+    
+    def onSetSetAcq(self, event):
+        """ Sets the camera length, diffraction alignment, contrast, brightness and acquires a single image"""
+        self.onSetSet(event)
+        time.sleep(0.5)
+        self.onAcquireSingle(1)
+    
     def acquireImages(self):
         ''' Acquire a single image with the currently
         setup image acquisition settings.
@@ -828,7 +960,6 @@ class TEAMFrame(wx.Frame):
         Will be called by onAcquireSingle, onAcquireFocal, etc.
         
         '''
-        #print('pre pixel size = {} (m)'.format(self.calX))
         #Stop an ongoing acquisition
         self.stopAcqusition()
         
@@ -857,7 +988,6 @@ class TEAMFrame(wx.Frame):
         self.drawPlot(self.imageData) #add the image to the figure
         
         self.sb.SetStatusText('Finished Acquisition image ...')
-        #print('post pixel size = {} (m)'.format(self.calX))
 
     def initializeEMDFile(self, exType):
         ''' Initialize the file and tags for HDF5 / EMD file format
@@ -894,7 +1024,6 @@ class TEAMFrame(wx.Frame):
                 dataTop.attrs['number per defocus'] = self.numPerDF
             
             pix = self.maxBin/self.Bin
-            print('num pixesl = {}'.format(pix))
             
             # Create dataset with correct shape
             if exType == 'single':
@@ -1025,8 +1154,6 @@ class TEAMFrame(wx.Frame):
             ydim = np.linspace(0,(imageShape[1]-1)*self.calY*1e9,imageShape[1])
             dims[-1][:] = xdim
             dims[-2][:] = ydim
-            dims[-2][:] = ydim
-            print('Debug: Why is dims[-2] written twice?')
             
             # Add as attribute so loading in Fiji provides pixel size
             # Note: Must be 3D so set the first element to 1
@@ -1044,7 +1171,6 @@ class TEAMFrame(wx.Frame):
                     tt = self.times - self.times[0] # relative times
                     dims[0][:] = tt
                     fiji_element_size = (tt[1], self.calY*1e6, self.calX*1e6)
-                    print(fiji_element_size)
                 elif exType == 'focalseries':
                     dims[0][:] = self.dfList
                     if self.numPerDF > 1:
@@ -1066,7 +1192,7 @@ class TEAMFrame(wx.Frame):
             
             # Create an attribute for easy loading into Fiji using HDF5 import
             dset.attrs['element_size_um'] = np.asarray(fiji_element_size).astype(np.float32)
-            print('Fiji attribute added = {}'.format(fiji_element_size))
+            #print('Fiji attribute added = {}'.format(fiji_element_size))
             
             # OR Write element size for simple Fiji loading (1, 1, y, x)
             # if len(dims) == 3:

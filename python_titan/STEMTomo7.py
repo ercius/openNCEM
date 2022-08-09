@@ -33,10 +33,13 @@ from comtypes.client import CreateObject
 from comtypes.safearray import safearray_as_ndarray  # get data across COM barrier fast
 
 # Connect to TEAM Stage
-import TEAMstageclass
+try:
+    import TEAMstageclass
+except ModuleNotFoundError:
+    print('TEAM stage module not found.')
 
 import argparse
-version = 7.0  # version number for this program
+version = 7.2  # version number for this program
 
 
 class TEAMFrame(wx.Frame):
@@ -75,17 +78,17 @@ class TEAMFrame(wx.Frame):
         self.curtiltnr = 0
 
         # Initialize the base Frame
-        wx.Frame.__init__(self, parent, title=title, size=(1500, 1000))
+        wx.Frame.__init__(self, parent, title=title, size=(1300, 1000))
 
         # menu 
-        menubar = wx.MenuBar()
-        filem = wx.Menu()
-        editm = wx.Menu()
-        helpm = wx.Menu()
-        menubar.Append(filem, '&File')
-        menubar.Append(editm, '&Edit')
-        menubar.Append(helpm, '&Help')
-        self.SetMenuBar(menubar)
+        #menubar = wx.MenuBar()
+        #filem = wx.Menu()
+        #editm = wx.Menu()
+        #helpm = wx.Menu()
+        #menubar.Append(filem, '&File')
+        #menubar.Append(editm, '&Edit')
+        #menubar.Append(helpm, '&Help')
+        #self.SetMenuBar(menubar)
 
         # define sizers     
         mainbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -120,18 +123,20 @@ class TEAMFrame(wx.Frame):
             pass
 
         # Create zoom figure in a canvas
-        self.TEMfigureZoom = Figure()
-        self.Zoomcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigureZoom)
-        self.Zoomaxes = self.TEMfigureZoom.add_subplot(111)
-        self.Zoomaxes.xaxis.set_visible(False)
-        self.Zoomaxes.yaxis.set_visible(False)
+        # self.TEMfigureZoom = Figure()
+        # self.Zoomcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigureZoom)
+        # self.Zoomaxes = self.TEMfigureZoom.add_subplot(111)
+        # self.Zoomaxes.xaxis.set_visible(False)
+        # self.Zoomaxes.yaxis.set_visible(False)
 
         # Create fft figure in a canvas
-        self.TEMfigurefft = Figure()
-        self.fftcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigurefft)
-        self.fftaxes = self.TEMfigurefft.add_subplot(111)
-        self.fftaxes.xaxis.set_visible(False)
-        self.fftaxes.yaxis.set_visible(False)
+        # self.TEMfigurefft = Figure()
+        # self.fftcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigurefft)
+        # self.fftaxes = self.TEMfigurefft.add_subplot(111)
+        # self.fftaxes.xaxis.set_visible(False)
+        # self.fftaxes.yaxis.set_visible(False)
+        
+        # set_cmap does not work in older matplotlib versions
         try:
             set_cmap('gray')
         except:
@@ -144,17 +149,15 @@ class TEAMFrame(wx.Frame):
         self._lDir = wx.StaticText(aquirepage, wx.ID_ANY, 'Output directory')
         try:
             self._iDir = wx.TextCtrl(aquirepage, wx.ID_ANY, value='G:\UserData',
-                                     size=(300, 20))  # correct for TEAM 0.50
+                                     size=(300, 20))  # correct for TEAM 0.5
         except:
             self._iDir = wx.TextCtrl(aquirepage, wx.ID_ANY, value=os.getcwd(), size=(300, 20))
         self._btnNewFile = wx.Button(aquirepage, label='Update File Name')
 
         self._lLabel3 = wx.StaticText(aquirepage, wx.ID_ANY, 'Acquire parameters')
-        self._lmaxBin = wx.StaticText(aquirepage, wx.ID_ANY, 'Max binning')
-        self._imaxBin = wx.TextCtrl(aquirepage, wx.ID_ANY, value='4096')
         self._lDwell = wx.StaticText(aquirepage, wx.ID_ANY, 'Dwell time (usec)')
         self._iDwell = wx.TextCtrl(aquirepage, wx.ID_ANY, value='12')
-        self._lBin = wx.StaticText(aquirepage, wx.ID_ANY, 'Binning (from max binning)')
+        self._lBin = wx.StaticText(aquirepage, wx.ID_ANY, 'Binning')
         self._iBin = wx.TextCtrl(aquirepage, wx.ID_ANY, value='4')
         self._lRep = wx.StaticText(aquirepage, wx.ID_ANY, 'Number of images per aquire')
         self._iRep = wx.TextCtrl(aquirepage, wx.ID_ANY, value='1')
@@ -163,7 +166,6 @@ class TEAMFrame(wx.Frame):
         self._iRot.SetSelection(0)
         self._lDel = wx.StaticText(aquirepage, wx.ID_ANY, 'Delay between images (sec)')
         self._iDel = wx.TextCtrl(aquirepage, wx.ID_ANY, value='0')
-        self._lPrevAqu = wx.StaticText(aquirepage, wx.ID_ANY, 'prev aquired setnr, alpha, gamma')
         self._btnAcq = wx.Button(aquirepage, label='Acquire')
         aquirebox.Add(self._lLabel1)
         aquirebox.Add(self._lFprefix)
@@ -172,8 +174,6 @@ class TEAMFrame(wx.Frame):
         aquirebox.Add(self._lDir)
         aquirebox.Add(self._iDir)
         aquirebox.Add(self._lLabel3)
-        aquirebox.Add(self._lmaxBin)
-        aquirebox.Add(self._imaxBin)
         aquirebox.Add(self._lDwell)
         aquirebox.Add(self._iDwell)
         aquirebox.Add(self._lBin)
@@ -184,8 +184,21 @@ class TEAMFrame(wx.Frame):
         aquirebox.Add(self._iRot)
         aquirebox.Add(self._lDel)
         aquirebox.Add(self._iDel)
-        aquirebox.Add(self._lPrevAqu)
         aquirebox.Add(self._btnAcq)
+        
+        # Add Go to button to simplify moving the stage.
+        # Use a dictionary instead of many variables to try a new way
+        self._gotoGUI = {}
+        self._gotoGUI['_lLabel31'] = wx.StaticText(aquirepage, wx.ID_ANY, 'Set stage angles (TS only)')
+        self._gotoGUI['_lGotoA'] = wx.StaticText(aquirepage, wx.ID_ANY, 'Alpha (deg)')
+        self._gotoGUI['_lGotoG'] = wx.StaticText(aquirepage, wx.ID_ANY, 'Gamma (deg)')
+        self._gotoGUI['_iGotoA'] = wx.TextCtrl(aquirepage, wx.ID_ANY, value='0')
+        self._gotoGUI['_iGotoG'] = wx.TextCtrl(aquirepage, wx.ID_ANY, value='0')
+        self._gotoGUI['_btnGotoAngles'] = wx.Button(aquirepage, label='Go to angles')
+        self._gotoGUI['_cGotoConfirm'] = wx.CheckBox(aquirepage, label='Confirm go to', pos=(20, 20))
+        self._gotoGUI['_cGotoConfirm'].SetValue(True)
+        for ii in ('_lLabel31', '_lGotoA','_iGotoA', '_lGotoG', '_iGotoG','_cGotoConfirm','_btnGotoAngles'):
+            aquirebox.Add(self._gotoGUI[ii])
 
         # Review page
         self._lDispPos = wx.StaticText(reviewpage, wx.ID_ANY, 'Displ pos')
@@ -209,18 +222,16 @@ class TEAMFrame(wx.Frame):
         self._lAlphaGamma = wx.StaticText(searchpage, wx.ID_ANY, 'alpha gamma')
         self._lFinePos = wx.StaticText(searchpage, wx.ID_ANY, 'fine positions')
         # self._lEucentric = wx.StaticText(searchpage, wx.ID_ANY, 'eucentric')
-        self._cbfft = wx.CheckBox(searchpage, label='display fft', pos=(20, 20))
-        self._cbfft.SetValue(False)
+        # self._cbfft = wx.CheckBox(searchpage, label='display fft', pos=(20, 20))
+        # self._cbfft.SetValue(False)
         self._btnGetPos = wx.Button(searchpage, label='Get Position')
         self._btnSearch = wx.Button(searchpage, label='Search')
         currentvalbox.Add(self._lPos, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
         currentvalbox.Add(self._lAlphaGamma, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
         currentvalbox.Add(self._lFinePos, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
-        # currentvalbox.Add(self._lEucentric, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=10)
-        currentvalbox.Add(self._lPrevAqu, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
         currentvalbox.Add(self._btnGetPos, proportion=0, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
         currentvalbox.Add(self._btnSearch, proportion=0, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
-        currentvalbox.Add(self._cbfft, proportion=0, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
+        # currentvalbox.Add(self._cbfft, proportion=0, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
 
         # Set label fonts X
         # note: wx.Font(pointSize, family, style, weight, underline=False, faceName="", encoding=wx.FONTENCODING_DEFAULT)
@@ -232,7 +243,6 @@ class TEAMFrame(wx.Frame):
         # self._lLabel3.SetFont(fontTopLabels)
         # self._lFprefix.SetFont(fontLabels)
         # self._lDir.SetFont(fontLabels)
-        # self._lmaxBin.SetFont(fontLabels)
         # self._lDwell.SetFont(fontLabels)
         # self._lBin.SetFont(fontLabels)
         # self._lRep.SetFont(fontLabels)
@@ -286,20 +296,18 @@ class TEAMFrame(wx.Frame):
         self._btnAcq.Bind(wx.EVT_BUTTON, self.onAcquire)  # bind the button event
         self._btnSearch.Bind(wx.EVT_BUTTON, self.onSearch)  # bind the button event
         self._btnGetPos.Bind(wx.EVT_BUTTON, self.onGetPos)  # bind the button event
-        ##Disbale Mouse events
+        ## Disabled mouse events
         # self.canvas.mpl_connect('button_press_event', self.onClick) #bind the left click event
         self._btnNewFile.Bind(wx.EVT_BUTTON, self.onNewFileName)  # bind the button event
-
         self._btnprev.Bind(wx.EVT_BUTTON, self.onShowPrev)  # bind the button event
         self._btnnext.Bind(wx.EVT_BUTTON, self.onShowNext)  # bind the button event
-
         self._btnDispGotoPos.Bind(wx.EVT_BUTTON, self.onGotoDispPos)
-
-        zoomfftbox.Add(self.Zoomcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
-        zoomfftbox.Add(self.fftcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
+        self._gotoGUI['_btnGotoAngles'].Bind(wx.EVT_BUTTON, self.onGotoAngles)
+        #zoomfftbox.Add(self.Zoomcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
+        #zoomfftbox.Add(self.fftcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
 
         imagebox.Add(self.canvas, proportion=3, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
-        imagebox.Add(zoomfftbox, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
+        #imagebox.Add(zoomfftbox, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
 
         # imagecolumnbox.Add(displayvalbox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=20)
         imagecolumnbox.Add(imagebox, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
@@ -363,12 +371,14 @@ class TEAMFrame(wx.Frame):
             raise
 
         # Connect to TEAM stage
+        print('Connecting to TEAM Stage...')
         self.TS = TEAMstageclass.TEAMstage()
         try:
             self.TS.TS_Connect('localhost', 5557)
         except Exception as e:
             print('Error with TEAM Stage connection. Exception type is {}'.format(e))
-
+        print('Success')
+        
         try:
             # Get microscope interfaces
             self.Acq = self._microscope.Acquisition
@@ -382,7 +392,10 @@ class TEAMFrame(wx.Frame):
             raise
 
         self._microscope.Acquisition.AddAcqDevice(self.detector0);
-
+        
+        # Determine the maximum binning value
+        self.determineMaxBinning()
+        
         # Initialize user acquisition values
         self.getUsrAcqVals()
 
@@ -392,7 +405,6 @@ class TEAMFrame(wx.Frame):
         self._iRot.EnableItem(0, ed)  # disable/enable radio buttons
         self._iRot.EnableItem(1, ed)
         self._iRot.EnableItem(2, ed)
-        self._imaxBin.SetEditable(ed)
         self._iDwell.SetEditable(ed)
         self._iDel.SetEditable(ed)
 
@@ -410,7 +422,6 @@ class TEAMFrame(wx.Frame):
         self._lLabel3.SetFont(fontTopLabels)
         self._lFprefix.SetFont(fontLabels)
         self._lDir.SetFont(fontLabels)
-        self._lmaxBin.SetFont(fontLabels)
         self._lDwell.SetFont(fontLabels)
         self._lBin.SetFont(fontLabels)
         self._lRep.SetFont(fontLabels)
@@ -419,7 +430,12 @@ class TEAMFrame(wx.Frame):
         self._lPos.SetFont(fontLabels)
         self._lAlphaGamma.SetFont(fontLabels)
         self._lFinePos.SetFont(fontLabels)
-
+        
+        for ii in self._gotoGUI.values():
+            ii.SetFont(fontLabels)
+        
+        self._gotoGUI['_lLabel31'].SetFont(fontTopLabels)
+        
     def initializeEMDFile(self):
         """ Initialize the file and tags for HDF5 / EMD file format
 
@@ -437,7 +453,7 @@ class TEAMFrame(wx.Frame):
             dataTop.attrs['nextindex'] = 0
             dataTop.attrs['nextset'] = 0
             dataTop.attrs['emd_group_type'] = 1
-            dataTop.attrs['uuid'] = uuid.uuid1()
+            dataTop.attrs['uuid'] = str(uuid.uuid1())
             
             dataTop.attrs['rotSetting'] = self.rotSetting
             if self.rotSetting == 1:
@@ -494,12 +510,14 @@ class TEAMFrame(wx.Frame):
             imageparameters.attrs['index'] = ['image number']
 
             microscope = f.create_group('microscope')
-            microscope.attrs['Name'] = self.microscopeName
-            microscope.attrs['High Tension'] = self._microscope.Gun.HTValue
-
-            stage = f.create_group('stage')
-            stage.attrs['Type'] = 'NCEM TEAM Stage'
-
+            microscope.attrs['name'] = self.microscopeName
+            microscope.attrs['high tension'] = self._microscope.Gun.HTValue
+            microscope.attrs['spot size'] = self.Ill.SpotsizeIndex
+            microscope.attrs['magnification'] = self.Ill.StemMagnification
+            microscope.attrs['convergence angle'] = self.Ill.ConvergenceAngle
+            microscope.attrs['camera length'] = self.Proj.CameraLength
+            microscope.attrs['stage type'] = self.stageType
+            
             stage = f.create_group('user')
 
     def setStemAcqVals(self):
@@ -521,7 +539,6 @@ class TEAMFrame(wx.Frame):
         self.Fdir = self._iDir.GetValue()
         self.fullName = self.Fdir + os.sep + self.Fprefix
         # self.Angle = int(self._iAngle.GetValue())
-        self.maxBin = int(self._imaxBin.GetValue())
         self.Dwell = int(self._iDwell.GetValue()) * 1e-6  # Change to microseconds
         self.Bin = int(self._iBin.GetValue())
         self.Rep = int(self._iRep.GetValue())
@@ -829,41 +846,59 @@ class TEAMFrame(wx.Frame):
         self.canvas.draw()  # draw the panel
         self.sb.SetStatusText('Search image')
 
-        self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
-                             int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
-        ZoomimageShape = self.ZoomimageData.shape
-        self.Zoomaxes.clear()
-        self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
-                                                                                 0, self.calY * ZoomimageShape[1]))
-        self.Zoomcanvas.draw()  # draw the panel
+        # self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
+                             # int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
+        # ZoomimageShape = self.ZoomimageData.shape
+        # self.Zoomaxes.clear()
+        # self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
+                                                                                 # 0, self.calY * ZoomimageShape[1]))
+        # self.Zoomcanvas.draw()  # draw the panel
         self._lDispFinePos.SetLabel(self._lFinePos.GetLabel())
         self._lDispPos.SetLabel(self._lPos.GetLabel())
         self._lDispAlphaGamma.SetLabel(self._lAlphaGamma.GetLabel())
         self._lDispIndex.SetLabel('Image shown: search (not saved) ')
 
         # Show FFT
-        if self._cbfft.GetValue():
-            fftimageShape = self.imageData.shape
-            cft = np.fft.fft2(self.imageData, self.imageData.shape)
-            vecfunc = np.vectorize(abs)
-            vecfunc2 = np.vectorize(math.log10)
-            vecfunc3 = np.vectorize(int)
-            a = vecfunc3(vecfunc2(vecfunc(cft)))
-            n = imageShape[0]
-            self.fftimageData = copy(a)
-            self.fftimageData[0:n / 2. - 1, 0:n / 2. - 1] = a[n / 2.:n - 1, n / 2.:n - 1]
-            self.fftimageData[n / 2.:n - 1, n / 2.:n - 1] = a[0:n / 2. - 1, 0:n / 2. - 1]
-            self.fftimageData[0:n / 2. - 1, n / 2.:n - 1] = a[n / 2.:n - 1, 0:n / 2. - 1]
-            self.fftimageData[n / 2.:n - 1, 0:n / 2. - 1] = a[0:n / 2. - 1, n / 2.:n - 1]
-            self.fftaxes.clear()
-            self.fftaxes.imshow(np.fliplr(np.rot90(self.fftimageData, 3)), extent=(0, self.calX * fftimageShape[0],
-                                                                                   0, self.calY * fftimageShape[1]))
-            self.fftcanvas.draw()  # draw the panel
-        else:
-            self.fftaxes.clear()
-            self.fftcanvas.draw()  # draw the panel
+        # if self._cbfft.GetValue():
+            # fftimageShape = self.imageData.shape
+            # cft = np.fft.fft2(self.imageData, self.imageData.shape)
+            # vecfunc = np.vectorize(abs)
+            # vecfunc2 = np.vectorize(math.log10)
+            # vecfunc3 = np.vectorize(int)
+            # a = vecfunc3(vecfunc2(vecfunc(cft)))
+            # n = imageShape[0]
+            # self.fftimageData = copy(a)
+            # self.fftimageData[0:n / 2. - 1, 0:n / 2. - 1] = a[n / 2.:n - 1, n / 2.:n - 1]
+            # self.fftimageData[n / 2.:n - 1, n / 2.:n - 1] = a[0:n / 2. - 1, 0:n / 2. - 1]
+            # self.fftimageData[0:n / 2. - 1, n / 2.:n - 1] = a[n / 2.:n - 1, 0:n / 2. - 1]
+            # self.fftimageData[n / 2.:n - 1, 0:n / 2. - 1] = a[0:n / 2. - 1, n / 2.:n - 1]
+            # self.fftaxes.clear()
+            # self.fftaxes.imshow(np.fliplr(np.rot90(self.fftimageData, 3)), extent=(0, self.calX * fftimageShape[0],
+                                                                                   # 0, self.calY * fftimageShape[1]))
+            # self.fftcanvas.draw()  # draw the panel
+        # else:
+            # self.fftaxes.clear()
+            # self.fftcanvas.draw()  # draw the panel
 
         self.imagevalid = 1
+
+    def determineMaxBinning(self):
+        print('Determine maximum STEM binning')
+        
+        # Stop and ongiong acquisition
+        self.stopAcqusition()
+        self.Ill.BeamBlanked = True
+        
+        # Acquire an image
+        self.setStemSearchVals()
+        acquiredImageSet = self.Acq.AcquireImages()
+
+        with safearray_as_ndarray:
+                imageData = acquiredImageSet(0).AsSafeArray # get data as ndarray
+        
+        sh = imageData.shape
+        
+        self.maxBin = sh[0] * self.myStemSearchParams.Binning
 
     def onShowPrev(self, event):
         self.showindex = self.showindex - 1
@@ -874,7 +909,7 @@ class TEAMFrame(wx.Frame):
         self.showimage()
 
     def onGotoDispPos(self, event):
-        self.stagejump(self.DispPosangles)
+        self.stage_goto(self.DispPosangles)
 
     def onNewFileName(self, event):
         self.NewFileName()
@@ -895,7 +930,6 @@ class TEAMFrame(wx.Frame):
             self.maxBin = int(dataTop.attrs.get('max binning'))
             self.Dwell = float(dataTop.attrs.get('dwell time'))
             self.Del = float(dataTop.attrs.get('delay time'))
-            self._imaxBin.SetValue(str(self.maxBin))
             self._iRep.SetValue(str(self.Rep))
             self._iRot.SetSelection(self.rotSetting)
             self._iBin.SetValue(str(self.Bin))
@@ -906,15 +940,10 @@ class TEAMFrame(wx.Frame):
         else:
             self.setDatasetAttributesEditable(True)
 
-    def stagejump(self, p):
-        # a = wx.MessageBox('Goto: X = ' + str(p[0]) + ', Y = ' + str(p[1]) + ',Z = ' + str(p[2]) + ', Alpha = ' + str(
-        #    p[3]) + ", " + 'Gamma = ' + str(p[4]) + '?', 'Stage movement confirm', wx.YES_NO | wx.ICON_EXCLAMATION)
-        a = wx.MessageBox('Goto: X = {0[0]}, Y= {0[1]}, Z = {0[2]}, Alpha, = {0[3]}, Gamma = {0[4]}?'.format(p),
-                          'Stage movement confirm', wx.YES_NO | wx.ICON_EXCLAMATION)
-        if a == wx.YES:
-            self.TS.TS_Connect('localhost', 5557)
-            self.TS.TS_GoTo(p)
-            self.TS.TS_Disconnect()
+    def stage_goto(self, p):
+        self.TS.TS_Connect('localhost', 5557)
+        self.TS.TS_GoTo(p)
+        self.TS.TS_Disconnect()
 
     def showimage(self):
         # Show image from data set
@@ -938,50 +967,68 @@ class TEAMFrame(wx.Frame):
                                                                                  0, self.calY * imageShape[1]))
                 self.canvas.draw()  # draw the panel
                 self._lDispIndex.SetLabel('Image shown: ' + str(self.showindex))
-                stage = f['stage']
+                # stage = f['stage']
                 Position = dataTop['imageSetParameters'][0:5, self.showset]
                 self._lDispFinePos.SetLabel('Fine position not recorded')
                 self._lDispPos.SetLabel('(X, Y , Z) = ({0[0]}, {0[1]}, {0[2]})'.format(Position))
                 self._lDispAlphaGamma.SetLabel('Alpha = {0[3]}, Gamma or Beta = {0[4]}'.format(Position))
                 self.DispPosangles = Position[:]
 
-                self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
-                                     int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
-                ZoomimageShape = self.ZoomimageData.shape
-                self.Zoomaxes.clear()
-                self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
-                                                                                         0, self.calY * ZoomimageShape[1]))
-                self.Zoomcanvas.draw()  # draw the panel
+                # self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
+                                     # int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
+                # ZoomimageShape = self.ZoomimageData.shape
+                # self.Zoomaxes.clear()
+                # self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
+                                                                                         # 0, self.calY * ZoomimageShape[1]))
+                # self.Zoomcanvas.draw()  # draw the panel
 
-                if self._cbfft.GetValue():
-                    fftimageShape = self.imageData.shape
-                    cft = np.fft.fft2(self.imageData, self.imageData.shape)
-                    vecfunc = np.vectorize(abs)
-                    vecfunc2 = np.vectorize(math.log10)
-                    vecfunc3 = np.vectorize(int)
-                    a = vecfunc3(vecfunc2(vecfunc(cft)))
-                    n = imageShape[0]
-                    self.fftimageData = copy(a)
-                    self.fftimageData[0:n / 2 - 1, 0:n / 2 - 1] = a[n / 2:n - 1, n / 2:n - 1]
-                    self.fftimageData[n / 2:n - 1, n / 2:n - 1] = a[0:n / 2 - 1, 0:n / 2 - 1]
-                    self.fftimageData[0:n / 2 - 1, n / 2:n - 1] = a[n / 2:n - 1, 0:n / 2 - 1]
-                    self.fftimageData[n / 2:n - 1, 0:n / 2 - 1] = a[0:n / 2 - 1, n / 2:n - 1]
-                    self.fftaxes.clear()
-                    self.fftaxes.imshow(np.fliplr(np.rot90(self.fftimageData, 3)), extent=(0, self.calX * fftimageShape[0],
-                                                                                           0, self.calY * fftimageShape[1]))
-                    self.fftcanvas.draw()  # draw the panel
-                else:
-                    self.fftaxes.clear()
-                    self.fftaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
-                                                                                            0, self.calY * ZoomimageShape[1]))
-                    self.fftcanvas.draw()  # draw the panel
+                # if self._cbfft.GetValue():
+                    # fftimageShape = self.imageData.shape
+                    # cft = np.fft.fft2(self.imageData, self.imageData.shape)
+                    # vecfunc = np.vectorize(abs)
+                    # vecfunc2 = np.vectorize(math.log10)
+                    # vecfunc3 = np.vectorize(int)
+                    # a = vecfunc3(vecfunc2(vecfunc(cft)))
+                    # n = imageShape[0]
+                    # self.fftimageData = copy(a)
+                    # self.fftimageData[0:n / 2 - 1, 0:n / 2 - 1] = a[n / 2:n - 1, n / 2:n - 1]
+                    # self.fftimageData[n / 2:n - 1, n / 2:n - 1] = a[0:n / 2 - 1, 0:n / 2 - 1]
+                    # self.fftimageData[0:n / 2 - 1, n / 2:n - 1] = a[n / 2:n - 1, 0:n / 2 - 1]
+                    # self.fftimageData[n / 2:n - 1, 0:n / 2 - 1] = a[0:n / 2 - 1, n / 2:n - 1]
+                    # self.fftaxes.clear()
+                    # self.fftaxes.imshow(np.fliplr(np.rot90(self.fftimageData, 3)), extent=(0, self.calX * fftimageShape[0],
+                                                                                           # 0, self.calY * fftimageShape[1]))
+                    # self.fftcanvas.draw()  # draw the panel
+                # else:
+                    # self.fftaxes.clear()
+                    # self.fftaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
+                                                                                            # 0, self.calY * ZoomimageShape[1]))
+                    # self.fftcanvas.draw()  # draw the panel
 
                 self.imagevalid = 0
 
     def stopAcqusition(self):
         if self.TIA.AcquisitionManager().isAcquiring:
             self.TIA.AcquisitionManager().Stop()
-
+    
+    def onGotoAngles(self, event):
+        """ Go to the angles that the user requested while keeping the x,y,z
+        consistent.
+        
+        """
+        alpha = float(self._gotoGUI['_iGotoA'].GetValue())
+        gamma = float(self._gotoGUI['_iGotoG'].GetValue())
+        cur_p = self.getPosition()
+        p = (cur_p[0], cur_p[1], cur_p[2], alpha, gamma)
+        if self._gotoGUI['_cGotoConfirm'].GetValue():
+            answer = wx.MessageBox('Goto: X = {0[0]}, Y= {0[1]}, Z = {0[2]}, Alpha = {0[3]}, Gamma = {0[4]}?'.format(p),
+                                   'Stage movement confirm', wx.YES_NO | wx.ICON_EXCLAMATION)
+        else:
+            answer = True
+        
+        if answer:
+            self.stage_goto(p)
+        
     def onAcquire(self, event):
         """ Acquire the image(s) for the tilt series stack. Save
         them to the EMD file after all acquisitions are complete
@@ -1053,16 +1100,16 @@ class TEAMFrame(wx.Frame):
             self.imagevalid = 1
 
             # Show the zoom image
-            self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
-                                 int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
-            ZoomimageShape = self.ZoomimageData.shape
-            self.Zoomaxes.clear()
-            self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(
-            0, self.calX * ZoomimageShape[0], 0, self.calY * ZoomimageShape[1]))  # add the image to the figure
-            self.Zoomcanvas.draw()  # draw the panel
-            self.fftcanvas.draw()  # draw the panel
+            # self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
+                                 # int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
+            # ZoomimageShape = self.ZoomimageData.shape
+            # self.Zoomaxes.clear()
+            # self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(
+            # 0, self.calX * ZoomimageShape[0], 0, self.calY * ZoomimageShape[1]))  # add the image to the figure
+            # self.Zoomcanvas.draw()  # draw the panel
+            # self.fftcanvas.draw()  # draw the panel
+            
             self._lDispIndex.SetLabel('Image shown: from current aquired set nr. ' + str(x))
-
             self.sb.SetStatusText('Finished Acquisition image ' + str(x + 1) + ' ...')
 
         # Set STEM rotation back to the original value
@@ -1073,7 +1120,7 @@ class TEAMFrame(wx.Frame):
             dataroot = f['data']
             dataTop = dataroot['raw']
             dset = dataTop['data']
-            stage = f['stage']
+            # stage = f['stage']
             user = f['user']
 
             if newfile == 1:
