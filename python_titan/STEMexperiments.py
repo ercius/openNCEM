@@ -124,7 +124,7 @@ class TEAMFrame(wx.Frame):
         # Setup page
         self._lDir = wx.StaticText(setupPage, wx.ID_ANY, 'Output directory')
         try:
-            self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=r'G:\UserData\Ercius\temp', size=(300,20)) #correct for TEAM 0.5
+            self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=r'Z:\Ercius\temp', size=(300,20)) #correct for TEAM 0.5
         except:
             self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=os.getcwd(), size=(300,20))
         
@@ -1004,15 +1004,15 @@ class TEAMFrame(wx.Frame):
             dataroot = f.create_group('data')
             dataroot.attrs['filename'] = str(self.Fprefix)
             dataTop = dataroot.create_group(exType)
-            dataTop.attrs['emd_group_type'] = 1
+            # dataTop.attrs['emd_group_type'] = 1
             dataTop.attrs['uuid'] = str(uuid.uuid1())
             
             if exType == 'drift':
                 dataTop.attrs['rotSetting'] = self.rotSetting
                 if self.rotSetting == 0:
-                    dataTop.attrs['rotations'] = [0,90]
+                    dataTop.attrs['rotations'] = [0, 90]
                 elif self.rotSetting == 1:
-                    dataTop.attrs['rotations'] = [0,45,90,135]
+                    dataTop.attrs['rotations'] = [0, 45, 90, 135]
                 else:
                     dataTop.attrs['rotations'] = 'none'
             elif exType == 'timeseries':
@@ -1193,7 +1193,7 @@ class TEAMFrame(wx.Frame):
             # Create an attribute for easy loading into Fiji using HDF5 import
             dset.attrs['element_size_um'] = np.asarray(fiji_element_size).astype(np.float32)
             #print('Fiji attribute added = {}'.format(fiji_element_size))
-            
+                        
             # OR Write element size for simple Fiji loading (1, 1, y, x)
             # if len(dims) == 3:
             #    dset.attrs['element_size_um'] = (1.0, 
@@ -1201,6 +1201,9 @@ class TEAMFrame(wx.Frame):
             # if len(dims) == 4:
             #    dset.attrs['element_size_um'] = (1.0, 1.0, 
             #                                     self.calY*1e6, self.calX*1e6)
+            
+            # Set the data as a valid EMD data set
+            dataTop.attrs['emd_group_type'] = 1
             
             self.imageData = 0 # set the image data to 0 to free memory
 # Parse the arguments
