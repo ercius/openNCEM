@@ -23,6 +23,7 @@ import time
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 from matplotlib.figure import Figure
 from matplotlib import patches
+from matplotlib.colors import LogNorm, PowerNorm, NoNorm
 
 # For connections to FEI TEMScripting and TIA
 from comtypes.client import CreateObject
@@ -36,11 +37,11 @@ try:
 except ModuleNotFoundError:
     print('No TEAM Stage functions available.')
 
-version = 0.1
+version = 0.2
 
 # Main window
 class TilterFrame(wx.Frame):
-    def __init__(self, parent, title, stagetype='compustage', verbose=False):
+    def __init__(self, parent, title, stagetype='compustage', verbose=False, norm='none'):
 
         try:
             # This does not exist in some versions
@@ -69,6 +70,13 @@ class TilterFrame(wx.Frame):
         self.gamma = 0
         self.new_alpha = 0
         self.new_gamma = 0
+        
+        if norm == 'log':
+            self.norm = LogNorm()
+        elif norm == 'pow':
+            self.norm = PowerNorm(0.5)
+        else:
+            self.norm = NoNorm()
         
         # TODO Add in configuration option for cbed pixel sizes and change
         # to radians (see calc_tilts also.)
@@ -288,13 +296,16 @@ class TilterFrame(wx.Frame):
         # Need to add updates to the color limits. Not sure how to do that.
         # self.ax0Im.set_data(imArray) <-- This should be faster.
         # but it does not work. Need to update 
-
-        self.ax0.clear()
+        
         if imArray.shape[0] <= 2048:
-            axIm = self.ax0.imshow(imArray)
+            # 4kx4k cant be shown, so sub-sample
+            sub = 1
         else:
-            # 4kx4k cant be shown
-            axIm = self.ax0.imshow(imArray[::2,::2])
+            print('Warning: images larger than 2kx2k are not supported')
+            sub = 2
+        
+        self.ax0.clear()
+        axIm = self.ax0.imshow(imArray[::sub, ::sub], norm=self.norm)
         
         # Add the zero beam marker
         self.ax0.add_patch(self.zero_beam)
