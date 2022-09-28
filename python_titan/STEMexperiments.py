@@ -47,6 +47,8 @@ class TEAMFrame(wx.Frame):
         self.curtiltnr = 0
         self.maxBin = 0
         
+        self.distiller_directory = r"\\team05-support2\Users\advanced_user\watch"
+        
         self.II = 0 # integer to put after file names
         self.times = None # acquisition time(s)
         
@@ -128,12 +130,16 @@ class TEAMFrame(wx.Frame):
         except:
             self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=os.getcwd(), size=(300,20))
         
+        # A button to automatically use the Disitller directory
+        self._btnDistiller = wx.Button(setupPage, label='Use Distiller')
+        
         self._lUser = wx.StaticText(setupPage, wx.ID_ANY, 'User name')
         self._iUser = wx.TextCtrl(setupPage,wx.ID_ANY, value='', size=(300,20))
         self._lSample = wx.StaticText(setupPage, wx.ID_ANY, 'Sample name')
         self._iSample = wx.TextCtrl(setupPage, wx.ID_ANY, value='', size=(300,20))
         setupbox.Add(self._lDir)
         setupbox.Add(self._iDir)
+        setupbox.Add(self._btnDistiller)
         setupbox.Add(self._lUser)
         setupbox.Add(self._iUser)
         setupbox.Add(self._lSample)
@@ -319,6 +325,7 @@ class TEAMFrame(wx.Frame):
         self.imagevalid = 0
         
         #Bind the events
+        self._btnDistiller.Bind(wx.EVT_BUTTON, self.onDistiller) #bind the button event
         self._btnAcqSingle.Bind(wx.EVT_BUTTON, self.onAcquireSingle) #bind the button event
         self._btnAcqFocal.Bind(wx.EVT_BUTTON, self.onAcquireFocal) #bind the button event
         self._btnAcqTimeSeries.Bind(wx.EVT_BUTTON, self.onAcquireTimeSeries) #bind the button event
@@ -373,14 +380,12 @@ class TEAMFrame(wx.Frame):
         self.sb = self.CreateStatusBar()
         self.sb.SetStatusText('Idle...')
         
-        
-        
         self.onConnect()
         
         self.Show(True) #show the frame
     
     def __del__(self):
-        self.f.close()
+        #self.f.close()
         self.TS.TS_Disconnect()
         
     def drawPlot(self, imArray):
@@ -472,6 +477,10 @@ class TEAMFrame(wx.Frame):
                    self._lSetTop, self._lSaveSet,
                    self._lDir, self._lSample, self._lUser):
             ii.SetFont(fontLabels)
+    
+    def onDistiller(self, ev):
+        print("Use Distiller directory. Sub-directories OK.")
+        self._iDir.SetValue(self.distiller_directory)
     
     def setStemAcqVals(self):
         """ Set the STEM acquisition values in the self.myStemAcqParams object.
@@ -1002,9 +1011,10 @@ class TEAMFrame(wx.Frame):
         
         with h5py.File(self.fullName + '.emd','w') as f:
             dataroot = f.create_group('data')
-            dataroot.attrs['filename'] = str(self.Fprefix)
+            
             dataTop = dataroot.create_group(exType)
             # dataTop.attrs['emd_group_type'] = 1
+            dataTop.attrs['filename'] = str(self.Fprefix)
             dataTop.attrs['uuid'] = str(uuid.uuid1())
             
             if exType == 'drift':
@@ -1205,7 +1215,7 @@ class TEAMFrame(wx.Frame):
             # Set the data as a valid EMD data set
             dataTop.attrs['emd_group_type'] = 1
             
-            self.imageData = 0 # set the image data to 0 to free memory
+        self.imageData = 0 # set the image data to 0 to free memory
 # Parse the arguments
 parser = argparse.ArgumentParser(description='Acquire sets of STEM images.')
 
