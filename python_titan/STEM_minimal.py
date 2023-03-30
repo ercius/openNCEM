@@ -1,18 +1,7 @@
 # A minimal script to test connecting to the microsocpe and TIA in STEM mode.
 # An image is acquired, but not saved.
 
-import uuid
-import argparse
-version = 1.1 #version number for this program
-
-import numpy as np
-import socket
-import os
-import wx # wxPython GUI package
-import h5py
-import time
-
-# For connections to FEI TEMScripting and TIA
+# Connect to FEI TEMScripting and TIA using COM
 from comtypes.client import CreateObject
 from comtypes.safearray import safearray_as_ndarray # get data across COM barrier fast
 
