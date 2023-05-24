@@ -141,3 +141,59 @@ class fileSMV:
         self.readHeader()
         self.parseHeader()
         self.getDataset()
+        
+def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1):
+    """ Write out diffraction as SMV formatted file
+    Header is 512 bytes of zeros and then filled with ASCII
+    
+    only little endian is supported.
+    
+    only uint16 is supported.
+    
+    camera length in mm
+    lamda = 0.0197  # angstroms
+    pixel_size = 0.01  # physical detector pixel size in mm
+    beam_center in column, row format in mm
+    """
+    print('New write_smv version!!')
+    
+    if dp.dtype != np.uint16:
+        raise TypeError("Only uint16 data type is supported.")
+    dtype = 'unsigned_short'
+    
+    if not beam_center:
+        beam_center = [ii / 2 * pixel_size for ii in dp.shape]
+    
+    # make sure binned_by is an integer
+    binned_by = int(binned_by)
+    
+    # Write 512 bytes of zeros
+    with open(out_path, 'wb') as f0:
+        f0.write(np.zeros(512, dtype=np.uint8))
+    # Write the header over the zeros as needed
+    with open(out_path, 'r+') as f0:
+        f0.write("{\nHEADER_BYTES=512;\n")
+        f0.write("DIM=2;\n")
+        f0.write("BYTE_ORDER=little_endian;\n")
+        f0.write(f"TYPE={dtype};\n")
+        f0.write(f"SIZE1={dp.shape[1]};\n")  # size 1 is columns
+        f0.write(f"SIZE2={dp.shape[0]};\n")  # size 2 is rows
+        f0.write(f"PIXEL_SIZE={pixel_size};\n")  # physical pixel size in micron
+        f0.write(f"WAVELENGTH={lamda};\n")  # wavelength
+        f0.write(f"DISTANCE={int(camera_length)};\n")
+        f0.write("PHI=0.0;\n")
+        f0.write(f"BEAM_CENTER_X={beam_center[1]};\n")
+        f0.write(f"BEAM_CENTER_Y={beam_center[0]};\n")
+        f0.write(f"BIN={binned_by}x{binned_by};\n")
+        f0.write("DATE=Fri Dec 31 23:59:59 1999;\n")
+        f0.write("DETECTOR_SN=unknown;\n")
+        f0.write("OSC_RANGE=1.0;\n")
+        f0.write("OSC_START=0;\n")
+        f0.write("IMAGE_PEDESTAL=0;\n")
+        f0.write("TIME=10.0;\n")
+        f0.write("TWOTHETA=0;\n")
+        f0.write("}\n")
+    # Append the binary image data at the end of the header
+    with open(out_path, 'rb+') as f0:
+        f0.seek(512, 0)
+        f0.write(dp)
