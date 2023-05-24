@@ -29,6 +29,17 @@ class fileSMV:
         The name of the file
     file_path : pathlib.Path
         A pathlib.Path object for the open file
+    fid : file
+        The file handle to the opened MRC file.
+    dataType : np.dtype
+        The numpy dtype of the data.
+    dataSize : np.ndarray
+        The number of pixels along each dimension. Corresponds to the shape attribute of a np.ndarray
+    num_header_bytes : 
+        The number of bytes in the header. Usually 512.
+    header_info : dict
+        A dictionary containing the header meta data.
+
     camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1
     """
     
@@ -50,8 +61,11 @@ class fileSMV:
                          'WAVELENGTH', 'DISTANCE', 'PHI', 'BEAM_CENTER_X', 'BEAM_CENTER_Y', 'BIN', 
                          'DATE', 'DETECTOR_SN', 'OSC_RANGE', 'OSC_START', 'IMAGE_PEDESTAL', 'TIME', 
                          'TWOTHETA')
+        self._data_types = {'unsigned_short': np.uint16} # convert SMV types with numpy dtypes
         self.header_info = {}
-        self.num_header_bytes = 512
+        self.num_header_bytes = None
+        self.dataType = None
+        self.dataSize = (0, 0)
         
         if hasattr(filename, 'read'):
             self.fid = filename
@@ -81,6 +95,9 @@ class fileSMV:
         
         if not self._validate():
             raise IOError('Not an SMV file: {}'.format(self.file_path))
+        
+        self.readHeader()
+        self.parseHeader()
         
     def __del__(self):
         """Destructor which also closes the file
@@ -135,13 +152,27 @@ class fileSMV:
     def parseHeader():
         """Parse the header dictionary for relelvant information to read the data in the file."""
         for key, val in self.header_info:
-            if key == ''
+            if key == 'SIZE1':
+                self.dataSize[0] = val
+            elif key == 'SIZE2':
+                self.dataSize[1] = val
+            elif key == 'TYPE':
+                try:
+                    self.dataType = self._data_types[val]
+                except KeyError:
+                    raise(f'File data type not supported: {val}')
     
     def getDataset(self):
         self.readHeader()
         self.parseHeader()
-        self.getDataset()
         
+        self.fid.seek(self.num_header_bytes, 0)
+        data = np.fromfile(self.fid, count=self.dataSize[0] * self.dataSize[1], dtype=self.dataType)
+        data = data.reshape(self.dataSize)
+        data_out = {}
+        data_out['data'] = data
+        return data_out
+    
 def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1):
     """ Write out diffraction as SMV formatted file
     Header is 512 bytes of zeros and then filled with ASCII
