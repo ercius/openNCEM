@@ -187,8 +187,6 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     pixel_size = 0.01  # physical detector pixel size in mm
     beam_center in column, row format in mm
     """
-    print('New write_smv version!!')
-    
     if dp.dtype != np.uint16:
         raise TypeError("Only uint16 data type is supported.")
     dtype = 'unsigned_short'

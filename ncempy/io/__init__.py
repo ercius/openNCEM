@@ -3,6 +3,7 @@ from . import ser
 from . import emd
 from . import mrc
 from . import emdVelox
+from . import smv
 
 from pathlib import Path
 
@@ -50,8 +51,10 @@ def read(filename, dsetNum=0):
             out = emdVelox.emdVeloxReader(filename, dsetNum)
     elif suffix in ('.mrc', '.rec', '.st', '.ali'):
         out = mrc.mrcReader(filename)
+    elif suffix in ('smv', 'img'):
+        out = smv.smvReader(filename)
     else:
         print('File suffix {} is not recognized.'.format(suffix))
-        print('Supported formats are ser, mrc, rec, ali, st, emd, dm3, dm4.')
+        print('Supported formats are ser, mrc, rec, ali, st, emd, dm3, dm4, smv, img.')
 
     return out
