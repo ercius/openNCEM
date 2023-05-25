@@ -65,12 +65,13 @@ class fileSMV:
         self.header_info = {}
         self.num_header_bytes = None
         self.dataType = None
-        self.dataSize = (0, 0)
+        self.dataSize = [0, 0]
+        self._v = verbose
         
         if hasattr(filename, 'read'):
             self.fid = filename
             try:
-                    self.file_name = self.fid.name
+                self.file_name = self.fid.name
             except AttributeError:
                 self.file_name = None
         else:
@@ -122,9 +123,9 @@ class fileSMV:
         return None
     
     def _validate(self):
-        first_line = self.read(15).decode('UTF-8')
-        if first_line = '{\nHEADER_BYTES=':
-            bytes_str = self.fid.readline()
+        first_line = self.fid.read(15).decode('UTF-8')
+        if first_line == '{\nHEADER_BYTES=':
+            bytes_str = self.fid.readline().decode('UTF-8')
             self.num_header_bytes = int(bytes_str.strip().strip(';'))
             return True
         else:
@@ -134,7 +135,7 @@ class fileSMV:
         """Read the header information and conver to numbers or strings."""
         
         self.fid.seek(0, 0)
-        head = f0.read(self.num_header_bytes).decode('UTF-8').split('\n')
+        head = self.fid.read(self.num_header_bytes).decode('UTF-8').split('\n')
         for line in head:
             if '=' in line:
                 key, val = line.split('=')
@@ -149,13 +150,13 @@ class fileSMV:
                     except:
                         self.header_info[key] = val # not a number
     
-    def parseHeader():
+    def parseHeader(self):
         """Parse the header dictionary for relelvant information to read the data in the file."""
-        for key, val in self.header_info:
+        for key, val in self.header_info.items():
             if key == 'SIZE1':
-                self.dataSize[0] = val
+                self.dataSize[1] = val # column
             elif key == 'SIZE2':
-                self.dataSize[1] = val
+                self.dataSize[0] = val # row
             elif key == 'TYPE':
                 try:
                     self.dataType = self._data_types[val]
@@ -182,7 +183,7 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     only uint16 is supported.
     
     camera length in mm
-    lamda = 0.0197  # angstroms
+    lamda = 0.0197  # 300 kV angstroms
     pixel_size = 0.01  # physical detector pixel size in mm
     beam_center in column, row format in mm
     """
