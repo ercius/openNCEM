@@ -266,33 +266,3 @@ def smvReader(file_name, verbose=False):
     print('Warning: pixelSize does not take binning into account.')
     
     return im1  # return the data and metadata as a dictionary
-
-"""
-# Determine camera length distances
-camera_pixel_size = 10e-6 # known 10 um pixels of camera (m)
-ring_radius = 93 # manually input for Au_111 (pixels)
-lam = 1.97e-12 # electron wavelength (m)
-
-# Crystal distances (meters)
-lattice_constant = 4.07e-10
-Au_111 = lattice_constant / np.sqrt(3)
-Au_200 = lattice_constant / np.sqrt(4)
-Au_220 = lattice_constant / np.sqrt(8)
-Au_311 = lattice_constant / np.sqrt(11)
-Au_420 = lattice_constant / np.sqrt(20)
-
-# lam * L = d_hkl * R
-# CL = d_hkl * R where CL is camera constant
-# lam = 1.9687576525122874e-12 # wavelength at 300 kV in m
-R = ring_radius * camera_pixel_size # distance of ring from center in meters
-CL = (Au_111 * 1e10) * (R * 1e3) # in mm * A
-L = Au_111 * R / 1.97e-12 * 1e3 # in mm
-print(f'Camera constant (CL) = {CL} A-mm')
-print(f'Camera length (L) = {L} mm')
-
-
-alpha = lambda * k
-alpha = arctan(PIXEL_SIZE / CAMERA_LENGTH)
-k = alpha / lambda
-
-"""
