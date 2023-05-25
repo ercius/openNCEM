@@ -30,13 +30,20 @@ class Testsmv:
         tt.close()  # need to close the file to use it later
         return Path(tt.name)
 
-    def test_file_object(self, temp_file):
+    def test_write_read(self, temp_file):
         # Write out a temporary SMV file
+        print(np.ones((10, 11), dtype=np.uint16).dtype)
         ncempy.io.smv.smvWriter(temp_file,
                                 np.ones((10, 11), dtype=np.uint16))
 
         assert temp_file.exists() is True
         with ncempy.io.smv.fileSMV(temp_file) as f0:
-            assert hasattr(f0, 'fid')
+            assert hasattr(f0, 'dataSize')
             assert f0.dataSize[0] == 10
     
+    def test_biotin_file(self, data_location):
+        file_path = data_location / Path('biotin_smv.img')
+        with ncempy.io.smv.fileSMV(file_path) as f0:
+            dd = f0.getDataset()
+            assert 'data' in dd
+            assert dd['data'].shape[0] == 2048
