@@ -227,3 +227,72 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     with open(out_path, 'rb+') as f0:
         f0.seek(512, 0)
         f0.write(dp)
+
+        
+def smvReader(file_name, verbose=False):
+    """ A simple function to read open a SMV, parse the header, and read the
+    data and meta data.
+
+    Parameters
+    ----------
+        file_name : str or pathlib.Path
+            The path to the file to load.
+
+    Returns
+    -------
+        out : dict
+            A dictionary containing the data and interesting metadata.
+
+    Example
+    -------
+        Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
+        >> from ncempy.io.smv import smvReader
+        >> import matplotlib.pyplot as plt
+        >> mrc1 = smvReader.('filename.mrc')
+        >> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
+    """
+    if isinstance(file_name, str):
+        file_name = Path(file_name)
+
+    with fileSMV(file_name) as f1:  # open the file and init the class
+        im1 = f1.getDataset()  # read in the dataset
+    
+    # Calculate the pixel size in inverse angstroms according to the geometry in the header
+    alpha = self.header_info['PIXEL_SIZE'] / self.header_info['CAMERA_LENGTH'] # angle across 1 pixel
+    dp_pixel_distance = alpha / self.header_info['WAVELENGTH'] * 1e-10 # divide by wavelength to get distance in Angstroms
+    pixelSize = (dp_pixel_distance, dp_pixel_distance)
+    self.dataOut = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': self.file_name, 
+                    'BIN':self.header_info['BIN']}
+    print('Warning: pixelSize does not take binning into account.')
+    
+    return im1  # return the data and metadata as a dictionary
+
+"""
+# Determine camera length distances
+camera_pixel_size = 10e-6 # known 10 um pixels of camera (m)
+ring_radius = 93 # manually input for Au_111 (pixels)
+lam = 1.97e-12 # electron wavelength (m)
+
+# Crystal distances (meters)
+lattice_constant = 4.07e-10
+Au_111 = lattice_constant / np.sqrt(3)
+Au_200 = lattice_constant / np.sqrt(4)
+Au_220 = lattice_constant / np.sqrt(8)
+Au_311 = lattice_constant / np.sqrt(11)
+Au_420 = lattice_constant / np.sqrt(20)
+
+# lam * L = d_hkl * R
+# CL = d_hkl * R where CL is camera constant
+# lam = 1.9687576525122874e-12 # wavelength at 300 kV in m
+R = ring_radius * camera_pixel_size # distance of ring from center in meters
+CL = (Au_111 * 1e10) * (R * 1e3) # in mm * A
+L = Au_111 * R / 1.97e-12 * 1e3 # in mm
+print(f'Camera constant (CL) = {CL} A-mm')
+print(f'Camera length (L) = {L} mm')
+
+
+alpha = lambda * k
+alpha = arctan(PIXEL_SIZE / CAMERA_LENGTH)
+k = alpha / lambda
+
+"""
