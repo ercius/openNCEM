@@ -186,7 +186,7 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     
     Parameters
     ----------
-    camera length : float
+    camera_length : float
         The calibrated camera length (not the label) in mm. Default is 110 mm.
     lamda : float
         The wavelength of the radiation in Ansgroms. Default is 0.0197 for 300 kV electrons
