@@ -31,7 +31,7 @@ class Testsmv:
         return Path(tt.name)
 
     def test_file_object(self, temp_file):
-        # Write out a temporary mrc file
+        # Write out a temporary SMV file
         ncempy.io.smv.smvWriter(temp_file,
                                 np.ones((10, 11), dtype=np.uint16))
 

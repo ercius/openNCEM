@@ -86,6 +86,18 @@ def test_mrc(temp_file):
         dd = mrc0.getDataset()
         assert dd['data'].shape == (10, 11, 12)
 
+def test_smv(temp_file):
+
+    # Write out a temporary mrc file
+    nio.smv.smvWriter(temp_file,
+                      np.ones((10, 11), dtype=np.float32),
+                      (1, 2))
+
+    assert temp_file.exists() is True
+
+    with nio.smv.fileSMV(temp_file) as smv0:
+        dd = smv0.getDataset()
+        assert dd['data'].shape == (10, 11)
 
 def test_read(data_location):
     """Test the general reader function"""
