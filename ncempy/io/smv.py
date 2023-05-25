@@ -175,17 +175,28 @@ class fileSMV:
         return data_out
     
 def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1):
-    """ Write out diffraction as SMV formatted file
-    Header is 512 bytes of zeros and then filled with ASCII
+    """ Write out data as a SMV (.img) formatted file
+    Header is 512 bytes of zeros and then filled with ASCII.
     
-    only little endian is supported.
+    Note:
+    - only little endian is supported
+    - only uint16 is supported
+    - ony 2D data is supported
+    - some other meta data (PHI, DATE, etc.) is populated with hard coded values
     
-    only uint16 is supported.
-    
-    camera length in mm
-    lamda = 0.0197  # 300 kV angstroms
-    pixel_size = 0.01  # physical detector pixel size in mm
-    beam_center in column, row format in mm
+    Parameters
+    ----------
+    camera length : float
+        The calibrated camera length (not the label) in mm. Default is 110 mm.
+    lamda : float
+        The wavelength of the radiation in Ansgroms. Default is 0.0197 for 300 kV electrons
+    pixel_size : float
+        Physical detector pixel size in mm. Default is 0.01 mm (10 microns)
+    beam_center : tuple
+        The location of the center beam in column, row format in mm (not pixels!)
+    binned_by : int
+        The binning applied to the original data. This is necessary for proper
+        calibrations of detector distances and beam center. Default is 1.
     """
     if dp.dtype != np.uint16:
         raise TypeError("Only uint16 data type is supported.")
@@ -208,19 +219,19 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
         f0.write(f"TYPE={dtype};\n")
         f0.write(f"SIZE1={dp.shape[1]};\n")  # size 1 is columns
         f0.write(f"SIZE2={dp.shape[0]};\n")  # size 2 is rows
-        f0.write(f"PIXEL_SIZE={pixel_size};\n")  # physical pixel size in micron
-        f0.write(f"WAVELENGTH={lamda};\n")  # wavelength
-        f0.write(f"DISTANCE={int(camera_length)};\n")
+        f0.write(f"PIXEL_SIZE={pixel_size};\n")  # physical pixel size in mm
+        f0.write(f"WAVELENGTH={lamda};\n")  # wavelength in Angstroms
+        f0.write(f"DISTANCE={int(camera_length)};\n") # in mm
         f0.write("PHI=0.0;\n")
-        f0.write(f"BEAM_CENTER_X={beam_center[1]};\n")
-        f0.write(f"BEAM_CENTER_Y={beam_center[0]};\n")
+        f0.write(f"BEAM_CENTER_X={beam_center[1]};\n") # in mm (not pixels!)
+        f0.write(f"BEAM_CENTER_Y={beam_center[0]};\n") 
         f0.write(f"BIN={binned_by}x{binned_by};\n")
         f0.write("DATE=Fri Dec 31 23:59:59 1999;\n")
         f0.write("DETECTOR_SN=unknown;\n")
         f0.write("OSC_RANGE=1.0;\n")
         f0.write("OSC_START=0;\n")
         f0.write("IMAGE_PEDESTAL=0;\n")
-        f0.write("TIME=10.0;\n")
+        f0.write("TIME=1.0;\n")
         f0.write("TWOTHETA=0;\n")
         f0.write("}\n")
     # Append the binary image data at the end of the header
