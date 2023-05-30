@@ -413,8 +413,9 @@ class fileDM:
             self._checkIndex(index)
         except:
             raise
-
-        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', ]
+        
+        # Most of the useful keys. Two other keys Tecnai.Microscope Info and Session Info are treated specially below
+        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters']
 
         # Determine useful meta data UNTESTED
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
@@ -423,8 +424,14 @@ class fileDM:
             if prefix1 in kk or prefix2 in kk:
                 kk_split = kk.split('.')
                 if kk_split[4] in good_keys:
-                    new_key = ' '.join(kk_split[4:])
-                    self.metadata[new_key] = ii
+                    if 'Session Info' in kk:
+                        print(kk)
+                        if not '.Items.' in kk:
+                            new_key = ' '.join(kk.split('.')[-2:])
+                            metadata[new_key] = ii
+                    else:
+                        new_key = ' '.join(kk_split[4:])
+                        metadata[new_key] = ii
 
             if 'Tecnai.Microscope Info.arrayOffset' in kk:
                 try:
@@ -438,7 +445,11 @@ class fileDM:
                     self.metadata['Tecnai Microscope Info'] = tecnai
                 except KeyError:
                     print('Tecnai parse error')
-
+            
+            if 'Session Info' in kk:
+                max_entries = 0
+                
+            
         return self.metadata
 
     def _readTagGroup(self):
