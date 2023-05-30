@@ -425,9 +425,8 @@ class fileDM:
                 kk_split = kk.split('.')
                 if kk_split[4] in good_keys:
                     if 'Session Info' in kk:
-                        print(kk)
                         if not '.Items.' in kk:
-                            new_key = ' '.join(kk.split('.')[-2:])
+                            new_key = ' '.join(kk_split[-2:])
                             metadata[new_key] = ii
                     else:
                         new_key = ' '.join(kk_split[4:])
