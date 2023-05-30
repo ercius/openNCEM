@@ -445,10 +445,6 @@ class fileDM:
                 except KeyError:
                     print('Tecnai parse error')
             
-            if 'Session Info' in kk:
-                max_entries = 0
-                
-            
         return self.metadata
 
     def _readTagGroup(self):
