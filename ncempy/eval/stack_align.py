@@ -25,7 +25,7 @@ def stack_align(stack, align_type='static', **kwargs):
 
     """
 
-    if align_type is not 'static' and align_type is not 'dynamic':
+    if align_type != 'static' and align_type != 'dynamic':
         raise KeyError('Incorrect align type. Must be static or dynamic')
 
     # Pre-allocate the arrays
@@ -45,7 +45,7 @@ def stack_align(stack, align_type='static', **kwargs):
         aligned[ii, :, :] = image_shifted
         shifts[ii, :] = sh
 
-        if align_type is 'dynamic':
+        if align_type == 'dynamic':
             ref_fft = cur_fft
             ref_sh = sh
 

@@ -134,7 +134,7 @@ def image_correlate(image, reference, real_filter=1, k_filter=1, shift_func='shi
     """
     output = None
 
-    if shift_func is not 'shift' and shift_func is not 'roll':
+    if shift_func != 'shift' and shift_func != 'roll':
         raise KeyError('Shift function has to be either shift or roll')
 
     image_f = np.fft.rfft2((image - np.mean(image)) * real_filter)
@@ -264,7 +264,7 @@ def stack_align(stack, align_type='static', real_filter=1, k_filter=1, shift_fun
             [num, Y, X] and shifts as a 2D ndarray of shape [num, 2]
     """
 
-    if align_type is not 'static' and align_type is not 'dynamic':
+    if align_type != 'static' and align_type != 'dynamic':
         raise KeyError('Incorrect align type. Must be static or dynamic')
 
     # Pre-allocate the arrays
@@ -280,7 +280,7 @@ def stack_align(stack, align_type='static', real_filter=1, k_filter=1, shift_fun
         sh += ref_sh
         aligned[ii, :, :] = output
         shifts[ii, :] = sh
-        if align_type is 'dynamic':
+        if align_type == 'dynamic':
             ref_sh = sh
             jj = ii
 
