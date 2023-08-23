@@ -135,4 +135,4 @@ class Testemd:
         with ncempy.io.emd.fileEMD(temp_file) as f0:
             _, dims = f0.get_emdgroup(0)
         assert dims[0][1] == 'dim1'
-        assert dims[1][2] is 'pixels'
+        assert dims[1][2] == 'pixels'
