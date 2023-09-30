@@ -400,7 +400,6 @@ class fileDM:
         index : int
             The number of the dataset to get the metadata from.
         """
-
         # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         # metadata indexing starts at 1 but the index keyword starts at 0
         if self.numObjects == 1:
@@ -413,19 +412,28 @@ class fileDM:
             self._checkIndex(index)
         except:
             raise
+        
+        # Most of the useful keys. Two other keys Tecnai.Microscope Info is treated specially below
+        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
 
-        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', ]
-
-        # Determine useful meta data UNTESTED
+        # Determine useful meta data
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
         prefix2 = '.ImageList.{}.ImageData.'.format(index)
+        metadata = {}
         for kk, ii in self.allTags.items():
             if prefix1 in kk or prefix2 in kk:
                 kk_split = kk.split('.')
                 if kk_split[4] in good_keys:
-                    new_key = ' '.join(kk_split[4:])
-                    self.metadata[new_key] = ii
-
+                    if 'Session Info' in kk:
+                        if not '.Items.' in kk:
+                            new_key = ' '.join(kk_split[-2:])
+                            metadata[new_key] = ii
+                    else:
+                        new_key = ' '.join(kk_split[4:])
+                        metadata[new_key] = ii
+            
+            # Tecnai info contains useful information but is encoded as a binary array
+            # We need to read is as binary and convert to text
             if 'Tecnai.Microscope Info.arrayOffset' in kk:
                 try:
                     offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
@@ -435,11 +443,11 @@ class fileDM:
                     self.seek(self.fid, offset)
                     string_data = self.fromfile(self.fid, count=size, dtype=np.uint16)
                     tecnai = ''.join([chr(ii) for ii in string_data]).replace('\u2028', ';')  # replace new line with ;
-                    self.metadata['Tecnai Microscope Info'] = tecnai
+                    metadata['Tecnai Microscope Info'] = tecnai
                 except KeyError:
-                    print('Tecnai parse error')
-
-        return self.metadata
+                    print('Tecnai info tag parse error')
+            
+        return metadata
 
     def _readTagGroup(self):
         """Read a tag group in a DM file.
