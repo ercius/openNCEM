@@ -69,7 +69,11 @@ class Testemd:
         assert dims2[0][2] == 'nm'
         assert dims2[1][2] == 'nm'
         assert dims2[2][2] == 'nm'
-
+    
+    def test_emd_writer_simple(self, temp_file):
+        dd = np.ones((10, 11, 12), dtype=np.uint16)
+        ncempy.io.emd.emdWriter(temp_file, dd)
+    
     def test_emd_writer(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
         ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), pixel_unit=('nm','Ang','um'))
