@@ -400,7 +400,6 @@ class fileDM:
         index : int
             The number of the dataset to get the metadata from.
         """
-
         # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         # metadata indexing starts at 1 but the index keyword starts at 0
         if self.numObjects == 1:
@@ -420,6 +419,7 @@ class fileDM:
         # Determine useful meta data UNTESTED
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
         prefix2 = '.ImageList.{}.ImageData.'.format(index)
+        metadata = {}
         for kk, ii in self.allTags.items():
             if prefix1 in kk or prefix2 in kk:
                 kk_split = kk.split('.')
@@ -443,11 +443,11 @@ class fileDM:
                     self.seek(self.fid, offset)
                     string_data = self.fromfile(self.fid, count=size, dtype=np.uint16)
                     tecnai = ''.join([chr(ii) for ii in string_data]).replace('\u2028', ';')  # replace new line with ;
-                    self.metadata['Tecnai Microscope Info'] = tecnai
+                    metadata['Tecnai Microscope Info'] = tecnai
                 except KeyError:
                     print('Tecnai info tag parse error')
             
-        return self.metadata
+        return metadata
 
     def _readTagGroup(self):
         """Read a tag group in a DM file.
