@@ -182,7 +182,9 @@ class Testdm3:
 
     def test_metadata(self, data_location):
         file_name = data_location / Path('08_carbon.dm3')
+        file_name = '/mnt/nvme1/percius/microED/2023.05.15/scan666.dm4'
         with ncempy.io.dm.fileDM(file_name) as dm0:
+            print(file_name)
             _ = dm0.getMetadata(0)
             print(_['Calibrations Brightness Scale'])
 
