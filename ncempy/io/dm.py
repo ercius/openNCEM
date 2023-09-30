@@ -416,7 +416,7 @@ class fileDM:
         # Most of the useful keys. Two other keys Tecnai.Microscope Info is treated specially below
         good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
 
-        # Determine useful meta data UNTESTED
+        # Determine useful meta data
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
         prefix2 = '.ImageList.{}.ImageData.'.format(index)
         metadata = {}
