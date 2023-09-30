@@ -414,7 +414,7 @@ class fileDM:
         except:
             raise
         
-        # Most of the useful keys. Two other keys Tecnai.Microscope Info and Session Info are treated specially below
+        # Most of the useful keys. Two other keys Tecnai.Microscope Info is treated specially below
         good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
 
         # Determine useful meta data UNTESTED
@@ -431,7 +431,9 @@ class fileDM:
                     else:
                         new_key = ' '.join(kk_split[4:])
                         metadata[new_key] = ii
-
+            
+            # Tecnai info contains useful information but is encoded as a binary array
+            # We need to read is as binary and convert to text
             if 'Tecnai.Microscope Info.arrayOffset' in kk:
                 try:
                     offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
@@ -443,7 +445,7 @@ class fileDM:
                     tecnai = ''.join([chr(ii) for ii in string_data]).replace('\u2028', ';')  # replace new line with ;
                     self.metadata['Tecnai Microscope Info'] = tecnai
                 except KeyError:
-                    print('Tecnai parse error')
+                    print('Tecnai info tag parse error')
             
         return self.metadata
 
