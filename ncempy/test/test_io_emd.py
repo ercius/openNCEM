@@ -55,7 +55,7 @@ class Testemd:
 
     def test_write_emd(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
-        dims = ncempy.io.emd.defaultDims(dd, pixel_size=(0.1, 0.2,  0.3))
+        dims = ncempy.io.emd.defaultDims(dd, pixel_size=(0.1, 0.2,  0.3), pixel_unit=('nm','nm','nm'))
 
         with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd0:
             emd0.put_emdgroup('pytest', dd, dims)
@@ -63,10 +63,20 @@ class Testemd:
         with ncempy.io.emd.fileEMD(temp_file, readonly=True) as emd1:
             dd2, dims2 = emd1.get_emdgroup(0)
         assert dd2.shape == (10, 11, 12)
-
+        assert np.allclose(dims2[0][0][1], 0.1)
+        assert np.allclose(dims2[1][0][1], 0.2)
+        assert np.allclose(dims2[2][0][1], 0.3)
+        assert dims2[0][2] == 'nm'
+        assert dims2[1][2] == 'nm'
+        assert dims2[2][2] == 'nm'
+    
+    def test_emd_writer_simple(self, temp_file):
+        dd = np.ones((10, 11, 12), dtype=np.uint16)
+        ncempy.io.emd.emdWriter(temp_file, dd)
+    
     def test_emd_writer(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
-        ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3))
+        ncempy.io.emd.emdWriter(temp_file, dd, pixel_size=(1, 2, 3), pixel_unit=('nm','Ang','um'))
         with ncempy.io.emd.fileEMD(temp_file) as emd0:
             dd2, dims2 = emd0.get_emdgroup(0)
             assert dd2.ndim == 3
@@ -74,7 +84,12 @@ class Testemd:
             assert dims2[1][0].size == 11
             assert dims2[2][0].size == 12
             # Test pixel size is stored correctly
+            assert int(dims2[0][0][1] - dims2[0][0][0]) == 1
+            assert int(dims2[1][0][1] - dims2[1][0][0]) == 2
             assert int(dims2[2][0][1] - dims2[2][0][0]) == 3
+            assert dims2[0][2] == 'nm'
+            assert dims2[1][2] == 'Ang'
+            assert dims2[2][2] == 'um'
 
     def test_dim_string(self, data_location):
         """Test for dims with string attributes as name and units"""

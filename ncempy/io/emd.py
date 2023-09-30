@@ -511,7 +511,7 @@ class fileEMD:
             self.comments.attrs[timestamp] = np.string_(msg)
         
 
-def defaultDims(data, pixel_size=None):
+def defaultDims(data, pixel_size=None, pixel_unit=None):
     """ A helper function that can generate a properly setup dim tuple
     with default values to allow quick writing of EMD files without
     the need to create these dim vectors manually.
@@ -520,10 +520,10 @@ def defaultDims(data, pixel_size=None):
     ----------
         data : ndarray
             The data that will be written to the EMD file. This is used to get the number of dims and their shape
-
         pixel_size : tuple, optional
             A tuple of pixel sizes. Must have same length as the number of dimensions of data.
-
+        pixel_unit : tuple, optional
+            A tuple of pixel units (i.e. nm), Must have the same length as the number of dimensions of data.
     Returns
     -------
         dims: list
@@ -537,14 +537,18 @@ def defaultDims(data, pixel_size=None):
 
     if not pixel_size:
         pixel_size = (1,) * num
-
-    if len(pixel_size) != data.ndim:
-        raise ValueError('pixel_size and data dimensions must match')
+    
+    if not pixel_unit:
+        pixel_unit = [f'unit{ii+1}' for ii in range(num)]
+    
+    if len(pixel_size) != data.ndim or len(pixel_unit) != data.ndim:
+        raise ValueError('pixel_size, pixel_unit, and data dimensions must match')
 
     dims = []
     for ii in range(num):
         curDim = [np.linspace(0, data.shape[ii] - 1, data.shape[ii]) * pixel_size[ii],
-                  'dim{}'.format(ii+1), 'unit{}'.format(ii+1)]
+                  'dim{}'.format(ii+1),
+                  pixel_unit[ii]]
         dims.append(curDim)
 
     return dims
@@ -596,7 +600,7 @@ def emdReader(filename, dsetNum=0):
         return out
 
 
-def emdWriter(filename, data, pixel_size=None, overwrite=False):
+def emdWriter(filename, data, pixel_size=None, pixel_unit=None, overwrite=False):
     """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
     size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
 
@@ -608,18 +612,26 @@ def emdWriter(filename, data, pixel_size=None, overwrite=False):
         The data as an ndarray to write to the file.
     pixel_size : tuple
         A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
+    pixel_unit : tuple, optional
+            A tuple of pixel units (i.e. nm), Must have the same length as the number of dimensions of data.
     overwrite : boolean
         If file exists, overwrite it.
     """
     if isinstance(filename, str):
         filename = Path(filename)
-
+    
     if pixel_size:
         try:
             assert len(pixel_size) == data.ndim
         except ValueError:
             raise ValueError('pixel_size length must match the number of dimensions of data.')
-
+    
+    if pixel_unit:
+        try:
+            assert len(pixel_unit) == data.ndim
+        except ValueError:
+            raise ValueError('pixel_unit length must match the number of dimensions of data.')
+    
     # Delete the file if it exists and overwrite is true
     if filename.exists() and overwrite:
         filename.unlink()
@@ -627,7 +639,7 @@ def emdWriter(filename, data, pixel_size=None, overwrite=False):
     if not filename.exists():
         with fileEMD(filename, readonly=False) as emd0:
             # Setup the dims for the EMD file. Pixel size is set to 1 by default for each dimension
-            dims0 = defaultDims(data, pixel_size=pixel_size)
+            dims0 = defaultDims(data, pixel_size=pixel_size, pixel_unit=pixel_unit)
             # Write the data to he emd file.
             emd0.put_emdgroup('converted', data, dims0)
     else:
