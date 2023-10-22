@@ -28,7 +28,7 @@ def plot(dd):
     
     assert dd['data'].ndim == 2
     
-    return im_calibrated(dd['data'], dd['pixelSize'], units=dd['pixelUnits'])
+    return im_calibrated(dd['data'], dd['pixelSize'], units=dd['pixelUnit'])
 
 
 def imsd(im, vmin=-2, vmax=2, **kwargs):
@@ -56,7 +56,7 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     return fg
 
 
-def im_calibrated(im, d, **kwargs):
+def im_calibrated(im, d, units=None, **kwargs):
     """ Plot an image calibrated using the pixel size d. The centers of the pixels will be the
     the center of each measurement. So, if you plot positions in real coordinates the points
     will be plotted in the center of the pixel.
@@ -65,9 +65,11 @@ def im_calibrated(im, d, **kwargs):
     ---------
     im : np.ndarray
         The image to show using imshow
-    d : float
-        The pixel size in both directions. The pixel size must be isotropic.
-
+    d : 2-tuple
+        The pixel size in both directions as a 2-tuple.
+    unit : 2-tuple
+        The name of the unit as a string for each pixel along each dimension. (nm or nanometer)
+        
     Returns
     -------
     : pyplot.figure
@@ -76,10 +78,16 @@ def im_calibrated(im, d, **kwargs):
     # The default extent is calculated like this:
     ext = [-0.5, im.shape[1] - 0.5, im.shape[0] - 0.5, -0.5]
     # Calibrate the extent
-    ext = [ii * d for ii in ext]
+    ext[0] = ext[0] * d[1]
+    ext[1] = ext[1] * d[1]
+    ext[2] = ext[2] * d[0]
+    ext[3] = ext[3] * d[0]
 
     fg, ax = plt.subplots(1, 1)
     ax.imshow(im, extent=ext, **kwargs)
+    
+    if units:
+        ax.set(xlabel=f'X ({units[1]})', ylabel=f'Y ({units[0]})')
     return fg
 
 
