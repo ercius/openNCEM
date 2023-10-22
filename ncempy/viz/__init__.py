@@ -37,7 +37,7 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     return fg
 
 
-def im_calibrated(im, d):
+def im_calibrated(im, d, **kwargs):
     """ Plot an image calibrated using the pixel size d. The centers of the pixels will be the
     the center of each measurement. So, if you plot positions in real coordinates the points
     will be plotted in the center of the pixel.
@@ -64,7 +64,7 @@ def im_calibrated(im, d):
     return fg
 
 
-def imfft(im, d=1.0, ax=None):
+def imfft(im, d=1.0, ax=None, **kwargs):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
 
@@ -105,7 +105,7 @@ def imfft(im, d=1.0, ax=None):
     return imax
 
 
-def imrfft(im, d=1.0, ax=None):
+def imrfft(im, d=1.0, ax=None, **kwargs):
     """Show a 2D rFFT (real FFT) as a diffractogram with log scaling applied
     and fftshift-ed along axis 0. See imfft for full details.
 
@@ -133,7 +133,7 @@ def imrfft(im, d=1.0, ax=None):
     return axim
 
 
-def im_and_fft(im, d=1.0, fft=None):
+def im_and_fft(im, d=1.0, fft=None, **kwargs):
     """ Show the image and its fft side by side. Uses imfft to show the fft.
 
     Parameters
