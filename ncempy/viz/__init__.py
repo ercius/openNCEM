@@ -11,6 +11,25 @@ from matplotlib import colors
 import ncempy.algo
 from ncempy.algo.distortion import rad_dis
 
+def plot(dd):
+    """Easy plot of data structure returned by ncempy.read(). This only works
+    for 2D images currently. Calls im_calibrated with proper inputs.
+    
+    Parameters
+    ----------
+    dd : dict
+        The dictionary returned by ncempy.read()
+        
+    Returns
+    -------
+    : matplotlb.pyplot.Figure
+        The handle to the created Figure
+    """
+    
+    assert dd['data'].ndim == 2
+    
+    return im_calibrated(dd['data'], dd['pixelSize'], units=dd['pixelUnits'])
+
 
 def imsd(im, vmin=-2, vmax=2, **kwargs):
     """Show an array as an image with intensities compared to the standard deviation of the data. Other
