@@ -60,7 +60,7 @@ def im_calibrated(im, d, **kwargs):
     ext = [ii * d for ii in ext]
 
     fg, ax = plt.subplots(1, 1)
-    ax.imshow(im, extent=ext)
+    ax.imshow(im, extent=ext, **kwargs)
     return fg
 
 
@@ -83,8 +83,8 @@ def imfft(im, d=1.0, ax=None, **kwargs):
         An axis to plot into.
     Returns
     -------
-    : matplotlib.image.AxesImage
-        The AxesImage that contains the image displayed.
+    : matplotlib.image.Figure
+        The Figure that contains the image displayed.
 
     Example
     -------
@@ -100,9 +100,9 @@ def imfft(im, d=1.0, ax=None, **kwargs):
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    imax = ax.imshow(np.fft.fftshift(np.abs(im) ** 2),
-                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
-    return imax
+    imax = ax.imshow(np.fft.fftshift(np.abs(im)),
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm(), **kwargs)
+    return imax.get_figure()
 
 
 def imrfft(im, d=1.0, ax=None, **kwargs):
@@ -119,7 +119,7 @@ def imrfft(im, d=1.0, ax=None, **kwargs):
         An axis to plot into.
     Returns
     -------
-    : matplotlib.image.AxesImage
+    : matplotlib.image.Figure
         The AxesImage that contains the image displayed.
     """
 
@@ -127,13 +127,13 @@ def imrfft(im, d=1.0, ax=None, **kwargs):
     fftFreq0 = np.fft.rfftfreq(im.shape[0], d)
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    axim = ax.imshow(np.fft.fftshift(np.abs(im) ** 2), axes=0,
-                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
+    axim = ax.imshow(np.fft.fftshift(np.abs(im)), axes=0,
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm(), **kwargs)
 
-    return axim
+    return axim.get_figure()
 
 
-def im_and_fft(im, d=1.0, fft=None, **kwargs):
+def im_and_fft(im, d=1.0, fft=None):
     """ Show the image and its fft side by side. Uses imfft to show the fft.
 
     Parameters
@@ -151,12 +151,13 @@ def im_and_fft(im, d=1.0, fft=None, **kwargs):
         The matplotlib.pyplot figure
     """
     fg, ax = plt.subplots(1, 2)
-    ax[0].imshow(im)
+    ax[0].imshow(im, **kwargs)
 
     if not fft:
         fft = np.fft.fft2(im)
     imfft(fft, d=d, ax=ax[1])
-
+    
+    return fg
 
 class stack_view:
     """
