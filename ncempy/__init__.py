@@ -8,3 +8,4 @@ from . import eval
 from . import viz
 
 from .io import read
+from .viz import plot
