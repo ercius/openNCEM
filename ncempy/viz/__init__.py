@@ -34,7 +34,7 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     im2 = im - im.mean()
     im3 = im2 / np.std(im2)
     imax = ax.imshow(im3, vmin=vmin, vmax=vmax, **kwargs)
-    return imax
+    return fg
 
 
 def im_calibrated(im, d):
