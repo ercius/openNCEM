@@ -123,10 +123,11 @@ class fileSMV:
         return None
     
     def _validate(self):
-        first_line = self.fid.read(15).decode('UTF-8')
-        if first_line == '{\nHEADER_BYTES=':
-            bytes_str = self.fid.readline().decode('UTF-8')
-            self.num_header_bytes = int(bytes_str.strip().strip(';'))
+        # first_line = self.fid.read(15).decode('UTF-8')
+        first_line = self.fid.readline() # should be {
+        second_line = self.fid.readline().decode('UTF-8') # should contain HEADER_BYTES
+        if 'HEADER_BYTES=' in second_line:
+            self.num_header_bytes = int(second_line.split('=')[1].strip().strip(';'))
             return True
         else:
             return False

@@ -32,7 +32,6 @@ class Testsmv:
 
     def test_write_read(self, temp_file):
         # Write out a temporary SMV file
-        print(np.ones((10, 11), dtype=np.uint16).dtype)
         ncempy.io.smv.smvWriter(temp_file,
                                 np.ones((10, 11), dtype=np.uint16))
 
