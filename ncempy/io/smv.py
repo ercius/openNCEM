@@ -135,7 +135,7 @@ class fileSMV:
         """Read the header information and conver to numbers or strings."""
         
         self.fid.seek(0, 0)
-        head = self.fid.read(self.num_header_bytes).decode('UTF-8').split('\n')
+        head = self.fid.read(self.num_header_bytes).decode('UTF-8').splitlines()
         for line in head:
             if '=' in line:
                 key, val = line.split('=')
