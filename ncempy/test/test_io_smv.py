@@ -46,3 +46,26 @@ class Testsmv:
             dd = f0.getDataset()
             assert 'data' in dd
             assert dd['data'].shape[0] == 2048
+            
+    def test_newline_linux(self, temp_file):
+        # Write out a temporary SMV file with linux line endings
+        ncempy.io.smv.smvWriter(temp_file,
+                                np.ones((10, 11), dtype=np.uint16),
+                               newline='\n')
+
+        assert temp_file.exists() is True
+        with open(temp_file,'rb') as f0:
+            vals = f0.read(2)
+            assert vals[1] == ord('\n')
+            
+    def test_newline_windows(self, temp_file):
+        # Write out a temporary SMV file with Windows line endings
+        ncempy.io.smv.smvWriter(temp_file,
+                                np.ones((10, 11), dtype=np.uint16),
+                               newline='\r\n')
+
+        assert temp_file.exists() is True
+        with open(temp_file,'rb') as f0:
+            vals = f0.read(3)
+            assert vals[1] == ord('\r')
+            assert vals[2] == ord('\n')

@@ -175,7 +175,7 @@ class fileSMV:
         data_out['data'] = data
         return data_out
     
-def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1):
+def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1, newline=None):
     """ Write out data as a SMV (.img) formatted file
     Header is 512 bytes of zeros and then filled with ASCII.
     
@@ -198,6 +198,11 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     binned_by : int
         The binning applied to the original data. This is necessary for proper
         calibrations of detector distances and beam center. Default is 1.
+    newline : str (optional)
+        Allow the user to specify the newline character. For data written on Windows computers
+        some microED processing programs in Linux are not able to load SMV files with Windows 
+        carriage return and newline characters. Use '\n' on Windows machines to enforce Linux
+        line endings. THe defauly None will use the system default.
     """
     if dp.dtype != np.uint16:
         raise TypeError("Only uint16 data type is supported.")
@@ -213,7 +218,8 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     with open(out_path, 'wb') as f0:
         f0.write(np.zeros(512, dtype=np.uint8))
     # Write the header over the zeros as needed
-    with open(out_path, 'r+') as f0:
+    # The newline character is system default unless otherwise specified
+    with open(out_path, 'r+', newline=newline) as f0:
         f0.write("{\nHEADER_BYTES=512;\n")
         f0.write("DIM=2;\n")
         f0.write("BYTE_ORDER=little_endian;\n")
