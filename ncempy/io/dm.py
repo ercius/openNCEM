@@ -573,7 +573,11 @@ class fileDM:
         """Utility function to convert a numpy array of binary values to a python string.
 
         """
-        return ''.join([chr(item) for item in bin0])
+        try:
+            return ''.join([chr(item) for item in bin0])
+        except:
+            # Some data can not be read. This is what DM says in the tag tree in this case
+            return '(Not displayable)'
 
     def _encodedTypeSize(self, encodedType):
         """Return the number of bytes in a data type for the encodings used by DM.
