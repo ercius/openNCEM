@@ -156,7 +156,7 @@ def peakFind3D(vol, threshold):
               & (vol > threshold * np.max(vol)))
 
     positions = np.array(np.where(pLarge * vol)).T.copy()  # return array as [num,posXYZ]
-    return positions.astype(np.int)
+    return positions.astype(int)
 
 
 def enforceMinDist(positions, intensities, minDistance):
@@ -203,7 +203,7 @@ def enforceMinDist(positions, intensities, minDistance):
 
     validPeaks = validPeaks[~np.isnan(validPeaks[:, 0]), :]
     # print("Removed %d peaks" % (positions.shape[0] - validPeaks.shape[0]))
-    return validPeaks.astype(np.int)
+    return validPeaks.astype(int)
 
 
 def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):
