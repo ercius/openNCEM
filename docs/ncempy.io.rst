@@ -44,3 +44,10 @@ ncempy.io.ser module
 .. automodule:: ncempy.io.ser
    :members:
    :undoc-members:
+
+ncempy.io.smv module
+--------------------
+
+.. automodule:: ncempy.io.smv
+   :members:
+   :undoc-members:
