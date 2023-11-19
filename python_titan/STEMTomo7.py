@@ -32,11 +32,11 @@ from comtypes.safearray import safearray_as_ndarray  # get data across COM barri
 # Connect to TEAM Stage
 try:
     import TEAMstageclass
-except ModuleNotFoundError:
+except ImportError:
     print('TEAM stage module not found.')
 
 import argparse
-version = 7.2  # version number for this program
+version = 7.3  # version number for this program
 
 
 class TEAMFrame(wx.Frame):
@@ -114,24 +114,6 @@ class TEAMFrame(wx.Frame):
         self.axes = self.TEMfigure.add_subplot(111)
         self.axes.xaxis.set_visible(False)
         self.axes.yaxis.set_visible(False)
-        try:
-            set_cmap('gray')
-        except:
-            pass
-
-        # Create zoom figure in a canvas
-        # self.TEMfigureZoom = Figure()
-        # self.Zoomcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigureZoom)
-        # self.Zoomaxes = self.TEMfigureZoom.add_subplot(111)
-        # self.Zoomaxes.xaxis.set_visible(False)
-        # self.Zoomaxes.yaxis.set_visible(False)
-
-        # Create fft figure in a canvas
-        # self.TEMfigurefft = Figure()
-        # self.fftcanvas = FigureCanvasWxAgg(self, -1, self.TEMfigurefft)
-        # self.fftaxes = self.TEMfigurefft.add_subplot(111)
-        # self.fftaxes.xaxis.set_visible(False)
-        # self.fftaxes.yaxis.set_visible(False)
         
         # set_cmap does not work in older matplotlib versions
         try:
@@ -145,7 +127,7 @@ class TEAMFrame(wx.Frame):
         self._iFprefix = wx.TextCtrl(aquirepage, wx.ID_ANY, value='TiltSeries1')
         self._lDir = wx.StaticText(aquirepage, wx.ID_ANY, 'Output directory')
         try:
-            self._iDir = wx.TextCtrl(aquirepage, wx.ID_ANY, value='G:\UserData',
+            self._iDir = wx.TextCtrl(aquirepage, wx.ID_ANY, value=r'G:/UserData',
                                      size=(300, 20))  # correct for TEAM 0.5
         except:
             self._iDir = wx.TextCtrl(aquirepage, wx.ID_ANY, value=os.getcwd(), size=(300, 20))
@@ -218,9 +200,6 @@ class TEAMFrame(wx.Frame):
         self._lPos = wx.StaticText(searchpage, wx.ID_ANY, 'positions')
         self._lAlphaGamma = wx.StaticText(searchpage, wx.ID_ANY, 'alpha gamma')
         self._lFinePos = wx.StaticText(searchpage, wx.ID_ANY, 'fine positions')
-        # self._lEucentric = wx.StaticText(searchpage, wx.ID_ANY, 'eucentric')
-        # self._cbfft = wx.CheckBox(searchpage, label='display fft', pos=(20, 20))
-        # self._cbfft.SetValue(False)
         self._btnGetPos = wx.Button(searchpage, label='Get Position')
         self._btnSearch = wx.Button(searchpage, label='Search')
         currentvalbox.Add(self._lPos, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
@@ -233,21 +212,6 @@ class TEAMFrame(wx.Frame):
         # Set label fonts X
         # note: wx.Font(pointSize, family, style, weight, underline=False, faceName="", encoding=wx.FONTENCODING_DEFAULT)
         self.setFonts(True)
-        # self.fontTopLabels = wx.Font(14, wx.DEFAULT, wx.NORMAL,wx.BOLD)
-        # self.fontLabels = wx.Font(12, wx.DEFAULT, wx.NORMAL,wx.BOLD)
-        # self.fontDisable = wx.Font(12,wx.DEFAULT,wx.ITALIC,wx.NORMAL) #not sure why this does not work, but its not used yet
-        # self._lLabel1.SetFont(fontTopLabels)
-        # self._lLabel3.SetFont(fontTopLabels)
-        # self._lFprefix.SetFont(fontLabels)
-        # self._lDir.SetFont(fontLabels)
-        # self._lDwell.SetFont(fontLabels)
-        # self._lBin.SetFont(fontLabels)
-        # self._lRep.SetFont(fontLabels)
-        # self._lRot.SetFont(fontLabels)
-        # self._lDel.SetFont(fontLabels)
-        # self._lPos.SetFont(fontLabels)
-        # self._lAlphaGamma.SetFont(fontLabels)
-        # self._lFinePos.SetFont(fontLabels)
 
         # tomo setup page
         self._lslope = wx.StaticText(tomosetuppage, wx.ID_ANY, 'slope')
@@ -285,8 +249,6 @@ class TEAMFrame(wx.Frame):
         # Set color
         self.SetBackgroundColour("0000FF")
 
-        # set resonable axis for start (will be 17 micro meters at 5000x, don't want to start at 1m)
-        # for now remember none loaded yet
         self.imagevalid = 0
 
         # Bind the events
@@ -300,17 +262,12 @@ class TEAMFrame(wx.Frame):
         self._btnnext.Bind(wx.EVT_BUTTON, self.onShowNext)  # bind the button event
         self._btnDispGotoPos.Bind(wx.EVT_BUTTON, self.onGotoDispPos)
         self._gotoGUI['_btnGotoAngles'].Bind(wx.EVT_BUTTON, self.onGotoAngles)
-        #zoomfftbox.Add(self.Zoomcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
-        #zoomfftbox.Add(self.fftcanvas, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
 
         imagebox.Add(self.canvas, proportion=3, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
-        #imagebox.Add(zoomfftbox, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
 
-        # imagecolumnbox.Add(displayvalbox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=20)
         imagecolumnbox.Add(imagebox, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
 
         infobox.Add(currentvalbox, proportion=0, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=0)
-        # infobox.Add(aquirebox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
 
         searchpage.SetSizer(infobox);
         tomosetuppage.SetSizer(tiltbox);
@@ -334,7 +291,6 @@ class TEAMFrame(wx.Frame):
         self.onConnect()
 
         self.Show(True)  # show the frame
-        # self.NewFileName() #crashes - still busy with some init process?
 
     def __del__(self):
         try:
@@ -342,14 +298,11 @@ class TEAMFrame(wx.Frame):
         except:
             pass
         self.f.close()
-        self.TS.TS_Disconnect()
 
     def drawPlot(self, imArray):
         self.axes.clear()
         self.axes.imshow(imArray)  # add the image to the figure
         self.canvas.draw()  # draw the panel
-        self.Zoomcanvas.draw()  # draw the panel
-        self.fftcanvas.draw()  # draw the panel
 
     # Connect to the microscope and setup STEM detectors
     def onConnect(self):
