@@ -385,7 +385,6 @@ class TEAMFrame(wx.Frame):
         self.Show(True) #show the frame
     
     def __del__(self):
-        #self.f.close()
         self.TS.TS_Disconnect()
         
     def drawPlot(self, imArray):
@@ -436,6 +435,7 @@ class TEAMFrame(wx.Frame):
                 print('Clear TEAM Stage GUI errors if frozen')
                 self.TS = TEAMstageclass.TEAMstage()
                 self.TS.TS_Connect('localhost',5557)
+                self.TS.TS_Disconnect()
             except Exception as e:
                 print('Error with TEAM Stage connection. Exception type is %s' % e)
         print('TEAM Stage connection successful')
