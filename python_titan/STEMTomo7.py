@@ -293,10 +293,8 @@ class TEAMFrame(wx.Frame):
         self.Show(True)  # show the frame
 
     def __del__(self):
-        try:
+        if self.stagetype == 'teamstage':
             self.TS.TS_Disconnect()
-        except:
-            pass
         self.f.close()
 
     def drawPlot(self, imArray):
@@ -306,7 +304,7 @@ class TEAMFrame(wx.Frame):
 
     # Connect to the microscope and setup STEM detectors
     def onConnect(self):
-        # connect using comtypes
+        # connect to microscope and TIA
         try:
             self._microscope = CreateObject('TEMScripting.Instrument')
             print("Connected to microscope")
@@ -341,7 +339,7 @@ class TEAMFrame(wx.Frame):
             print('Connections to microscope interfaces failed.')
             raise
 
-        self._microscope.Acquisition.AddAcqDevice(self.detector0);
+        self._microscope.Acquisition.AddAcqDevice(self.detector0)
         
         # Determine the maximum binning value
         self.determineMaxBinning()
@@ -352,7 +350,7 @@ class TEAMFrame(wx.Frame):
     def setDatasetAttributesEditable(self, ed):
         self._iBin.SetEditable(ed)
         self._iRep.SetEditable(ed)
-        self._iRot.EnableItem(0, ed)  # disable/enable radio buttons
+        self._iRot.EnableItem(0, ed)
         self._iRot.EnableItem(1, ed)
         self._iRot.EnableItem(2, ed)
         self._iDwell.SetEditable(ed)
@@ -388,7 +386,6 @@ class TEAMFrame(wx.Frame):
         
     def initializeEMDFile(self):
         """ Initialize the file and tags for HDF5 / EMD file format
-
         """
         print('init emd file: ' + self.fullName)
 
@@ -495,102 +492,6 @@ class TEAMFrame(wx.Frame):
         self.rotSetting = self._iRot.GetSelection()
         self.Del = int(self._iDel.GetValue())
 
-    def onClick(self, event):
-        # Determine mouse position and move stage. xdata = x coord of mouse in data coords
-        if (self.imagevalid == 0) or (event.xdata == None) or (event.ydata == None):
-            pass
-        else:
-            # get slider values
-            self.updateFinePosition()
-            self._lFinePos.SetLabel('Fine position = ({0[0]}, {0[1]}, {0[2]}'.format(self.TS.finecoords))
-
-            # image center position
-            XC = self.calX * self.imageData.shape[0] / 2.0
-            YC = self.calY * self.imageData.shape[1] / 2.0
-
-            print("XC/YC")
-            print(XC)
-            print(YC)
-
-            # required motion
-            XM = event.xdata - XC
-            YM = event.ydata - YC
-
-            print("event data")
-            print(event.xdata)
-            print(event.ydata)
-
-            print("XM/YM")
-            print(XM)
-            print(YM)
-
-            # Project onto TEAM Stage axes
-            rot = self.TS.STEMRot / 180.0 * np.pi  # change to radians
-            XMr = XM * np.cos(rot) + YM * np.sin(rot)
-            YMr = -XM * np.sin(rot) + YM * np.cos(rot)
-
-            print("XMr/YMr")
-            print(XMr)
-            print(YMr)
-
-            # Determine X&ZY slider values (-100 to 100)
-            newSliderX = self.TS.finecoords[0] + XMr / self.TS.sliderX_cal
-            newSliderY = self.TS.finecoords[1] + YMr / self.TS.sliderY_cal
-
-            # Test if in range else show error message and don't move (later move coarse?)
-            newSliders = [newSliderX, newSliderY, self.TS.finecoords[2]]
-
-            if ((newSliderX > -100) and (newSliderX < 100) and (newSliderY > -100) and (newSliderY < 100)):
-                # Make a tuple of the new values
-                self.setFinePosition(newSliders)
-                self.sb.SetStatusText(
-                    'New sliders: ' + str(newSliders[0]) + ", " + str(newSliders[1]) + ", " + str(newSliders[2]))
-                self._lFinePos.SetLabel('Xf = ' + "{0:.2f}".format(newSliders[0]) + ", " + 'Yf = ' + "{0:.2f}".format(
-                    newSliders[1]) + ", " + 'Zf = ' + "{0:.2f}".format(newSliders[2]))
-                # wait 1 second
-                time.sleep(1)
-                self.quickimage()
-            else:
-                steps = [1, 2, 4]
-                steps[0] = int(XM / self.TS.step10X_cal)
-                steps[1] = int(YM / self.TS.step10Y_cal)
-                steps[2] = 0
-                size = [1, 1, 1]
-                self.sb.SetStatusText('Steps: ' + str(steps[0]) + ', ' + str(steps[1]) + ', ' + str(steps[2]))
-                # self.step(steps, size)
-                time.sleep(1)
-                self.quickimage()
-
-            pass
-        pass
-
-    def step(self, steps, size):
-        self.TS.TS_Connect('localhost', 5557)
-        xsteps = steps[0]
-        if xsteps < 0:
-            self.TS.TS_Step([-xsteps, 0, 0], -size)
-        elif xsteps > 0:
-            self.TS.TS_Step([xsteps, 0, 0], size)
-        ysteps = steps[1]
-        if ysteps < 0:
-            self.TS.TS_Step([-ysteps, 0, 0], -size)
-        elif ysteps > 0:
-            self.TS.TS_Step([ysteps, 0, 0], size)
-        zsteps = steps[1]
-        if zsteps < 0:
-            self.TS.TS_Step([-zsteps, 0, 0], -size)
-        elif zsteps > 0:
-            self.TS.TS_Step([zsteps, 0, 0], size)
-        self.TS.TS_Disconnect()
-        return 1
-
-    def updateFinePosition(self):
-        # Get the TEAM stage fine position coordinates
-        self.TS.TS_Connect('localhost', 5557)
-        self.TS.TS_GetFinePosition()
-        self.TS.TS_Disconnect()
-        return self.TS.finecoords
-
     def onCalcTilt(self, event):
         self.calcgammatiltangles(int(self._islope.GetValue()),
                                  (float(self._iA1.GetValue()), float(self._iG1.GetValue())),
@@ -608,10 +509,6 @@ class TEAMFrame(wx.Frame):
         self.showtiltdetails()
 
     def showtiltdetails(self):
-        #mystr = "nr= " + str(self.curtiltnr) + '  phi= ' + "{0:.2f}".format(
-        #    self.tiltanglelist[0, self.curtiltnr]) + '  al= ' + "{0:.2f}".format(
-        #    self.tiltanglelist[1, self.curtiltnr]) + '  ga= ' + "{0:.2f}".format(
-        #    self.tiltanglelist[2, self.curtiltnr]) + '  rot= ' + "{0:.2f}".format(self.tiltanglelist[3, self.curtiltnr])
         mystr = 'nr= {} phi= {:0.2f} al= {:0.2f} ga= {:0.2f} rot= {:0.2f}'.format(self.curtiltnr,
                                                                                  self.tiltanglelist[0, self.curtiltnr],
                                                                                  self.tiltanglelist[1, self.curtiltnr],
