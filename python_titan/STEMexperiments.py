@@ -5,17 +5,17 @@ ncempy.io.emd to read these files.
 
 author: Peter Ercius, percius@lbl.gov
 '''
+version = 1.2 # version number for this program
 
 import uuid
 import argparse
-version = 1.2 # version number for this program
-
-import numpy as np
 import socket
 import os
+import time
+
+import numpy as np
 import wx # wxPython GUI package
 import h5py
-import time
 
 # For connections to FEI TEMScripting and TIA
 from comtypes.client import CreateObject

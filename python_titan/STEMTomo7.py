@@ -11,18 +11,15 @@ author: Peter Ercius, percius@lbl.gov, Wolfgang Theis, Birmingham UK
 """
 
 import uuid
-
-import numpy as np
-import scipy as sci
 import socket
-from sys import path as path2
 import os
-import wx  # wxPython GUI package
-import h5py
 import threading
 import time
 import math
-from copy import copy
+
+import numpy as np
+import wx  # wxPython GUI package
+import h5py
 
 # Import only necessary modules from matplotlib
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
