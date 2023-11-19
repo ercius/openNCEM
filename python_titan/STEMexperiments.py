@@ -1,11 +1,11 @@
-''' Python script for acquiring STEM data experiments
-such as Focal series, Scanning rotation series, time series and
+''' Python script for acquiring STEM data for experiments
+such as focal series, scanning rotation series, time series and
 single images. All data is saved as a Berkeley EMD file. Use
 ncempy.io.emd to read these files.
 
 author: Peter Ercius, percius@lbl.gov
 '''
-version = 1.2 # version number for this program
+version = 1.2.1 # version number for this program
 
 import uuid
 import argparse
@@ -31,7 +31,7 @@ except:
 class TEAMFrame(wx.Frame):
     def __init__(self, parent, title, stagetype = 'compustage'):
         
-        #Import only necessary modules from matplotlib
+        # Import only necessary modules from matplotlib
         from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
         from matplotlib.figure import Figure
         try:
@@ -52,8 +52,9 @@ class TEAMFrame(wx.Frame):
         self.II = 0 # integer to put after file names
         self.times = None # acquisition time(s)
         
-        self.calX = self.calY = 0
+        self.calX = self.calY = 0 # pixel size
         
+        # Paramter sets (STEM camera lenght, diffraction shift, HAADF contrast/brightness)
         self.setA = {}
         self.setB = {}
         self.setC = {}
@@ -126,7 +127,7 @@ class TEAMFrame(wx.Frame):
         # Setup page
         self._lDir = wx.StaticText(setupPage, wx.ID_ANY, 'Output directory')
         try:
-            self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=r'Z:\Ercius\temp', size=(300,20)) #correct for TEAM 0.5
+            self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=r'Z:\Ercius\temp', size=(300,20)) # correct for TEAM 0.5
         except:
             self._iDir = wx.TextCtrl(setupPage,wx.ID_ANY, value=os.getcwd(), size=(300,20))
         
@@ -684,7 +685,7 @@ class TEAMFrame(wx.Frame):
         self.getUsrAcqVals('drift')
         self.setStemAcqVals()
         
-        #Create a STEM rotation array
+        # Create a STEM rotation array
         rot0 = self.Ill.StemRotation # Current STEM rotation
         rotNum = self.rotSetting
         
@@ -793,11 +794,8 @@ class TEAMFrame(wx.Frame):
         Will be called by onAcquireSingle, onAcquireFocal, etc.
         
         '''
-        #Stop an ongoing acquisition
+        # Stop an ongoing acquisition
         self.stopAcqusition()
-        
-        #Update the TEAM Stage position
-        #self.updatePosition()
         
         self.sb.SetStatusText('Acquiring image ...')
         
@@ -806,7 +804,7 @@ class TEAMFrame(wx.Frame):
 
         self.Ill.BeamBlanked = False
         
-        #Acquire the image
+        # Acquire the image
         acquiredImageSet = self.Acq.AcquireImages()
 
         with safearray_as_ndarray:
@@ -907,7 +905,8 @@ class TEAMFrame(wx.Frame):
         # Close the file
     
     def createDims(self, dataTop, exType, pix):
-        
+        """ Create EMD dims for output file.
+        """
         if exType == 'single':
             dim2 = dataTop.create_dataset('dim2',(pix,),'f')
             dim2.attrs['name'] = np.string_('X')
@@ -1015,11 +1014,6 @@ class TEAMFrame(wx.Frame):
             
             # Write the acquisition times as a data set
             dataTop.create_dataset('acquisition times', data = self.times)
-            
-            # Create the dimension scales and attach them
-            #for ii, d in enumerate(dims):
-            #    d.make_scale(name=d.attrs['name'])
-            #    dataTop.dims[ii].attach_scale(d)
             
             self.sb.SetStatusText('Writing image(s)...')
             dset[:] = self.imageData
