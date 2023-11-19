@@ -539,99 +539,6 @@ class TEAMFrame(wx.Frame):
             self.Rep = int(self.numDF * self.numPerDF)
             
         self.expectedImageShape = (self.maxBin/self.Bin,self.maxBin/self.Bin)
-        
-    def onClick(self,event):
-        """ Determine mouse position and move stage. xdata = x coord of mouse in data coords.
-        Not user currently.
-        """
-        if ((self.imagevalid ==0) or (event.xdata == None) or (event.ydata == None)):
-            pass
-        else:
-            #get slider values
-            self.updateFinePosition()
-            #self._lFinePos.SetLabel('XF = ' + str(self.TS.finecoords[0]) + ", " + 'YF = ' + str(self.TS.finecoords[1]) + ", " + 'ZF = ' + str(self.TS.finecoords[2]))
-        
-            #get position and slider values (might be needed in later versions)
-            #self.updatePositionandFinePosition()
-            
-            # image center position
-            XC = self.calX*self.imageData.shape[0]/2.0
-            YC = self.calY*self.imageData.shape[1]/2.0
-            
-            print("XC/YC")
-            print(XC)
-            print(YC)
-            
-            # required motion
-            XM = event.xdata - XC
-            YM = event.ydata - YC
-            
-            print("event data")
-            print(event.xdata)
-            print(event.ydata)
-            
-            print("XM/YM")
-            print(XM)
-            print(YM)
-            
-            #Project onto TEAM Stage axes
-            rot = self.TS.STEMRot/180.0*np.pi #change to radians
-            XMr = XM*np.cos(rot) + YM*np.sin(rot)
-            YMr = -XM*np.sin(rot) + YM*np.cos(rot)
-            
-            print("XMr/YMr")
-            print(XMr)
-            print(YMr)
-            
-            #Determine X&ZY slider values (-100 to 100)
-            newSliderX = self.TS.finecoords[0] + XMr / self.TS.sliderX_cal
-            newSliderY = self.TS.finecoords[1] + YMr / self.TS.sliderY_cal
-        
-            #Test if in range else show error message and don't move (later move coarse?)
-            newSliders = [newSliderX, newSliderY, self.TS.finecoords[2]]
-            
-            if ((newSliderX > -100) and (newSliderX < 100) and (newSliderY > -100) and (newSliderY < 100)):
-                #Make a tuple of the new values
-                self.setFinePosition(newSliders)
-                self.sb.SetStatusText('New sliders: ' + str(newSliders[0]) + ", " + str(newSliders[1]) + ", " + str(newSliders[2]))
-                self._lFinePos.SetLabel('Xf = ' + "{0:.2f}".format(newSliders[0]) + ", " + 'Yf = ' + "{0:.2f}".format(newSliders[1]) + ", " + 'Zf = ' +"{0:.2f}".format(newSliders[2]))
-                #wait 1 second
-                time.sleep(1)
-                self.quickimage()
-            else:
-                steps = [1,2,4]
-                steps[0] = int(XM / self.TS.step10X_cal)
-                steps[1] = int(YM / self.TS.step10Y_cal)
-                steps[2] = 0
-                size = [1,1,1]
-                self.sb.SetStatusText('Steps: ' + str(steps[0]) + ', ' + str(steps[1])+ ', ' + str(steps[2]))
-                #self.step(steps, size)
-                time.sleep(1)
-                self.quickimage()
-            
-            pass
-        pass
-            
-    def step(self, steps, size):
-        """ Take a step using the TEAM Stage"""
-        self.TS.TS_Connect('localhost',5557)
-        xsteps = steps[0]
-        if xsteps < 0:
-            self.TS.TS_Step([-xsteps,0,0],-size)
-        elif xsteps>0:
-            self.TS.TS_Step([xsteps,0,0],size)
-        ysteps = steps[1]
-        if ysteps < 0:
-            self.TS.TS_Step([-ysteps,0,0],-size)
-        elif ysteps>0:
-            self.TS.TS_Step([ysteps,0,0],size)
-        zsteps = steps[1]
-        if zsteps < 0:
-            self.TS.TS_Step([-zsteps,0,0],-size)
-        elif zsteps>0:
-            self.TS.TS_Step([zsteps,0,0],size)
-        self.TS.TS_Disconnect()
-        return 1
     
     def getPosition_compustage(self):
         ''' Get compustage position
@@ -658,22 +565,6 @@ class TEAMFrame(wx.Frame):
         self.TS.TS_GetFinePosition()
         self.TS.TS_Disconnect()
         return self.TS.finecoords
-
-    def setFinePosition(self, newSliders):
-        """ Sets the fine position of the TEAM Stage.
-        
-        Parameters
-        ----------
-        newSliders : tuple
-            A 3-tuple of the values for the fine position of the TEAM Stage. All values should be
-            > -100 and < 100
-        
-        """
-        #Set the TEAM Stage fine coordinates
-        self.TS.TS_Connect('localhost',5557)
-        self.TS.TS_SetFinePosition(newSliders)
-        self.TS.TS_Disconnect()
-        return self.TS.finecoords
     
     def updatePositionSIM(self):
         """ For testing offline """
@@ -683,35 +574,11 @@ class TEAMFrame(wx.Frame):
     def getPixelSize(self):
         """ Get the pixel calibration from TIA """
         window1 = self.TIA.ActiveDisplayWindow()
-        Im1 = window1.FindDisplay(window1.DisplayNames[0]) #returns an image display object
-        unit1 = Im1.SpatialUnit #returns SpatialUnit object
-        self.unitName = unit1.unitstring #returns a string (such as nm)
-        # print('Image calibration = {}, {}'.format(Im1.image.calibration.deltaX,Im1.image.calibration.deltay))
-        #self.calX = Im1.image.calibration.deltaX #returns the x calibration in meters
-        #self.calY = Im1.image.calibration.deltaY
-        # print('Scan resolution = {}'.format(self.TIA.ScanningServer().ScanResolution))
+        Im1 = window1.FindDisplay(window1.DisplayNames[0]) # returns an image display object
+        unit1 = Im1.SpatialUnit # returns SpatialUnit object
+        self.unitName = unit1.unitstring # returns a string (such as nm)
         self.calX = self.TIA.ScanningServer().ScanResolution
         self.calY = self.TIA.ScanningServer().ScanResolution
-        
-    def quickimage(self):
-        """ Stop an ongoing acquisition and acquire a seatch image """
-        self.stopAcqusition()
-        
-        #Acquire a quick image
-        self.setStemSearchVals()
-        acquiredImageSet = self.Acq.AcquireImages()
-
-        with safearray_as_ndarray:
-            self.imageData = acquiredImageSet(0).AsSafeArray # get data as ndarray
-        
-        self.getPixelSize() #get the pixel calibration
-        imageShape = self.imageData.shape
-        self.axes.clear()
-        self.axes.imshow(np.fliplr(np.rot90(self.imageData,3)),extent=(0,self.calX*imageShape[0],0,self.calY*imageShape[1])) #add the image to the figure
-        self.canvas.draw() #draw the panel
-        self.sb.SetStatusText('Search image')
-        
-        self.imagevalid =1
     
     def determineMaxBinning(self):
         """ Acquire an image with a certain binning number. The resulting image size provides 
@@ -732,46 +599,6 @@ class TEAMFrame(wx.Frame):
         sh = imageData.shape
         
         self.maxBin = sh[0] * self.myStemSearchParams.Binning
-        
-    def onShowPrev(self, event):
-        self.showindex = self.showindex -1
-        self.showimage()
-
-    def onShowNext(self, event):
-        self.showindex = self.showindex +1
-        self.showimage()
-
-    def showimage(self):
-        #Show image from data set
-        f = h5py.File(self.fullName + '.emd','a') #open and expand if file exists
-        dataroot = f['data']
-        dataTop = dataroot['raw']
-        dset=dataTop['data']
-        nindex = dataTop.attrs.get('nextindex')
-        
-        # check that in range
-        if (self.showindex < dataTop.attrs.get('nextindex',0)) and (self.showindex>=0):
-            self.showset = dataTop['imageParameters'][0,self.showindex] 
-            self.showsubindex = dataTop['imageParameters'][1,self.showindex] 
-            #self.imageData = dset[self.showsubindex,self.showset,:,:]
-            self.imageData = dset[self.showset,self.showsubindex,:,:]
-            self.calX = dataTop['dim4'][1]-dataTop['dim4'][0]
-            self.calY = dataTop['dim3'][1]-dataTop['dim3'][0]
-            imageShape = self.imageData.shape
-            self.axes.clear()
-            self.axes.imshow(np.fliplr(np.rot90(self.imageData,3)),extent=(0,self.calX*imageShape[0],0,self.calY*imageShape[1])) #add the image to the figure
-            self.canvas.draw() #draw the panel
-            self._lDispIndex.SetLabel('Image shown: ' + str(self.showindex))
-            stage = f['stage']
-            Position = dataTop['imageSetParameters'][0:5,self.showset]
-            self._lDispFinePos.SetLabel('Fine position not recorded')
-            self._lDispPos.SetLabel('X = ' + str(Position[0]) + ", " + 'Y = ' + str(Position[1]) + ", " + 'Z = ' + str(Position[2]))
-            self._lDispAlphaGamma.SetLabel('Alpha = ' + str(Position[3]) + ", " + 'Gamma = ' + str(Position[4]))
-            self.DispPosangles = Position[:]
-            
-            self.imagevalid =0
-            # display related properties
-        f.close()
         
     def stopAcqusition(self):
         if self.TIA.AcquisitionManager().isAcquiring:
