@@ -318,14 +318,15 @@ class TEAMFrame(wx.Frame):
         displayvalbox.Add(imagebuttonbox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=20)
         '''
         
+        # Set all fonts
         self.setFonts(1)
         
-        #Set color
+        # Set color
         self.SetBackgroundColour("0000FF")
         
         self.imagevalid = 0
         
-        #Bind the events
+        # Bind the events
         self._btnDistiller.Bind(wx.EVT_BUTTON, self.onDistiller) #bind the button event
         self._btnAcqSingle.Bind(wx.EVT_BUTTON, self.onAcquireSingle) #bind the button event
         self._btnAcqFocal.Bind(wx.EVT_BUTTON, self.onAcquireFocal) #bind the button event
@@ -344,14 +345,11 @@ class TEAMFrame(wx.Frame):
         
         # Eanble Mouse events
         #self.canvas.mpl_connect('button_press_event', self.onClick) #bind the left click event
-                
         #self._btnprev.Bind(wx.EVT_BUTTON, self.onShowPrev) #bind the button event
         #self._btnnext.Bind(wx.EVT_BUTTON, self.onShowNext) #bind the button event
-        
         #self._btnDispGotoPos.Bind(wx.EVT_BUTTON, self.onGotoDispPos)
         
         imagebox.Add(self.canvas, proportion=3, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
-                
         imagecolumnbox.Add(imagebox, proportion=1, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
         
         infobox.Add(currentvalbox, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
@@ -376,7 +374,7 @@ class TEAMFrame(wx.Frame):
         mainbox.Add(imagecolumnbox, proportion=1, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=0)
         mainbox.Add(notebook, proportion=0, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=20)
         
-        self.SetSizer(mainbox) #Initialize the parent sizer
+        self.SetSizer(mainbox) # Initialize the parent sizer
         
         self.sb = self.CreateStatusBar()
         self.sb.SetStatusText('Idle...')
@@ -386,7 +384,8 @@ class TEAMFrame(wx.Frame):
         self.Show(True) #show the frame
     
     def __del__(self):
-        self.TS.TS_Disconnect()
+        if self.stagetype:
+            self.TS.disconnect()
         
     def drawPlot(self, imArray):
         """ Draw an image in the GUI
@@ -399,23 +398,20 @@ class TEAMFrame(wx.Frame):
         """
         #print('Draw plot')
         
-        # Need to add updates to the color limits. Not sure how to do that.
         #self.axesIm.set_array(imArray) # This should be faster...but it does not work. Need to update 
-
+        
+        # This in inefficient, but the canvas will not update when using the imageAxes method
         self.axes.clear()
         if imArray.shape[0] <= 2048:
             axIm = self.axes.imshow(imArray) 
         else:
             axIm = self.axes.imshow(imArray[::2,::2]) # 4kx4k cant be shown. reduce the size of the image
-        self.canvas.draw() #draw the panel
+        self.canvas.draw() # draw the panel
     
-    #Connect to the microscope and setup STEM detectors
     def onConnect(self):
         """ Connects to the microscope, TIA scanning software, and TEAM Stage (if applicable)
-        
-        
         """
-        # connect using comtypes
+        # connect to microscope and TIA
         try:
             self._microscope = CreateObject('TEMScripting.Instrument')
             print("Connected to microscope")
@@ -430,13 +426,13 @@ class TEAMFrame(wx.Frame):
             raise
         
         if self.stagetype == 'teamstage':
-            #Connect to TEAM stage
+            # Connect to TEAM stage
             try:
                 print('Attempt to connect to TEAM Stage')
                 print('Clear TEAM Stage GUI errors if frozen')
                 self.TS = TEAMstageclass.TEAMstage()
-                self.TS.TS_Connect('localhost',5557)
-                self.TS.TS_Disconnect()
+                self.TS.TS_Connect('localhost', 5557) # test connection
+                self.TS.TS_Disconnect() # disconnect
                 print('TEAM Stage connection successful')
             except Exception as e:
                 print('Error with TEAM Stage connection. Exception type is {}'.format(e))
@@ -480,6 +476,8 @@ class TEAMFrame(wx.Frame):
             ii.SetFont(fontLabels)
     
     def onDistiller(self, ev):
+        """ Use the distiller directory as the save directory.
+        """
         print("Use Distiller directory. Sub-directories OK.")
         self._iDir.SetValue(self.distiller_directory)
     
@@ -543,7 +541,6 @@ class TEAMFrame(wx.Frame):
     
     def getPosition_compustage(self):
         ''' Get compustage position
-        
         '''
         stageObj = self.Stage.Position
         posArray = (stageObj.X,stageObj.Y,stageObj.Z,stageObj.A,stageObj.B)
@@ -551,7 +548,6 @@ class TEAMFrame(wx.Frame):
         
     def getPosition_teamstage(self):
         ''' Get the TEAM Stage position
-        
         '''
         self.TS.TS_Connect('localhost',5557)
         self.TS.TS_GetPosition()
