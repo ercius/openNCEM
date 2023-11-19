@@ -387,7 +387,7 @@ class TEAMFrame(wx.Frame):
     def initializeEMDFile(self):
         """ Initialize the file and tags for HDF5 / EMD file format
         """
-        print('init emd file: ' + self.fullName)
+        print('init emd file: {}'.format(self.fullName))
 
         with h5py.File(self.fullName + '.emd', 'w') as f:
             f['/'].attrs['version'] = version
@@ -821,37 +821,6 @@ class TEAMFrame(wx.Frame):
                 self._lDispAlphaGamma.SetLabel('Alpha = {0[3]}, Gamma or Beta = {0[4]}'.format(Position))
                 self.DispPosangles = Position[:]
 
-                # self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
-                                     # int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
-                # ZoomimageShape = self.ZoomimageData.shape
-                # self.Zoomaxes.clear()
-                # self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
-                                                                                         # 0, self.calY * ZoomimageShape[1]))
-                # self.Zoomcanvas.draw()  # draw the panel
-
-                # if self._cbfft.GetValue():
-                    # fftimageShape = self.imageData.shape
-                    # cft = np.fft.fft2(self.imageData, self.imageData.shape)
-                    # vecfunc = np.vectorize(abs)
-                    # vecfunc2 = np.vectorize(math.log10)
-                    # vecfunc3 = np.vectorize(int)
-                    # a = vecfunc3(vecfunc2(vecfunc(cft)))
-                    # n = imageShape[0]
-                    # self.fftimageData = copy(a)
-                    # self.fftimageData[0:n / 2 - 1, 0:n / 2 - 1] = a[n / 2:n - 1, n / 2:n - 1]
-                    # self.fftimageData[n / 2:n - 1, n / 2:n - 1] = a[0:n / 2 - 1, 0:n / 2 - 1]
-                    # self.fftimageData[0:n / 2 - 1, n / 2:n - 1] = a[n / 2:n - 1, 0:n / 2 - 1]
-                    # self.fftimageData[n / 2:n - 1, 0:n / 2 - 1] = a[0:n / 2 - 1, n / 2:n - 1]
-                    # self.fftaxes.clear()
-                    # self.fftaxes.imshow(np.fliplr(np.rot90(self.fftimageData, 3)), extent=(0, self.calX * fftimageShape[0],
-                                                                                           # 0, self.calY * fftimageShape[1]))
-                    # self.fftcanvas.draw()  # draw the panel
-                # else:
-                    # self.fftaxes.clear()
-                    # self.fftaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(0, self.calX * ZoomimageShape[0],
-                                                                                            # 0, self.calY * ZoomimageShape[1]))
-                    # self.fftcanvas.draw()  # draw the panel
-
                 self.imagevalid = 0
 
     def stopAcqusition(self):
@@ -920,9 +889,9 @@ class TEAMFrame(wx.Frame):
         tempData = np.zeros((self.Rep, self.maxBin / self.Bin, self.maxBin / self.Bin))
         for x in range(0, self.Rep):
             if (x != 0):  # and (self.Del<10)):
-                self.sb.SetStatusText('Waiting ' + str(self.Del) + ' seconds ...')
+                self.sb.SetStatusText('Waiting {} seconds ...'.format(self.Del))
                 time.sleep(self.Del)
-            self.sb.SetStatusText('Acquiring image ' + str(x + 1) + ' ...')
+            self.sb.SetStatusText('Acquiring image {}...'.format(x + 1))
 
             self.Ill.StemRotation = rotArray[x]
 
@@ -945,19 +914,9 @@ class TEAMFrame(wx.Frame):
             0, self.calX * imageShape[0], 0, self.calY * imageShape[1]))  # add the image to the figure
             self.canvas.draw()  # draw the panel
             self.imagevalid = 1
-
-            # Show the zoom image
-            # self.ZoomimageData = self.imageData[int(imageShape[0] * 0.4):int(imageShape[0] * 0.6),
-                                 # int(imageShape[1] * 0.4):int(imageShape[1] * 0.6)]
-            # ZoomimageShape = self.ZoomimageData.shape
-            # self.Zoomaxes.clear()
-            # self.Zoomaxes.imshow(np.fliplr(np.rot90(self.ZoomimageData, 3)), extent=(
-            # 0, self.calX * ZoomimageShape[0], 0, self.calY * ZoomimageShape[1]))  # add the image to the figure
-            # self.Zoomcanvas.draw()  # draw the panel
-            # self.fftcanvas.draw()  # draw the panel
             
-            self._lDispIndex.SetLabel('Image shown: from current aquired set nr. ' + str(x))
-            self.sb.SetStatusText('Finished Acquisition image ' + str(x + 1) + ' ...')
+            self._lDispIndex.SetLabel('Image shown: from current aquired set nr. {}'.format(x))
+            self.sb.SetStatusText('Finished Acquisition image {}...'.format(x + 1))
 
         # Set STEM rotation back to the original value
         self.Ill.StemRotation = rot0
@@ -971,7 +930,7 @@ class TEAMFrame(wx.Frame):
             user = f['user']
 
             if newfile == 1:
-                print('Check EMD initialization is correct. This note replaces an untested removal of deprecated code.')
+                #print('Check EMD initialization is correct. This note replaces an untested removal of deprecated code.')
                 xdim = np.linspace(0, (imageShape[0] - 1) * self.calX * 1e9,
                                    imageShape[0])  # multiply by 1e9 for nanometers
                 ydim = np.linspace(0, (imageShape[1] - 1) * self.calY * 1e9, imageShape[1])
@@ -1022,7 +981,6 @@ class TEAMFrame(wx.Frame):
                 dataTop['imageParameters'][5, nindex] = mytimestack[x]
 
             f['microscope'].attrs['STEM rotations'] = rotArray
-        # f.close()
 
         self.sb.SetStatusText('Idle...')
 
