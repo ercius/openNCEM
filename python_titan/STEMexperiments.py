@@ -436,18 +436,18 @@ class TEAMFrame(wx.Frame):
                 self.TS = TEAMstageclass.TEAMstage()
                 self.TS.TS_Connect('localhost',5557)
                 self.TS.TS_Disconnect()
+                print('TEAM Stage connection successful')
             except Exception as e:
-                print('Error with TEAM Stage connection. Exception type is %s' % e)
-        print('TEAM Stage connection successful')
+                print('Error with TEAM Stage connection. Exception type is {}'.format(e))
         
         try:
             # Get microscope interfaces
             self.Acq = self._microscope.Acquisition
             self.Proj = self._microscope.Projection
             self.Ill = self._microscope.Illumination
-            self.Stage = self._microscope.Stage #FEI stage. Not needed for TEAM Stage
+            self.Stage = self._microscope.Stage #  FEI stage if no TEAM Stage
             
-            self.detector0 = self.Acq.Detectors(0) #older pythoncom versions might require square brackets []
+            self.detector0 = self.Acq.Detectors(0) #  older pythoncom versions might require square brackets []
         except:
             print('Connections to microscope interfaces failed.')
             raise
@@ -505,8 +505,6 @@ class TEAMFrame(wx.Frame):
         ----------
         exType : str
             The experiment type to retrieve the values from.
-        
-        
         """
         self.Fdir = self._iDir.GetValue()
         
@@ -541,7 +539,6 @@ class TEAMFrame(wx.Frame):
             self.Rep = int(self.numDF * self.numPerDF)
             
         self.expectedImageShape = (self.maxBin/self.Bin,self.maxBin/self.Bin)
-        #print('self.expectedImageShape = {}'.format(self.expectedImageShape))
         
     def onClick(self,event):
         """ Determine mouse position and move stage. xdata = x coord of mouse in data coords.
