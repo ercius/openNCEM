@@ -274,13 +274,13 @@ def smvReader(file_name, verbose=False):
 
     with fileSMV(file_name) as f1:  # open the file and init the class
         im1 = f1.getDataset()  # read in the dataset
-    
-    # Calculate the pixel size in inverse angstroms according to the geometry in the header
-    alpha = self.header_info['PIXEL_SIZE'] / self.header_info['CAMERA_LENGTH'] # angle across 1 pixel
-    dp_pixel_distance = alpha / self.header_info['WAVELENGTH'] * 1e-10 # divide by wavelength to get distance in Angstroms
-    pixelSize = (dp_pixel_distance, dp_pixel_distance)
-    self.dataOut = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': self.file_name, 
-                    'BIN':self.header_info['BIN']}
-    print('Warning: pixelSize does not take binning into account.')
+
+        # Calculate the pixel size in inverse angstroms according to the geometry in the header
+        alpha = f1.header_info['PIXEL_SIZE'] / f1.header_info['DISTANCE'] # angle across 1 pixel
+        dp_pixel_distance = alpha / f1.header_info['WAVELENGTH'] * 1e-10 # divide by wavelength to get distance in Angstroms
+        pixelSize = (dp_pixel_distance, dp_pixel_distance)
+        f1.dataOut = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': f1.file_name, 
+                        'BIN':f1.header_info['BIN']}
+        print('Warning: pixelSize does not take binning into account.')
     
     return im1  # return the data and metadata as a dictionary
