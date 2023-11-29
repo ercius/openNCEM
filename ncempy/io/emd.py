@@ -23,6 +23,16 @@ import numpy as np
 import h5py
 
 
+class NoEmdDataSets(Exception):
+    """Special exception indicating no EMD datasets are in an EMD file."""
+    pass
+
+class UnsupportedEmdVersion(Exception):
+    """Special exception indicating an unsupported EMD version."""
+    pass
+        
+
+
 class fileEMD:
     """Class to represent Berkeley EMD files.
 
@@ -123,10 +133,6 @@ class fileEMD:
             if 'version_major' in self.file_hdl.attrs and 'version_minor' in self.file_hdl.attrs:
                 # read version information
                 self.version = (self.file_hdl.attrs['version_major'], self.file_hdl.attrs['version_minor'])
-                # compare to implementation
-                if not self.version == (0, 2):
-                    print('WARNING: You are reading a version {}.{} EMD file, '
-                          'this implementation assumes version 0.2!'.format(self.version[0], self.version[1]))
             else:
                 # set version information
                 if not readonly:
@@ -170,7 +176,19 @@ class fileEMD:
 
             # find emd_data_type groups in the file
             self.list_emds = self.find_emdgroups(self.file_hdl)
-
+            
+            if len(self.list_emds) == 0 and readonly is True:
+                message = 'No Berkeley EMD data sets found in file.'
+                raise NoEmdDataSets(message)
+            
+            # compare to implementation
+            # Only raise an exception if no Berkeley EMD data sets are found and the version does not match
+            if self.version and readonly is True:
+                if (len(self.list_emds) == 0) and (self.version != (0, 2)):
+                    message = 'No Berkeley EMD data sets found. You are reading a version {}.{} EMD file, \
+                               this implementation assumes version 0.2'.format(self.version[0], self.version[1])
+                    raise UnsupportedEmdVersion(message)
+            
     def __del__(self):
         """Destructor for EMD file object.
 

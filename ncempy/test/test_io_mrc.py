@@ -37,5 +37,5 @@ class Testmrc:
 
         assert temp_file.exists() is True
         with open(temp_file, 'rb') as f0:
-            mrc0 = ncempy.io.mrc.fileMRC(fid)
+            mrc0 = ncempy.io.mrc.fileMRC(f0)
             assert hasattr(mrc0, 'fid')
