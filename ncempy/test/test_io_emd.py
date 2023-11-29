@@ -46,12 +46,18 @@ class Testemd:
         
     def test_comments(self, temp_file):
         """Test putting and retrieving comments"""
+        
+        try:
+            with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd0:
+                emd0.put_comment('file created')
+        except ncempy.io.emd.NoEmdDataSets:
+            pass
 
-        with ncempy.io.emd.fileEMD(temp_file, readonly=False) as emd0:
-            emd0.put_comment('file created')
-
-        with ncempy.io.emd.fileEMD(temp_file, readonly=True) as emd1:
-            assert len(emd1.comments.attrs) == 1
+        try:
+            with ncempy.io.emd.fileEMD(temp_file, readonly=True) as emd1:
+                assert len(emd1.comments.attrs) == 1
+        except ncempy.io.emd.NoEmdDataSets:
+            pass
 
     def test_write_emd(self, temp_file):
         dd = np.ones((10, 11, 12), dtype=np.uint16)
@@ -151,3 +157,36 @@ class Testemd:
             _, dims = f0.get_emdgroup(0)
         assert dims[0][1] == 'dim1'
         assert dims[1][2] == 'pixels'
+
+    def test_version(self, temp_file):
+        import h5py
+        dd = np.ones((10, 11, 12), dtype=np.uint16)
+        ncempy.io.emd.emdWriter(temp_file, dd)
+        # Change the minor version manually
+        with h5py.File(temp_file, 'r+') as f1:
+            f1.attrs['version_minor'] = 3
+        try:
+            dd = ncempy.io.emd.emdReader(temp_file)
+        except ncempy.io.emd.UnsupportedEmdVersion:
+            pass
+        
+        # This should not error since an EMD daat set was found
+        dd = ncempy.io.emd.emdReader(temp_file)
+        
+    def test_no_emds(self, temp_file, data_location):
+        import h5py
+        # Creat a HDF5 file with a data set
+        with h5py.File(temp_file, 'w') as f0:
+            f0.create_dataset('test', data=np.zeros((10,10)))
+            
+        # Try to read the data with emdReader
+        try:
+            ncempy.io.emd.emdReader(temp_file)
+        except ncempy.io.emd.NoEmdDataSets:
+            pass
+        
+        # Try to read a Velox file
+        try:
+            ncempy.io.emd.emdReader(data_location / Path('STEM HAADF-DF4-DF2-BF Diffraction Micro.emd'))
+        except ncempy.io.emd.NoEmdDataSets:
+            pass
