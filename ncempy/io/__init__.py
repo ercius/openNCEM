@@ -51,7 +51,7 @@ def read(filename, dsetNum=0):
             out = emdVelox.emdVeloxReader(filename, dsetNum)
     elif suffix in ('.mrc', '.rec', '.st', '.ali'):
         out = mrc.mrcReader(filename)
-    elif suffix in ('smv', 'img'):
+    elif suffix in ('.smv', '.img'):
         out = smv.smvReader(filename)
     else:
         print('File suffix {} is not recognized.'.format(suffix))
