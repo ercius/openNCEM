@@ -70,8 +70,9 @@ class Testsmv:
             assert vals[1] == ord('\r')
             assert vals[2] == ord('\n')
     
-    def test_smvReader(self, temp_file):
+    def test_smvReader(self, data_location):
         file_path = data_location / Path('biotin_smv.img')
         dd = ncempy.io.smv.smvReader(file_path)
         assert 'data' in dd
         assert dd['data'].shape[0] == 2048
+

@@ -260,6 +260,11 @@ def smvReader(file_name, verbose=False):
     -------
         out : dict
             A dictionary containing the data and interesting metadata.
+    
+    Note
+    ----
+    The returned dictionary has an entry called `pixelSize`. This is the calibrated distance
+    in angstroms. It is not the physical size of a detector pixel. 
 
     Example
     -------
@@ -276,11 +281,10 @@ def smvReader(file_name, verbose=False):
         im1 = f1.getDataset()  # read in the dataset
 
         # Calculate the pixel size in inverse angstroms according to the geometry in the header
-        alpha = f1.header_info['PIXEL_SIZE'] / f1.header_info['DISTANCE'] # angle across 1 pixel
+        alpha = (f1.heaer_info['BIN'] * f1.header_info['PIXEL_SIZE'] / f1.header_info['DISTANCE'] # angle across 1 pixel
         dp_pixel_distance = alpha / f1.header_info['WAVELENGTH'] * 1e-10 # divide by wavelength to get distance in Angstroms
         pixelSize = (dp_pixel_distance, dp_pixel_distance)
-        f1.dataOut = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': f1.file_name, 
+        extra_metadata = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': f1.file_name, 
                         'BIN':f1.header_info['BIN']}
-        print('Warning: pixelSize does not take binning into account.')
-    
-    return im1  # return the data and metadata as a dictionary
+    im1.update(extra_metadata)
+    return im1
