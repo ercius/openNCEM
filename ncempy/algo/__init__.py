@@ -151,7 +151,7 @@ def image_correlate(image, reference, real_filter=1, k_filter=1, shift_func='shi
 
     if shift_func == 'shift':
         # shift image using ndimage.shift
-        output = ndimage.interpolation.shift(image, shifts, order=0)
+        output = ndimage.shift(image, shifts, order=0)
     elif shift_func == 'roll':
         # shift image using roll to be reversible
         output = np.roll(image, shifts[0], axis=0)
