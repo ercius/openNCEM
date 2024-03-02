@@ -200,9 +200,9 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
         calibrations of detector distances and beam center. Default is 1.
     newline : str (optional)
         Allow the user to specify the newline character. For data written on Windows computers
-        some microED processing programs in Linux are not able to load SMV files with Windows 
+        some processing programs in Linux are not able to load SMV files with Windows 
         carriage return and newline characters. Use '\n' on Windows machines to enforce Linux
-        line endings. THe defauly None will use the system default.
+        line endings. The default `None` will use the system default.
     """
     if dp.dtype != np.uint16:
         raise TypeError("Only uint16 data type is supported.")
