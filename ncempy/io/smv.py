@@ -281,7 +281,8 @@ def smvReader(file_name, verbose=False):
         im1 = f1.getDataset()  # read in the dataset
 
         # Calculate the pixel size in inverse angstroms according to the geometry in the header
-        alpha = (f1.heaer_info['BIN'] * f1.header_info['PIXEL_SIZE']) / f1.header_info['DISTANCE'] # angle across 1 pixel
+        BIN = [int(ii) for ii in f1.header_info['BIN'].split('x')]
+        alpha = (BIN[0] * f1.header_info['PIXEL_SIZE']) / f1.header_info['DISTANCE'] # angle across 1 pixel
         dp_pixel_distance = alpha / f1.header_info['WAVELENGTH'] * 1e-10 # divide by wavelength to get distance in Angstroms
         pixelSize = (dp_pixel_distance, dp_pixel_distance)
         extra_metadata = {'pixelSize': pixelSize, 'pixelUnit':'A', 'filename': f1.file_name, 
