@@ -28,7 +28,7 @@ The **settings** dict used for the evaluation has the following entries:
 
 import copy
 import numpy as np
-import scipy.ndimage.filters
+import scipy.ndimage
 import scipy.interpolate
 
 import ncempy.algo.math
@@ -214,8 +214,8 @@ def calc_radialprofile(img, rs, rMax, dr, rsigma, mask=None):
     signal = np.histogram(rs[sel], rBins, weights=img[sel])
     count = np.histogram(rs[sel], rBins, weights=np.ones(img[sel].shape))
 
-    signal_sm = scipy.ndimage.filters.gaussian_filter1d(signal[0], rsigma / dr)
-    count_sm = scipy.ndimage.filters.gaussian_filter1d(count[0], rsigma / dr)
+    signal_sm = scipy.ndimage.gaussian_filter1d(signal[0], rsigma / dr)
+    count_sm = scipy.ndimage.gaussian_filter1d(count[0], rsigma / dr)
 
     # masked regions lead to 0 in count_sm, divide produces nans, just ignore the warning    
     old_err_state = np.seterr(divide='ignore', invalid='ignore')
