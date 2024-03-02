@@ -3,7 +3,7 @@ Module to find local maxima in an image.
 """
 
 import numpy as np
-import scipy.ndimage.filters
+import scipy.ndimage
 
 
 def local_max(img, r, thresh):
@@ -40,8 +40,8 @@ def local_max(img, r, thresh):
     kernel = x**2 + y**2 <= r**2
     
     # calculate max and min images
-    img_dil = scipy.ndimage.filters.maximum_filter(img, footprint=kernel)
-    img_ero = scipy.ndimage.filters.minimum_filter(img, footprint=kernel)
+    img_dil = scipy.ndimage.maximum_filter(img, footprint=kernel)
+    img_ero = scipy.ndimage.minimum_filter(img, footprint=kernel)
     
     # get selection of local maxima
     sel = (img == img_dil)*(img-img_ero > thresh)
