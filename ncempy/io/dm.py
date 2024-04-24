@@ -1246,7 +1246,7 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
         if sh == 1:
             coords.append(0)
         else:
-            pixel_origin = np.abs(round(pixel_origin * pixel_size, ndigits=4))  # Multiply by pixelSize to get the correct origin
+            pixel_origin = round(-1*pixel_origin * pixel_size, ndigits=4)  # Multiply by pixelSize to get the correct origin
             eLoss = np.round(np.linspace(0, pixel_size * (sh - 1), sh) + pixel_origin, decimals=4)
             coords.append(eLoss)
     im1['coords'] = coords
