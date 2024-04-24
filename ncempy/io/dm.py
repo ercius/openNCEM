@@ -1255,6 +1255,3 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     del im1['pixelOrigin']
 
     return im1  # return the dataset and metadata as a dictionary
-
-if __name__ == '__main__':
-    print('hi')
