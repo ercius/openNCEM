@@ -1016,7 +1016,7 @@ def read_emi(filename):
 
 
 def _parseEntry_emi(value):
-    """Auxiliary function to parse string entry to int, float or np.string_().
+    """Auxiliary function to parse string entry to int, float or str.
 
     Parameters
     ----------
@@ -1039,7 +1039,7 @@ def _parseEntry_emi(value):
             p = float(value)
         except ValueError:
             # if neither int nor float, stay with string
-            p = np.string_(str(value))
+            p = str(value)
 
     return p
 
