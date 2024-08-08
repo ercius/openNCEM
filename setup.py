@@ -75,6 +75,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
+
     install_requires=['numpy>=2', 'scipy', 'matplotlib', 'h5py>=3'],
 
     # List additional groups of dependencies here (e.g. development
@@ -82,7 +83,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'edstomo': ['glob2', 'genfire', 'hyperspy', 'scikit-image', 'scipy', 'matplotlib', 'ipyvolume']
+        'edstomo': ['glob2', 'genfire', 'hyperspy', 'scikit-image', 'ipyvolume']
     },
 
     # If there are data files included in your packages that need to be
