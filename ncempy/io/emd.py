@@ -400,8 +400,8 @@ class fileEMD:
 
         try:
             dset = parent.create_dataset(label, data=dim[0])
-            dset.attrs['name'] = np.string_(dim[1])
-            dset.attrs['units'] = np.string_(dim[2])
+            dset.attrs['name'] = dim[1]
+            dset.attrs['units'] = dim[2]
         except:
             raise RuntimeError('Error during writing dim dataset')
 
@@ -522,11 +522,11 @@ class fileEMD:
         # write comment
         if timestamp in self.comments.attrs:
             # append to existing
-            self.comments.attrs[timestamp] += np.string_('\n' + msg)
+            self.comments.attrs[timestamp] += '\n' + msg
 
         else:
             # create new entry
-            self.comments.attrs[timestamp] = np.string_(msg)
+            self.comments.attrs[timestamp] = msg
         
 
 def defaultDims(data, pixel_size=None, pixel_unit=None):
