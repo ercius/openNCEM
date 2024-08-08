@@ -81,7 +81,7 @@ def get_settings( parent ):
     except:
         raise TypeError('Something wrong with the input.')
 
-    if not parent.attrs['type'] == np.string_(cur_set_vers):
+    if not parent.attrs['type'] == cur_set_vers:
         print('Don\'t  know the format of these settings.')
         return None
     
@@ -102,11 +102,11 @@ def get_settings( parent ):
         in_funcs = parent.attrs['fit_funcs'][0]
     else:
         in_funcs = parent.attrs['fit_funcs']
-    in_funcs = in_funcs.split(b',')
+    in_funcs = in_funcs.split(',')
         
     out_funcs = []
     for i in range(len(in_funcs)):
-        out_funcs.append(in_funcs[i].decode('utf-8').strip())
+        out_funcs.append(in_funcs[i].strip())
     settings['fit_funcs'] = tuple(out_funcs)
 
     if 'plt_imgminmax' in parent.attrs:
@@ -175,7 +175,7 @@ def put_settings( parent, settings ):
         
         
     # set version information    
-    grp_set.attrs['type'] = np.string_(cur_set_vers)
+    grp_set.attrs['type'] = cur_set_vers
     
     # hardcoding the written settings to keep control
     grp_set.attrs['lmax_r'] = settings['lmax_r']
@@ -192,7 +192,7 @@ def put_settings( parent, settings ):
     fit_funcs = []
     for i in range(len(settings['fit_funcs'])):
         fit_funcs.append(settings['fit_funcs'][i])
-    grp_set.attrs['fit_funcs'] = np.string_(', '.join(fit_funcs))
+    grp_set.attrs['fit_funcs'] = ', '.join(fit_funcs)
     
     if not settings['plt_imgminmax'] is None:
         grp_set.attrs['plt_imgminmax'] = settings['plt_imgminmax']
@@ -240,11 +240,11 @@ def put_sglgroup(parent, label, data_grp):
 
     # create the evaluation group
     grp = parent.create_group(label)
-    grp.attrs['type'] = np.string_(cur_eva_vers)
+    grp.attrs['type'] = cur_eva_vers
     
     # put a link to the data
-    grp.attrs['filename'] = np.string_(data_grp.file.filename)
-    grp.attrs['internal_path'] = np.string_(data_grp.name)
+    grp.attrs['filename'] = data_grp.file.filename
+    grp.attrs['internal_path'] = data_grp.name
     #grp['emdgroup'] = h5py.ExternalLink(data_grp.file.filename, data_grp.name)    
     
     return grp
@@ -270,7 +270,7 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
 
     try:
         assert(isinstance(group, h5py._hl.group.Group))
-        assert( group.attrs['type'] == np.string_(cur_eva_vers) )
+        assert( group.attrs['type'] == cur_eva_vers)
         
         assert(isinstance(outfile, ncempy.io.emd.fileEMD))
     except:
@@ -281,9 +281,9 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
 
     # get the emdgroup
     if verbose:
-        print('.. getting data from {}:{}'.format(group.attrs['filename'].decode('utf-8'), group.attrs['internal_path'].decode('utf-8')))
-    readfile = ncempy.io.emd.fileEMD( group.attrs['filename'].decode('utf-8'), readonly=True )
-    data, dims = readfile.get_emdgroup(readfile.file_hdl[group.attrs['internal_path'].decode('utf-8')])
+        print('.. getting data from {}:{}'.format(group.attrs['filename'], group.attrs['internal_path']))
+    readfile = ncempy.io.emd.fileEMD( group.attrs['filename'], readonly=True )
+    data, dims = readfile.get_emdgroup(readfile.file_hdl[group.attrs['internal_path']])
     
     # find the settings moving upwards in hierarchy
     if verbose:
@@ -292,7 +292,7 @@ def run_sglgroup(group, outfile, overwrite=False, verbose=False, showplots=False
         #print('scanning group {}'.format(grp))
         if 'settings_ringdiffraction' in grp:
             stt = grp['settings_ringdiffraction']
-            if stt.attrs['type'] == np.string_(cur_set_vers):
+            if stt.attrs['type'] == cur_set_vers:
                 return stt
         else:
             if not grp == grp.file:
@@ -394,7 +394,7 @@ def run_all(parent, outfile, overwrite=False, verbose=False, showplots=False):
             if grp.get(item, getclass=True) == h5py._hl.group.Group:
                 item = grp.get(item)
                 if 'type' in item.attrs:
-                    if item.attrs['type'] == np.string_(cur_eva_vers):
+                    if item.attrs['type'] == cur_eva_vers:
                         todo.append(item)
                         if verbose:
                             print('Found evaluation group at "{}".'.format(item.name) )
