@@ -62,7 +62,7 @@ class Testsmv:
         # Write out a temporary SMV file with Windows line endings
         ncempy.io.smv.smvWriter(temp_file,
                                 np.ones((10, 11), dtype=np.uint16),
-                               newline='\r\n')
+                                newline='\r\n')
 
         assert temp_file.exists() is True
         with open(temp_file,'rb') as f0:
@@ -76,3 +76,11 @@ class Testsmv:
         assert 'data' in dd
         assert dd['data'].shape[0] == 2048
 
+    def test_custom_header(self, temp_file):
+        # Write out a temporary SMV file with custom header info
+        custom_header = {'4DCAMERA_scan':10, '4DCAMERA_id':101}
+        ncempy.io.smv.smvWriter(temp_file,
+                                np.ones((10, 11), dtype=np.uint16),
+                                custom_header=custom_header)
+        assert temp_file.exists() is True
+        d = ncempy.io.smv.smvReader(temp_file)

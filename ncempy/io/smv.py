@@ -176,7 +176,7 @@ class fileSMV:
         return data_out
     
 def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, 
-              beam_center=None, binned_by=1, newline=None, , custom_header=None):
+              beam_center=None, binned_by=1, newline=None, custom_header=None):
     """ Write out data as a SMV (.img) formatted file
     Header is 512 bytes of zeros and then filled with ASCII.
     
@@ -252,8 +252,7 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01,
         f0.write("}\n")
 
         if f0.tell() > 511:
-            raise AssertionError(f"Header must be less than 512 bytes.\n
-                                   Header size is {f0.tell()} bytes.")
+            raise AssertionError(f"Header must be less than 512 bytes.\n Header size is {f0.tell()} bytes.")
             
     # Append the binary image data at the end of the header
     with open(out_path, 'rb+') as f0:
