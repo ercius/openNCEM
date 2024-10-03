@@ -84,3 +84,6 @@ class Testsmv:
                                 custom_header=custom_header)
         assert temp_file.exists() is True
         d = ncempy.io.smv.smvReader(temp_file)
+        with ncempy.io.smv.fileSMV(temp_file) as f0:
+            f0.readHeader()
+            assert f0.custom_info['4DCAMERA_scan'] == 10

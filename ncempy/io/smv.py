@@ -38,7 +38,9 @@ class fileSMV:
     num_header_bytes : 
         The number of bytes in the header. Usually 512.
     header_info : dict
-        A dictionary containing the header meta data.
+        A dictionary containing typical header meta data. See _expected_keys for a list.
+    custom_info : dict
+        A dictionary containing extra header meta data. All meta data not in _expected_keys.
 
     camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1
     """
@@ -60,9 +62,10 @@ class fileSMV:
         self._expected_keys = ('HEADER_BYTES', 'DIM', 'BYTE_ORDER', 'TYPE', 'SIZE1', 'SIZE2', 'PIXEL_SIZE', 
                          'WAVELENGTH', 'DISTANCE', 'PHI', 'BEAM_CENTER_X', 'BEAM_CENTER_Y', 'BIN', 
                          'DATE', 'DETECTOR_SN', 'OSC_RANGE', 'OSC_START', 'IMAGE_PEDESTAL', 'TIME', 
-                         'TWOTHETA')
+                         'TWOTHETA') # typical meta data in the header
         self._data_types = {'unsigned_short': np.uint16} # convert SMV types with numpy dtypes
-        self.header_info = {}
+        self.header_info = {} # expected header key/value pairs
+        self.custom_info = {} # custom header key/value pairs
         self.num_header_bytes = None
         self.dataType = None
         self.dataSize = [0, 0]
@@ -133,7 +136,7 @@ class fileSMV:
             return False
     
     def readHeader(self):
-        """Read the header information and conver to numbers or strings."""
+        """Read the header information and convert to numbers or strings."""
         
         self.fid.seek(0, 0)
         head = self.fid.read(self.num_header_bytes).decode('UTF-8').splitlines()
@@ -147,9 +150,18 @@ class fileSMV:
                         try:
                             self.header_info[key] = int(val)
                         except:
-                            pass # it is a float
+                            pass # it is a string
                     except:
                         self.header_info[key] = val # not a number
+                else:
+                    try:
+                        self.custom_info[key] = float(val)
+                        try:
+                            self.custom_info[key] = int(val)
+                        except:
+                            pass # it is a string
+                    except:
+                        self.custom_info[key] = val # not a number
     
     def parseHeader(self):
         """Parse the header dictionary for relelvant information to read the data in the file."""
