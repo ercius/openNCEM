@@ -38,7 +38,9 @@ class fileSMV:
     num_header_bytes : 
         The number of bytes in the header. Usually 512.
     header_info : dict
-        A dictionary containing the header meta data.
+        A dictionary containing typical header meta data. See _expected_keys for a list.
+    custom_info : dict
+        A dictionary containing extra header meta data. All meta data not in _expected_keys.
 
     camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1
     """
@@ -60,9 +62,10 @@ class fileSMV:
         self._expected_keys = ('HEADER_BYTES', 'DIM', 'BYTE_ORDER', 'TYPE', 'SIZE1', 'SIZE2', 'PIXEL_SIZE', 
                          'WAVELENGTH', 'DISTANCE', 'PHI', 'BEAM_CENTER_X', 'BEAM_CENTER_Y', 'BIN', 
                          'DATE', 'DETECTOR_SN', 'OSC_RANGE', 'OSC_START', 'IMAGE_PEDESTAL', 'TIME', 
-                         'TWOTHETA')
+                         'TWOTHETA') # typical meta data in the header
         self._data_types = {'unsigned_short': np.uint16} # convert SMV types with numpy dtypes
-        self.header_info = {}
+        self.header_info = {} # expected header key/value pairs
+        self.custom_info = {} # custom header key/value pairs
         self.num_header_bytes = None
         self.dataType = None
         self.dataSize = [0, 0]
@@ -133,7 +136,7 @@ class fileSMV:
             return False
     
     def readHeader(self):
-        """Read the header information and conver to numbers or strings."""
+        """Read the header information and convert to numbers or strings."""
         
         self.fid.seek(0, 0)
         head = self.fid.read(self.num_header_bytes).decode('UTF-8').splitlines()
@@ -147,9 +150,18 @@ class fileSMV:
                         try:
                             self.header_info[key] = int(val)
                         except:
-                            pass # it is a float
+                            pass # it is a string
                     except:
                         self.header_info[key] = val # not a number
+                else:
+                    try:
+                        self.custom_info[key] = float(val)
+                        try:
+                            self.custom_info[key] = int(val)
+                        except:
+                            pass # it is a string
+                    except:
+                        self.custom_info[key] = val # not a number
     
     def parseHeader(self):
         """Parse the header dictionary for relelvant information to read the data in the file."""
@@ -175,7 +187,8 @@ class fileSMV:
         data_out['data'] = data
         return data_out
     
-def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, beam_center=None, binned_by=1, newline=None):
+def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, 
+              beam_center=None, binned_by=1, newline=None, custom_header=None):
     """ Write out data as a SMV (.img) formatted file
     Header is 512 bytes of zeros and then filled with ASCII.
     
@@ -184,6 +197,7 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
     - only uint16 is supported
     - ony 2D data is supported
     - some other meta data (PHI, DATE, etc.) is populated with hard coded values
+    - Header size is hard coded to 512 bytes
     
     Parameters
     ----------
@@ -203,6 +217,10 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
         some processing programs in Linux are not able to load SMV files with Windows 
         carriage return and newline characters. Use '\n' on Windows machines to enforce Linux
         line endings. The default `None` will use the system default.
+    custom_header : dict
+        This allows the user to input custom header lines using a dictionary. Each key/value
+        pair is saved as `KEY = value` in the header. The users is not allowed to create a 
+        header larger than 512 bytes. An AssertionError is raised if the header is too large.
     """
     if dp.dtype != np.uint16:
         raise TypeError("Only uint16 data type is supported.")
@@ -240,7 +258,14 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, be
         f0.write("IMAGE_PEDESTAL=0;\n")
         f0.write("TIME=1.0;\n")
         f0.write("TWOTHETA=0;\n")
+        if isinstance(custom_header, dict):
+            for k, v in custom_header.items():
+                f0.write(f"{k}={v};\n")
         f0.write("}\n")
+
+        if f0.tell() > 511:
+            raise AssertionError(f"Header must be less than 512 bytes.\n Header size is {f0.tell()} bytes.")
+            
     # Append the binary image data at the end of the header
     with open(out_path, 'rb+') as f0:
         f0.seek(512, 0)
