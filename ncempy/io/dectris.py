@@ -10,8 +10,8 @@ class fileDECTRIS:
         raw_shape : list
             The shape of the raw data. This is three-dimensional: [num_frames, frameY, frameX].
         data_shape : list
-            The four-dimensional shape of the dataset. It is always assumed that the 
-            num_frames**0.5 = num_frames (i.e. region of interest is square).
+            The four-dimensional shape of the dataset. By default, the 
+            scanned region is square.
         file_hdl : h5py.File
             The h5py file handle which provides direct access to the underlying hdf5 file structure.
         data_type : numpy.dtype
@@ -94,14 +94,16 @@ class fileDECTRIS:
         self.__del__()
         return None
 
-    def get_dataset(self, remove_bad_pixels=False):
+    def get_dataset(self, remove_bad_pixels=False, assume_shape=None:
         """ Read the data from the HDF5 files
 
         Parameters
         ----------
         remove_bad_pixels : bool, default False
             If True, remove_bad_pixels function is called after the data is loaded.
-        
+        assume_shape : tuple, optional
+            If this is set, then this tuple is used as the scanning shape overriding 
+            the assumption of a square real space scanning grid
         """
         # Pre allocate space
         data = np.zeros(self.raw_shape, dtype=self.data_dtype)
@@ -111,11 +113,15 @@ class fileDECTRIS:
             data[ii:ii+v.shape[0]] = v[:]
             ii += v.shape[0]
 
-        # Reshape assuming square
-        shape_square = int((data.shape[0])**0.5)
-        assert data.shape[0] == shape_square**2
-        self.data_shape = (shape_square, shape_square, 
-                           data.shape[1], data.shape[2])
+        if assume_shape:
+            self.data.shape = (assume_shape[0], assume_shape[1],
+                               data.shape[1], data.shape[2])
+        else:
+            # Reshape assuming square
+            shape_square = int((data.shape[0])**0.5)
+            assert data.shape[0] == shape_square**2
+            self.data_shape = (shape_square, shape_square,
+                               data.shape[1], data.shape[2])
         data = data.reshape(data_shape)
         if remove_bad_pixels:
             self.remove_bad_pixels()
