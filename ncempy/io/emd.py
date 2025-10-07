@@ -527,7 +527,38 @@ class fileEMD:
         else:
             # create new entry
             self.comments.attrs[timestamp] = msg
+
+    def getMetadata(self, group):
+        """Get the useful metdata (experimental information) available in the file. These
+        are the attrs of the user, microscope, and sample groups. The metdata is returned
+        as a dictionary. 
         
+        Parameters
+        ----------
+        group: h5py._hl.group.Group or int
+            Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
+            is loaded
+
+        Returns
+        -------
+        : dict
+            A dictionary of meta data keys and values.
+        """
+        meta_data = {}
+        try:
+            meta_data.update(self.user.attrs)
+        except AttributeError:
+            pass
+        try:
+            meta_data.update(self.microscope.attrs)
+        except AttributeError:
+            pass
+        try:
+            meta_data.update(self.sample.attrs)
+        except AttributeError:
+            pass
+
+        return meta_data
 
 def defaultDims(data, pixel_size=None, pixel_unit=None):
     """ A helper function that can generate a properly setup dim tuple
