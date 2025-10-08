@@ -193,16 +193,15 @@ class fileEMDVelox:
 
         Parameters
         ----------
-            group : h5py.Group or int
-                The h5py group to load the metadata from which is easily retrived from the list_data attribute.
-                If input is an int then the
-                group corresponding to list_data attribute is used. The string metadata is loaded
-                and parsed by the json module into a dictionary.
+        group : h5py.Group or int
+            The h5py group to load the metadata from which is easily retrived from the list_data attribute.
+            If input is an int then the group corresponding to list_data attribute is used. The string 
+            metadata is loaded and parsed by the json module into a dictionary.
 
         Returns
         -------
-            md : dict
-                The JSON information in the file returned as a python dictionary.
+        : dict
+            The JSON information in the file returned as a python dictionary.
 
         """
         try:
@@ -244,8 +243,37 @@ class fileEMDVelox:
             md['dwellTime'] = 0
 
         return md
+    
+    def getMetadata(self, group):
+        """ Reads important metadata from Velox EMD files.
 
-
+        Parameters
+        ----------
+        group : h5py.Group or int
+            The h5py group to load the metadata from which is easily retrived from the list_data attribute.
+            If input is an int then the group corresponding to list_data attribute is used. The string 
+            metadata is loaded and parsed by the json module into a dictionary.
+        """
+        self.parseMetaData(group)
+        useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
+        meta_data = {}
+        for kk in self.metaDataJSON.keys():
+            if kk in useful_keys:
+               meta_data.update(self.metaDataJSON[kk])
+        
+        for kk, vv in self.metaDataJSON['CustomProperties'].items():
+            try:
+                if isinstance(vv, dict):
+                    if vv['type'] == 'string':
+                        meta_data[kk] = str(vv['value'])
+                    elif vv['type'] == 'double':
+                        meta_data[kk] = float(vv['value'])
+                    else:
+                        meta_data[kk] = vv['value']
+            except:
+                pass
+        return meta_data
+        
 def emdVeloxReader(filename, dsetNum=0):
     """ A simple helper function to read in the data and metadata in a 
     structured format similar to the other ncempy readers.
