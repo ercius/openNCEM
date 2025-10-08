@@ -148,8 +148,15 @@ class fileEMDVelox:
             raise
         
         self.list_emds = self.list_data  # make a copy to match the Berkeley EMD attribute
-    
+
     def get_dataset(self, group, memmap=False):
+        """ Get the data from a group and the associated metadata.
+
+        This is a convenience function and calls getDataset
+        """
+        return self.getDataset(group, memmap=memmap)
+    
+    def getDataset(self, group, memmap=False):
         """ Get the data from a group and the associated metadata.
 
         Parameters
@@ -187,9 +194,21 @@ class fileEMDVelox:
         return data, metaData
     
     def parseMetaData(self, group):
-        """ Parse metadata in a data group. Determines the pixelSize and
-        detector name. The EMDVelox data sets have extensive metadata
-        stored as a JSON type string.
+        """ Convenience function that calls _parseMetadata. 
+        This function should not be directly used. Please use
+        getMetadata instead."""
+        return self._parseMetadata(group)
+    
+    def _parseMetadata(self, group):
+        """ Parse metadata in a data group. The EMDVelox data sets have
+        extensive metadata stored as a JSON type string. This function 
+        converts it to a dictionary. All converted metadata is stored in
+        the metadataJSON parameter.
+        
+        For historical reasons this also returns a dicitonary with some
+        useful metadata.
+
+        For better metadata output please use the getMetadata function.
 
         Parameters
         ----------
@@ -254,7 +273,7 @@ class fileEMDVelox:
             If input is an int then the group corresponding to list_data attribute is used. The string 
             metadata is loaded and parsed by the json module into a dictionary.
         """
-        self.parseMetaData(group)
+        self._parseMetadata(group)
         useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
         meta_data = {}
         for kk in self.metaDataJSON.keys():
