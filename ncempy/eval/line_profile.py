@@ -63,11 +63,11 @@ def line_profile(im0, p0, p1, num_points, width=0, step=0.5):
 
     Example
     --------
-        >> line, (xx, yy) = line_profile(image,(0,100),(175,100),50,step=0.5,width=5)
-        >> fg, ax = plt.subplots(1,2)
-        >> ax[0].plot(line,'*-')
+        >> line, (xx, yy) = line_profile(image, (0, 100), (175, 100), 50, step=0.5, width=5)
+        >> fg, ax = plt.subplots(1, 2)
+        >> ax[0].plot(line, '*-')
         >> ax[1].imshow(image)
-        >> ax[1].scatter(xx, yy)
+        >> ax[1].scatter(yy, xx)
     """
 
     im = im0.astype(np.float32)

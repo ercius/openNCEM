@@ -11,6 +11,25 @@ from matplotlib import colors
 import ncempy.algo
 from ncempy.algo.distortion import rad_dis
 
+def plot(dd):
+    """Easy plot of data structure returned by ncempy.read(). This only works
+    for 2D images currently. Calls im_calibrated with proper inputs.
+    
+    Parameters
+    ----------
+    dd : dict
+        The dictionary returned by ncempy.read()
+        
+    Returns
+    -------
+    : matplotlb.pyplot.Figure
+        The handle to the created Figure
+    """
+    
+    assert dd['data'].ndim == 2
+    
+    return im_calibrated(dd['data'], dd['pixelSize'], units=dd['pixelUnit'])
+
 
 def imsd(im, vmin=-2, vmax=2, **kwargs):
     """Show an array as an image with intensities compared to the standard deviation of the data. Other
@@ -34,10 +53,10 @@ def imsd(im, vmin=-2, vmax=2, **kwargs):
     im2 = im - im.mean()
     im3 = im2 / np.std(im2)
     imax = ax.imshow(im3, vmin=vmin, vmax=vmax, **kwargs)
-    return imax
+    return fg
 
 
-def im_calibrated(im, d):
+def im_calibrated(im, d, units=None, **kwargs):
     """ Plot an image calibrated using the pixel size d. The centers of the pixels will be the
     the center of each measurement. So, if you plot positions in real coordinates the points
     will be plotted in the center of the pixel.
@@ -46,9 +65,11 @@ def im_calibrated(im, d):
     ---------
     im : np.ndarray
         The image to show using imshow
-    d : float
-        The pixel size in both directions. The pixel size must be isotropic.
-
+    d : 2-tuple
+        The pixel size in both directions as a 2-tuple.
+    unit : 2-tuple
+        The name of the unit as a string for each pixel along each dimension. (nm or nanometer)
+        
     Returns
     -------
     : pyplot.figure
@@ -57,14 +78,20 @@ def im_calibrated(im, d):
     # The default extent is calculated like this:
     ext = [-0.5, im.shape[1] - 0.5, im.shape[0] - 0.5, -0.5]
     # Calibrate the extent
-    ext = [ii * d for ii in ext]
+    ext[0] = ext[0] * d[1]
+    ext[1] = ext[1] * d[1]
+    ext[2] = ext[2] * d[0]
+    ext[3] = ext[3] * d[0]
 
     fg, ax = plt.subplots(1, 1)
-    ax.imshow(im, extent=ext)
+    ax.imshow(im, extent=ext, **kwargs)
+    
+    if units:
+        ax.set(xlabel=f'X ({units[1]})', ylabel=f'Y ({units[0]})')
     return fg
 
 
-def imfft(im, d=1.0, ax=None):
+def imfft(im, d=1.0, ax=None, **kwargs):
     """ Show a 2D FFT as a diffractogram with log scaling applied and zero frequency
     fftshifted tp the center. A new figure is created or an axis can be specified.
 
@@ -83,8 +110,8 @@ def imfft(im, d=1.0, ax=None):
         An axis to plot into.
     Returns
     -------
-    : matplotlib.image.AxesImage
-        The AxesImage that contains the image displayed.
+    : matplotlib.image.Figure
+        The Figure that contains the image displayed.
 
     Example
     -------
@@ -100,12 +127,12 @@ def imfft(im, d=1.0, ax=None):
     fftFreq1 = np.fft.fftshift(np.fft.fftfreq(im.shape[1], d))
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    imax = ax.imshow(np.fft.fftshift(np.abs(im) ** 2),
-                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
-    return imax
+    imax = ax.imshow(np.fft.fftshift(np.abs(im)),
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm(), **kwargs)
+    return imax.get_figure()
 
 
-def imrfft(im, d=1.0, ax=None):
+def imrfft(im, d=1.0, ax=None, **kwargs):
     """Show a 2D rFFT (real FFT) as a diffractogram with log scaling applied
     and fftshift-ed along axis 0. See imfft for full details.
 
@@ -119,7 +146,7 @@ def imrfft(im, d=1.0, ax=None):
         An axis to plot into.
     Returns
     -------
-    : matplotlib.image.AxesImage
+    : matplotlib.image.Figure
         The AxesImage that contains the image displayed.
     """
 
@@ -127,10 +154,10 @@ def imrfft(im, d=1.0, ax=None):
     fftFreq0 = np.fft.rfftfreq(im.shape[0], d)
     if ax is None:
         fg, ax = plt.subplots(1, 1)
-    axim = ax.imshow(np.fft.fftshift(np.abs(im) ** 2), axes=0,
-                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm())
+    axim = ax.imshow(np.fft.fftshift(np.abs(im)), axes=0,
+                     extent=(fftFreq0[0], fftFreq0[-1], fftFreq1[-1], fftFreq1[0]), norm=colors.LogNorm(), **kwargs)
 
-    return axim
+    return axim.get_figure()
 
 
 def im_and_fft(im, d=1.0, fft=None):
@@ -151,12 +178,13 @@ def im_and_fft(im, d=1.0, fft=None):
         The matplotlib.pyplot figure
     """
     fg, ax = plt.subplots(1, 2)
-    ax[0].imshow(im)
+    ax[0].imshow(im, **kwargs)
 
     if not fft:
         fft = np.fft.fft2(im)
     imfft(fft, d=d, ax=ax[1])
-
+    
+    return fg
 
 class stack_view:
     """

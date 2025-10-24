@@ -13,7 +13,7 @@ import ncempy.io.mrc
 
 class Testmrc:
     """
-    Test the DM3 io module
+    Test the MRC io module
     """
 
     @pytest.fixture
@@ -36,6 +36,12 @@ class Testmrc:
                                 (1, 2, 3))
 
         assert temp_file.exists() is True
-        fid = open(temp_file, 'rb')
-        dm0 = ncempy.io.mrc.fileMRC(fid)
-        assert hasattr(dm0, 'fid')
+        with open(temp_file, 'rb') as f0:
+            mrc0 = ncempy.io.mrc.fileMRC(f0)
+            assert hasattr(mrc0, 'fid')
+
+    # def test_metadata(self):
+    #     file_path = Path('/mnt/NAS-NCEM_Data/TitanX/KateG/KateG/Greenlee_20190413_FeFeO_KGBox4G2/tiltSeries_20190413_FeFeO_neg70to65.mrc')
+    #     with ncempy.io.mrc.fileMRC(file_path) as f0:
+    #         md = f0.getMetadata()
+    #     md['tilt_axis'])

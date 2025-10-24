@@ -471,6 +471,28 @@ class fileSER:
 
         return dataset, meta
 
+    def getMetadata(self):
+        """Retrieve meta data on experimental parmaeters and settings from
+        the file. This is global metdata for the entire set of images in 
+        the SER file. Metadata such as the pixel size needs to be retrived
+        for each image separately using getDataset.        
+        
+        """
+        meta_data = {}
+        
+        # Add extra meta data from the EMI file if it exists
+        if self._emi is not None:
+            meta_data.update(self._emi)
+
+        meta_data.update(self.head)  # some header data for the ser file
+
+        # Clean the dictionary
+        for k, v in meta_data.items():
+            if isinstance(v, bytes):
+                meta_data[k] = v.decode('UTF8')
+
+        return meta_data
+    
     def _getTag(self, index, verbose=False):
         """Retrieve tag from data file.
 
@@ -950,35 +972,10 @@ def read_emi(filename):
     # dict to store _emi stuff
     _emi = {}
 
-    # need anything readable from <ObjectInfo> to </ObjectInfo>
-    # collect = False
-    # data = b''
-    # for line in f_emi:
-    #    if b'<ObjectInfo>' in line:
-    #        collect = True
-    #    if collect:
-    #        data += line.strip()
-    #    if b'</ObjectInfo>' in line:
-    #        collect = False
-
-    # close the file
-    # f_emi.close()
-
     metaStart = emi_data.find(b'<ObjectInfo>')
     metaEnd = emi_data.find(b'</ObjectInfo>')  # need to add len('</ObjectInfo>') = 13 to encompass this final tag
 
     root = ET.fromstring(emi_data[metaStart:metaEnd + 13])
-
-    # strip of binary stuff still around
-    # data = data.decode('ascii', errors='ignore')
-    # matchObj = re.search('<ObjectInfo>(.+?)</ObjectInfo', data)
-    # try:
-    #    data = matchObj.group(1)
-    # except:
-    #    raise RuntimeError('Could not find _emi metadata in specified file.')
-
-    # parse metadata as xml
-    # root = ET.fromstring('<_emi>' + data + '</_emi>')
 
     # single items
     _emi['Uuid'] = root.findtext('Uuid')
@@ -1016,7 +1013,7 @@ def read_emi(filename):
 
 
 def _parseEntry_emi(value):
-    """Auxiliary function to parse string entry to int, float or np.string_().
+    """Auxiliary function to parse string entry to int, float or str.
 
     Parameters
     ----------
@@ -1039,7 +1036,7 @@ def _parseEntry_emi(value):
             p = float(value)
         except ValueError:
             # if neither int nor float, stay with string
-            p = np.string_(str(value))
+            p = str(value)
 
     return p
 

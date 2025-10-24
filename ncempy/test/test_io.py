@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import ncempy.io as nio
+import ncempy
 
 
 @pytest.fixture
@@ -23,6 +24,12 @@ def temp_file():
     tt = tempfile.NamedTemporaryFile(mode='wb')
     tt.close() # need to close the file to use it later
     return Path(tt.name)
+
+
+def test_import(data_location):
+    emd_path = data_location / Path('Acquisition_18.emd')
+    dd = ncempy.read(emd_path)
+    assert 'data' in dd
 
 
 def test_emd_berkeley(data_location):
@@ -79,6 +86,17 @@ def test_mrc(temp_file):
         dd = mrc0.getDataset()
         assert dd['data'].shape == (10, 11, 12)
 
+def test_smv(temp_file):
+
+    # Write out a temporary mrc file
+    nio.smv.smvWriter(temp_file,
+                      np.ones((10, 11), dtype=np.uint16))
+
+    assert temp_file.exists() is True
+
+    with nio.smv.fileSMV(temp_file) as smv0:
+        dd = smv0.getDataset()
+        assert dd['data'].shape == (10, 11)
 
 def test_read(data_location):
     """Test the general reader function"""

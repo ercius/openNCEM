@@ -37,6 +37,9 @@ The package is given the following structure:
 * io
     Module to do file IO for various file formats. While the EMD file format is used internally, other file formats commonly used in electron microscopy are read in using importers.
 
+* viz
+    Module to assist with displaying common types of TEM data like images and diffraction patterns.
+
 * data
     Example datasets which can be used to test and demonstrate the code base.
 

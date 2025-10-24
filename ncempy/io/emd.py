@@ -23,6 +23,16 @@ import numpy as np
 import h5py
 
 
+class NoEmdDataSets(Exception):
+    """Special exception indicating no EMD datasets are in an EMD file."""
+    pass
+
+class UnsupportedEmdVersion(Exception):
+    """Special exception indicating an unsupported EMD version."""
+    pass
+        
+
+
 class fileEMD:
     """Class to represent Berkeley EMD files.
 
@@ -123,10 +133,6 @@ class fileEMD:
             if 'version_major' in self.file_hdl.attrs and 'version_minor' in self.file_hdl.attrs:
                 # read version information
                 self.version = (self.file_hdl.attrs['version_major'], self.file_hdl.attrs['version_minor'])
-                # compare to implementation
-                if not self.version == (0, 2):
-                    print('WARNING: You are reading a version {}.{} EMD file, '
-                          'this implementation assumes version 0.2!'.format(self.version[0], self.version[1]))
             else:
                 # set version information
                 if not readonly:
@@ -170,7 +176,19 @@ class fileEMD:
 
             # find emd_data_type groups in the file
             self.list_emds = self.find_emdgroups(self.file_hdl)
-
+            
+            if len(self.list_emds) == 0 and readonly is True:
+                message = 'No Berkeley EMD data sets found in file.'
+                raise NoEmdDataSets(message)
+            
+            # compare to implementation
+            # Only raise an exception if no Berkeley EMD data sets are found and the version does not match
+            if self.version and readonly is True:
+                if (len(self.list_emds) == 0) and (self.version != (0, 2)):
+                    message = 'No Berkeley EMD data sets found. You are reading a version {}.{} EMD file, \
+                               this implementation assumes version 0.2'.format(self.version[0], self.version[1])
+                    raise UnsupportedEmdVersion(message)
+            
     def __del__(self):
         """Destructor for EMD file object.
 
@@ -249,15 +267,21 @@ class fileEMD:
             dim = group['dim{}'.format(ii + 1)]
             # save them as (vector, name, units)
 
-            if isinstance(dim.attrs['name'], np.ndarray):
-                name = dim.attrs['name'][0]
+            if 'name' in dim.attrs:
+                if isinstance(dim.attrs['name'], np.ndarray):
+                    name = dim.attrs['name'][0]
+                else:
+                    name = dim.attrs['name']
             else:
-                name = dim.attrs['name']
+                name = 'dim{}'.format(ii + 1)
 
-            if isinstance(dim.attrs['units'], np.ndarray):
-                units = dim.attrs['units'][0]
+            if 'units' in dim.attrs:
+                if isinstance(dim.attrs['units'], np.ndarray):
+                    units = dim.attrs['units'][0]
+                else:
+                    units = dim.attrs['units']
             else:
-                units = dim.attrs['units']
+                units = 'pixels'
 
             # Handle bytes objects by decoding them to strings
             # If something goes wrong, the original attribute is left as-is
@@ -376,8 +400,8 @@ class fileEMD:
 
         try:
             dset = parent.create_dataset(label, data=dim[0])
-            dset.attrs['name'] = np.string_(dim[1])
-            dset.attrs['units'] = np.string_(dim[2])
+            dset.attrs['name'] = dim[1]
+            dset.attrs['units'] = dim[2]
         except:
             raise RuntimeError('Error during writing dim dataset')
 
@@ -498,14 +522,45 @@ class fileEMD:
         # write comment
         if timestamp in self.comments.attrs:
             # append to existing
-            self.comments.attrs[timestamp] += np.string_('\n' + msg)
+            self.comments.attrs[timestamp] += '\n' + msg
 
         else:
             # create new entry
-            self.comments.attrs[timestamp] = np.string_(msg)
-        
+            self.comments.attrs[timestamp] = msg
 
-def defaultDims(data, pixel_size=None):
+    def getMetadata(self, group):
+        """Get the useful metdata (experimental information) available in the file. These
+        are the attrs of the user, microscope, and sample groups. The metdata is returned
+        as a dictionary. 
+        
+        Parameters
+        ----------
+        group: h5py._hl.group.Group or int
+            Reference to the HDF5 group to load. If int is used then the item corresponding to self.list_emds
+            is loaded
+
+        Returns
+        -------
+        : dict
+            A dictionary of meta data keys and values.
+        """
+        meta_data = {}
+        try:
+            meta_data.update(self.user.attrs)
+        except AttributeError:
+            pass
+        try:
+            meta_data.update(self.microscope.attrs)
+        except AttributeError:
+            pass
+        try:
+            meta_data.update(self.sample.attrs)
+        except AttributeError:
+            pass
+
+        return meta_data
+
+def defaultDims(data, pixel_size=None, pixel_unit=None):
     """ A helper function that can generate a properly setup dim tuple
     with default values to allow quick writing of EMD files without
     the need to create these dim vectors manually.
@@ -514,10 +569,10 @@ def defaultDims(data, pixel_size=None):
     ----------
         data : ndarray
             The data that will be written to the EMD file. This is used to get the number of dims and their shape
-
         pixel_size : tuple, optional
             A tuple of pixel sizes. Must have same length as the number of dimensions of data.
-
+        pixel_unit : tuple, optional
+            A tuple of pixel units (i.e. nm), Must have the same length as the number of dimensions of data.
     Returns
     -------
         dims: list
@@ -531,14 +586,18 @@ def defaultDims(data, pixel_size=None):
 
     if not pixel_size:
         pixel_size = (1,) * num
-
-    if len(pixel_size) != data.ndim:
-        raise ValueError('pixel_size and data dimensions must match')
+    
+    if not pixel_unit:
+        pixel_unit = [f'unit{ii+1}' for ii in range(num)]
+    
+    if len(pixel_size) != data.ndim or len(pixel_unit) != data.ndim:
+        raise ValueError('pixel_size, pixel_unit, and data dimensions must match')
 
     dims = []
     for ii in range(num):
         curDim = [np.linspace(0, data.shape[ii] - 1, data.shape[ii]) * pixel_size[ii],
-                  'dim{}'.format(ii+1), 'unit{}'.format(ii+1)]
+                  'dim{}'.format(ii+1),
+                  pixel_unit[ii]]
         dims.append(curDim)
 
     return dims
@@ -590,7 +649,7 @@ def emdReader(filename, dsetNum=0):
         return out
 
 
-def emdWriter(filename, data, pixel_size=None, overwrite=False):
+def emdWriter(filename, data, pixel_size=None, pixel_unit=None, overwrite=False):
     """ Simple method to write data to a file formatted as an EMD v0.2. The only possible metadata to write is the pixel
     size for each dimension. Use the emd.fileEMD() class for more complex operations. The file must not already exist.
 
@@ -602,18 +661,26 @@ def emdWriter(filename, data, pixel_size=None, overwrite=False):
         The data as an ndarray to write to the file.
     pixel_size : tuple
         A tuple with the same length as the number of dims in data. len(pixel_size) == data.ndim
+    pixel_unit : tuple, optional
+            A tuple of pixel units (i.e. nm), Must have the same length as the number of dimensions of data.
     overwrite : boolean
         If file exists, overwrite it.
     """
     if isinstance(filename, str):
         filename = Path(filename)
-
+    
     if pixel_size:
         try:
             assert len(pixel_size) == data.ndim
         except ValueError:
             raise ValueError('pixel_size length must match the number of dimensions of data.')
-
+    
+    if pixel_unit:
+        try:
+            assert len(pixel_unit) == data.ndim
+        except ValueError:
+            raise ValueError('pixel_unit length must match the number of dimensions of data.')
+    
     # Delete the file if it exists and overwrite is true
     if filename.exists() and overwrite:
         filename.unlink()
@@ -621,7 +688,7 @@ def emdWriter(filename, data, pixel_size=None, overwrite=False):
     if not filename.exists():
         with fileEMD(filename, readonly=False) as emd0:
             # Setup the dims for the EMD file. Pixel size is set to 1 by default for each dimension
-            dims0 = defaultDims(data, pixel_size=pixel_size)
+            dims0 = defaultDims(data, pixel_size=pixel_size, pixel_unit=pixel_unit)
             # Write the data to he emd file.
             emd0.put_emdgroup('converted', data, dims0)
     else:

@@ -12,5 +12,11 @@ Overview of contents with short description:
 | Module             | Description                                                        |
 +====================+====================================================================+
 | ring_diff          | Evaluate ring diffraction patterns.                                |
++====================+====================================================================+
+| line_profile       | Calculate line profiles along arbitrary angles in 2D images.       |
++====================+====================================================================+
+| multicorr          | Advanced correlation of images to calculate shifts.                |
++====================+====================================================================+
+| stack_align        | Alignment of stack of images                                       |
 +--------------------+--------------------------------------------------------------------+
 

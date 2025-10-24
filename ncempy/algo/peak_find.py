@@ -7,7 +7,15 @@ RealSpaceLattice01.m code.
 author: Peter Ercius, percius@lbl.gov
 """
 
-from . import gaussND
+try:
+    from . import gaussND
+except:
+    try:
+        print('peakFind: Temporary import!')
+        import gaussND
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError
+    
 
 import numpy as np
 import scipy.optimize as opt
@@ -92,7 +100,7 @@ def peakFind2D(image, threshold):
              (image > threshold * np.max(image))
 
     positions = np.array(np.where(pLarge * image)).T.copy()  # return array as [num,posXY]
-    return positions.astype(np.int)
+    return positions.astype(int)
 
 
 def peakFind3D(vol, threshold):
@@ -148,7 +156,7 @@ def peakFind3D(vol, threshold):
               & (vol > threshold * np.max(vol)))
 
     positions = np.array(np.where(pLarge * vol)).T.copy()  # return array as [num,posXYZ]
-    return positions.astype(np.int)
+    return positions.astype(int)
 
 
 def enforceMinDist(positions, intensities, minDistance):
@@ -195,7 +203,7 @@ def enforceMinDist(positions, intensities, minDistance):
 
     validPeaks = validPeaks[~np.isnan(validPeaks[:, 0]), :]
     # print("Removed %d peaks" % (positions.shape[0] - validPeaks.shape[0]))
-    return validPeaks.astype(np.int)
+    return validPeaks.astype(int)
 
 
 def peaksToVolume(peakList, volShape, gaussSigma, gaussSize, indexing='ij'):

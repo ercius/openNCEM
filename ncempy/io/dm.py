@@ -21,6 +21,7 @@ On Memory mode:
 
 from pathlib import Path
 import mmap
+import copy
 import os
 from os import stat as filestats
 from os.path import basename as os_basename
@@ -91,7 +92,7 @@ class fileDM:
                  '_endianType', 'origin', '_encodedTypeSizes',
                  '_buffer_offset', '_buffer_size', '_DM2NPDataTypes',
                  '_TagType2NPDataTypes', 'on_memory', 'verbose',
-                 '_EncodedTypeDTypes')
+                 '_EncodedTypeDTypes','metadata')
 
     def __init__(self, filename, verbose=False, on_memory=True):
         """
@@ -172,6 +173,7 @@ class fileDM:
         self.dataOffset = []
         self.dataShape = []  # 1,2,3, or 4. The total number of dimensions in a data set (like numpy.ndim)
         self.allTags = {}
+        self.metadata = {}
 
         # lists that will contain scale information (pixel size)
         self.scale = []
@@ -353,8 +355,8 @@ class fileDM:
         aa = self.fromfile(self.fid, dtype=np.dtype([('fileSize', self._specialType),
                                                      ('endianType', '>u4')]), count=1)
 
-        self.fileSize = aa['fileSize']
-        self._endianType = aa['endianType']
+        self.fileSize = copy.deepcopy(aa['fileSize'])
+        self._endianType = copy.deepcopy(aa['endianType'])
 
         if self._endianType != 1:
             # print('File is not written Little Endian (PC) format and can not be read by this program.')
@@ -384,38 +386,67 @@ class fileDM:
         else:  # this file only contains tags (such as a GTG file)
             self.thumbnail = False
 
-        ''' Determine useful meta data UNTESTED
-        self.metaData = {}
-        for kk,ii in self.allTags.items():
-            prefix1 = 'ImageList.{}.ImageTags.'.format(md.numObjects)
-            prefix2 = 'ImageList.{}.ImageData.'.format(md.numObjects)
-            pos1 = kk.find(prefix1)
-            pos2 = kk.find(prefix2)
-            if pos1 > -1:
-                sub = kk[pos1+len(prefix):]
-                self.metaData[sub] = ii
-            elif pos2 > -1:
-                sub = kk[pos2+len(prefix):]
-                self.metaData[sub] = ii
+    def getMetadata(self, index):
+        """ Get the useful metadata in the file. This parses the allTags dictionary and retrieves only the useful
+        information about hte experimental parameters. This is a (useful) subset of the information contains in the
+        allTags attribute.
+
+        Note: some DM files contain extra information called the Tecnai Microscope Info. This is added to the metadata
+        dictionary as a string.
+
+        Parameters
+        ----------
+        index : int
+            The number of the dataset to get the metadata from.
+        """
+        # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
+        # metadata indexing starts at 1 but the index keyword starts at 0
+        if self.numObjects == 1:
+            index = 1  # the first data set will have a 1 in the metadata
+        else:
+            index += 2  # the thumbnail is index = 1. The actual data will needs to start at 2.
+
+        # Check that the dataset exists.
+        try:
+            self._checkIndex(index)
+        except:
+            raise
+        
+        # Most of the useful keys. Two other keys Tecnai.Microscope Info is treated specially below
+        good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
+
+        # Determine useful meta data
+        prefix1 = '.ImageList.{}.ImageTags.'.format(index)
+        prefix2 = '.ImageList.{}.ImageData.'.format(index)
+        metadata = {}
+        for kk, ii in self.allTags.items():
+            if prefix1 in kk or prefix2 in kk:
+                kk_split = kk.split('.')
+                if kk_split[4] in good_keys:
+                    if 'Session Info' in kk:
+                        if not '.Items.' in kk:
+                            new_key = ' '.join(kk_split[-2:])
+                            metadata[new_key] = ii
+                    else:
+                        new_key = ' '.join(kk_split[4:])
+                        metadata[new_key] = ii
             
-            #Remove some unneeded keys
-            for jj in list(self.metaData):
-                if jj.find('frame sequence')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Private')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Reference Images')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Frame.Intensity')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Area.Transform')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Parameters.Objects')>-1:
-                    del self.metaData[jj]
-                elif jj.find('Device.Parameters')>-1:
-                    del self.metaData[jj]
-        return metaData
-        '''
+            # Tecnai info contains useful information but is encoded as a binary array
+            # We need to read is as binary and convert to text
+            if 'Tecnai.Microscope Info.arrayOffset' in kk:
+                try:
+                    offset = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayOffset']
+                    size = self.allTags[prefix1 + 'Tecnai.Microscope Info.arraySize']
+                    dtype = self.allTags[prefix1 + 'Tecnai.Microscope Info.arrayType']
+                    cur_offset = self.fid.tell()
+                    self.seek(self.fid, offset)
+                    string_data = self.fromfile(self.fid, count=size, dtype=np.uint16)
+                    tecnai = ''.join([chr(ii) for ii in string_data]).replace('\u2028', ';')  # replace new line with ;
+                    metadata['Tecnai Microscope Info'] = tecnai
+                except KeyError:
+                    print('Tecnai info tag parse error')
+            
+        return metadata
 
     def _readTagGroup(self):
         """Read a tag group in a DM file.
@@ -541,7 +572,11 @@ class fileDM:
         """Utility function to convert a numpy array of binary values to a python string.
 
         """
-        return ''.join([chr(item) for item in bin0])
+        try:
+            return ''.join([chr(item) for item in bin0])
+        except:
+            # Some data can not be read. This is what DM says in the tag tree in this case
+            return '(Not displayable)'
 
     def _encodedTypeSize(self, encodedType):
         """Return the number of bytes in a data type for the encodings used by DM.
@@ -1006,6 +1041,12 @@ class fileDM:
                 outputDict['pixelSize'] = self.scale[jj:jj + self.dataShape[ii]][::-1]
                 outputDict['pixelOrigin'] = self.origin[jj:jj + self.dataShape[ii]][::-1]
 
+            # Add calibrated intensity (this should be in getMetadata
+            #prefix1 = '.ImageList.{}.ImageData.Calibrations.Brightness.'.format(ii)
+            #outputDict['intensityScale'] = self.brightnessScale
+            #outputDict['intensityUnits'] = self.brightnessUnit
+            #outputDict['intensityOrigin'] = self.brightnessOrigin
+
         # Ensure the data is loaded into memory from the buffer
         if self._on_memory:
             outputDict['data'] = np.array(outputDict['data'])
@@ -1195,7 +1236,8 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
     with fileDM(filename, verbose, on_memory=on_memory) as f1:
         # Get the requested dataset
         im1 = f1.getDataset(dSetNum)
-
+        allTags = f1.allTags
+        
     # Now prepare nice coordinates (like energy loss axis for spectra)
     coords = []
     for pixel_size, pixel_origin, pixel_unit, sh in zip(im1['pixelSize'], im1['pixelOrigin'], im1['pixelUnit'],
@@ -1203,15 +1245,12 @@ def dmReader(filename, dSetNum=0, verbose=False, on_memory=True):
         if sh == 1:
             coords.append(0)
         else:
-            pixel_origin = np.abs(round(pixel_origin * pixel_size, ndigits=4))  # Multiply by pixelSize to get the correct origin
+            pixel_origin = round(-1*pixel_origin * pixel_size, ndigits=4)  # Multiply by pixelSize to get the correct origin
             eLoss = np.round(np.linspace(0, pixel_size * (sh - 1), sh) + pixel_origin, decimals=4)
             coords.append(eLoss)
     im1['coords'] = coords
-
+    
     # Remove confusing pixelOrigin. Use coords instead
     del im1['pixelOrigin']
 
     return im1  # return the dataset and metadata as a dictionary
-
-if __name__ == '__main__':
-    print('hi')

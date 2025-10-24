@@ -388,6 +388,20 @@ class fileMRC:
 
         return mm
 
+    def getMetadata(self):
+        meta_data = {}
+
+        # Save most useful metaData
+        meta_data.update({'pixelSize': self.voxelSize, 'voxelSize': self.voxelSize,
+                        'cellAngles': self.cellAngles, 'axisOrientations': self.axisOrientations})
+        if hasattr(self, 'FEIinfo'):
+            # add in the special FEIinfo if it exists
+            try:
+                meta_data.update(self.FEIinfo)
+            except TypeError:
+                pass
+        return meta_data
+    
     def _applyAxisOrientations(self, arrayIn):
         """ This is untested and unused.
 
@@ -428,16 +442,14 @@ class fileMRC:
         return Type
 
 
-def mrcReader(file_name, verbose=False):
+def mrcReader(file_name):
     """A simple function to read open a MRC, parse the header, and read the full
     data set.
 
     Parameters
     ----------
-        file_name: str
-            The name of the file to load
-        verbose : bool, optional
-            Enable printing debug messages as the header is parsed.
+        file_name : str or pathlib.Path
+            The path to the file to load.
 
     Returns
     -------
@@ -446,18 +458,19 @@ def mrcReader(file_name, verbose=False):
 
     Example
     -------
-        Simply read in all data from disk into memory. This assumes the dataset is 3 dimensional:
-        >> from ncempy.io import mrc
+        Read in all data from disk into memory. This assumes the dataset is 3 dimensional:
+        >> from ncempy.io.mrc import mrcReader
         >> import matplotlib.pyplot as plt
-        >> mrc1 = mrc.mrcReader('filename.mrc')
-        >> plt.imshow(mrc1['data'][0, :, :]) #show the first image in the data set
+        >> mrc1 = mrcReader('filename.mrc')
+        >> plt.imshow(mrc1['data'][0, :, :])  # show the first image in the data set
     """
     if isinstance(file_name, str):
         file_name = Path(file_name)
 
-    with fileMRC(file_name, verbose) as f1:  # open the file and init the class
+    with fileMRC(file_name) as f1:  # open the file and init the class
         im1 = f1.getDataset()  # read in the dataset
-
+    
+    # Add extra meta data not already in im1
     im1['filename'] = file_name.name
     im1['pixelUnit'] = 'A'
 
