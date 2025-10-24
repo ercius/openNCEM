@@ -394,7 +394,6 @@ class fileDM:
         Note: some DM files contain extra information called the Tecnai Microscope Info. This is added to the metadata
         dictionary as a string.
 
-
         Parameters
         ----------
         index : int

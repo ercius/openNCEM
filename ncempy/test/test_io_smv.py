@@ -87,3 +87,9 @@ class Testsmv:
         with ncempy.io.smv.fileSMV(temp_file) as f0:
             f0.readHeader()
             assert f0.custom_info['4DCAMERA_scan'] == 10
+
+    def test_metadata(self, data_location):
+        file_path = data_location / Path('biotin_smv.img')
+        with ncempy.io.smv.fileSMV(file_path) as f0:
+            md = f0.getMetadata()
+            assert md['SIZE1'] == 2048
