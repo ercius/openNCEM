@@ -402,8 +402,8 @@ class fileDM:
         ----------
         index : int
             The number of the dataset to get the metadata from.
-        metadata_keys : list
-            Extra keys in a list or tuply to extract from the DM tags as metadata.
+        metadata_keys : list or tuple
+            Extra keys in a list or tuple to extract from the DM tags as metadata.
 
         Returns
         -------
@@ -428,7 +428,9 @@ class fileDM:
 
         # Add extra keys in case the user wants to extract other metadata
         if metadata_keys:
+            assert isinstance(metadata_keys, (list, tuple))
             good_keys.extend(metadata_keys)
+            # print(f'extended keys = {good_keys}')
         
         # Determine useful meta data
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
@@ -905,7 +907,6 @@ class fileDM:
 
         # Change output path
         if new_folder_path_for_tags:
-            print('choosing different path')
             out_directory = Path(new_folder_path_for_tags)
         else:
             out_directory = self.file_path.parent
