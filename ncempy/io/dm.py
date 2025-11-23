@@ -430,7 +430,6 @@ class fileDM:
         if metadata_keys:
             assert isinstance(metadata_keys, (list, tuple))
             good_keys.extend(metadata_keys)
-            # print(f'extended keys = {good_keys}')
         
         # Determine useful meta data
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
