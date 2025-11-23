@@ -386,7 +386,7 @@ class fileDM:
         else:  # this file only contains tags (such as a GTG file)
             self.thumbnail = False
 
-    def getMetadata(self, index):
+    def getMetadata(self, index, metadata_keys=None):
         """ Get the useful metadata in the file. This parses the allTags dictionary and retrieves only the useful
         information about hte experimental parameters. This is a (useful) subset of the information contains in the
         allTags attribute.
@@ -394,10 +394,21 @@ class fileDM:
         Note: some DM files contain extra information called the Tecnai Microscope Info. This is added to the metadata
         dictionary as a string.
 
+        The "good" keys include:
+        ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
+        To extract other metadata not found in the above list use the metadata_keys input to this function.
+
         Parameters
         ----------
         index : int
             The number of the dataset to get the metadata from.
+        metadata_keys : list
+            Extra keys in a list or tuply to extract from the DM tags as metadata.
+
+        Returns
+        -------
+        : dict
+            A subset of the DM tags returned as a dictionary with useful meatdata about the experiment.
         """
         # The first dataset is usually a thumbnail. Test for this and skip the thumbnail automatically
         # metadata indexing starts at 1 but the index keyword starts at 0
@@ -415,6 +426,10 @@ class fileDM:
         # Most of the useful keys. Two other keys Tecnai.Microscope Info is treated specially below
         good_keys = ['Calibrations', 'Acquisition', 'DataBar', 'EELS', 'Meta Data', 'Microscope Info', '4Dcamera Parameters', 'Session Info']
 
+        # Add extra keys in case the user wants to extract other metadata
+        if metadata_keys:
+            good_keys.extend(metadata_keys)
+        
         # Determine useful meta data
         prefix1 = '.ImageList.{}.ImageTags.'.format(index)
         prefix2 = '.ImageList.{}.ImageData.'.format(index)
