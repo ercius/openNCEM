@@ -1,5 +1,5 @@
 """
-Tests for the basic functionality of the smv io module.
+Tests for the basic functionality of the dectris io module.
 """
 
 import pytest
@@ -9,12 +9,12 @@ from pathlib import Path
 import tempfile
 import numpy as np
 
-import ncempy.io.smv
+import ncempy.io.dectris
 
 
-class Testsmv:
+class Testdectris:
     """
-    Test the SMV io module
+    Test the dectris io module
     """
 
     @pytest.fixture
@@ -24,72 +24,33 @@ class Testsmv:
         root_path = test_path.parents[1]
         return root_path / Path('data')
 
-    @pytest.fixture
-    def temp_file(self):
-        tt = tempfile.NamedTemporaryFile(mode='wb')
-        tt.close()  # need to close the file to use it later
-        return Path(tt.name)
-
-    def test_write_read(self, temp_file):
-        # Write out a temporary SMV file
-        ncempy.io.smv.smvWriter(temp_file,
-                                np.ones((10, 11), dtype=np.uint16))
-
-        assert temp_file.exists() is True
-        with ncempy.io.smv.fileSMV(temp_file) as f0:
-            assert hasattr(f0, 'dataSize')
-            assert f0.dataSize[0] == 10
-    
-    def test_biotin_file(self, data_location):
-        file_path = data_location / Path('biotin_smv.img')
-        with ncempy.io.smv.fileSMV(file_path) as f0:
+    def test_read_data(self, data_location):
+        file_path = data_location / Path('au_145mm_68kx_microprobe_01_master.h5')
+        with ncempy.io.dectris.fileDECTRIS(file_path) as f0:
             dd = f0.getDataset()
             assert 'data' in dd
-            assert dd['data'].shape[0] == 2048
-            
-    def test_newline_linux(self, temp_file):
-        # Write out a temporary SMV file with linux line endings
-        ncempy.io.smv.smvWriter(temp_file,
-                                np.ones((10, 11), dtype=np.uint16),
-                               newline='\n')
 
-        assert temp_file.exists() is True
-        with open(temp_file,'rb') as f0:
-            vals = f0.read(2)
-            assert vals[1] == ord('\n')
-            
-    def test_newline_windows(self, temp_file):
-        # Write out a temporary SMV file with Windows line endings
-        ncempy.io.smv.smvWriter(temp_file,
-                                np.ones((10, 11), dtype=np.uint16),
-                                newline='\r\n')
-
-        assert temp_file.exists() is True
-        with open(temp_file,'rb') as f0:
-            vals = f0.read(3)
-            assert vals[1] == ord('\r')
-            assert vals[2] == ord('\n')
-    
-    def test_smvReader(self, data_location):
-        file_path = data_location / Path('biotin_smv.img')
-        dd = ncempy.io.smv.smvReader(file_path)
-        assert 'data' in dd
-        assert dd['data'].shape[0] == 2048
-
-    def test_custom_header(self, temp_file):
-        # Write out a temporary SMV file with custom header info
-        custom_header = {'4DCAMERA_scan':10, '4DCAMERA_id':101}
-        ncempy.io.smv.smvWriter(temp_file,
-                                np.ones((10, 11), dtype=np.uint16),
-                                custom_header=custom_header)
-        assert temp_file.exists() is True
-        d = ncempy.io.smv.smvReader(temp_file)
-        with ncempy.io.smv.fileSMV(temp_file) as f0:
-            f0.readHeader()
-            assert f0.custom_info['4DCAMERA_scan'] == 10
-
-    def test_metadata(self, data_location):
-        file_path = data_location / Path('biotin_smv.img')
-        with ncempy.io.smv.fileSMV(file_path) as f0:
+    def test_read_metadata(self, data_location):
+        file_path = data_location / Path('au_145mm_68kx_microprobe_01_master.h5')
+        with ncempy.io.dectris.fileDECTRIS(file_path) as f0:
             md = f0.getMetadata()
-            assert md['SIZE1'] == 2048
+            if md:
+                assert 'pixelSize' in md
+
+    def test_str_input(self, data_location):
+        file_path = data_location / Path('au_145mm_68kx_microprobe_01_master.h5')
+        with ncempy.io.dectris.fileDECTRIS(str(file_path)) as f0:
+            assert f0.data_shap[0] = 64
+    
+    #def test_read_file(self, data_location):
+    #    file_path = data_location / Path('dectris_master.h5')
+    #    with ncempy.io.dectris.fileDECTRIS(file_path) as f0:
+    #        dd = f0.getDataset()
+    #        assert 'data' in dd
+    #        assert dd['data'].shape[0] == 2048
+    
+    # def test_dectrisReader(self, data_location):
+    #     file_path = data_location / Path('dectris_master.h5')
+    #     dd = ncempy.io.dectris.dectrisReader(file_path)
+    #     assert 'data' in dd
+    #     assert dd['data'].shape[0] == 2048
