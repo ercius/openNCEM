@@ -1,12 +1,12 @@
+from pathlib import Path
+
 from . import dm
 from . import ser
 from . import emd
 from . import mrc
 from . import emdVelox
 from . import smv
-
-from pathlib import Path
-
+from . import dectris
 
 def read(filename, dsetNum=0):
     """
