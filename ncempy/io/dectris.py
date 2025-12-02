@@ -58,7 +58,7 @@ class fileDECTRIS:
                 pass
             else:
                 raise TypeError('Filename is supposed to be a string or pathlib.Path or file object')
-            self.file_path = filename
+            self.file_path = Path(filename)
             self.file_name = self.file_path.name
 
         # Try opening the file
@@ -135,6 +135,35 @@ class fileDECTRIS:
         data_out['data'] = data
         return data_out
 
+    def getMetadata(self):
+        """ The dectris Arina files sometimes output an extra file with 
+        metadata in it. This checks for that file and reads the meta data
+        if if exists. The units are assumed to be nanometers.
+
+        Returns
+        -------
+        : dict
+            Meta data as a dictionary
+        
+        """
+
+        filename_parts = self.file_path.stem.split('_')
+        metadata_file_path = self.file_path.parent / Path('_'.join(filename_parts[0:-1])).with_suffix('.h5')
+        if metadata_file_path.exists():
+            try:
+                metadata = {}
+                with h5py.File(metadata_file_path, 'r') as f0:
+                    for k,v in f0["STEM Metadata"].attrs.items():
+                        metadata[k] = v
+                
+                pixel_size0 = metadata["Pixel Size"] # convert to ncempy standard
+                metadata['pixelSize'] = (pixel_size0, pixel_size0)
+                metadata['pixelUnit'] = ('n_m', 'n_m')
+                
+                return metadata
+            except:
+                raise
+        
     def _remove_bad_pixels(self, data, value=0, bad_pixels=None):
         """ Some pixels are known to be very high or very low. This function will replace the 
         pixel values.
