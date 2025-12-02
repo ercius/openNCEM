@@ -78,7 +78,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
 
-    install_requires=['numpy>=2', 'scipy', 'matplotlib', 'h5py>=3'],
+    install_requires=['numpy>=2', 'scipy', 'matplotlib', 'h5py>=3, hdf5plugin'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
