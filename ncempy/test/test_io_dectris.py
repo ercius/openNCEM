@@ -44,4 +44,6 @@ class Testdectris:
 
     def test_dectrisReader(self, data_location):
         import ncempy
-        ncempy.read(data_location / Path('au_145mm_68kx_microprobe_01_master.h5'))
+        out = ncempy.read(data_location / Path('au_145mm_68kx_microprobe_01_master.h5'))
+        assert 'pixelSize' in out
+        assert 'data' in out
