@@ -119,7 +119,7 @@ class fileDECTRIS:
             ii += v.shape[0]
 
         if assume_shape:
-            self.data.shape = (assume_shape[0], assume_shape[1],
+            self.data_shape = (assume_shape[0], assume_shape[1],
                                data.shape[1], data.shape[2])
         else:
             # Reshape assuming square
@@ -127,10 +127,13 @@ class fileDECTRIS:
             assert data.shape[0] == shape_square**2
             self.data_shape = (shape_square, shape_square,
                                data.shape[1], data.shape[2])
-        data = data.reshape(data_shape)
+        data = data.reshape(self.data_shape)
         if remove_bad_pixels:
             self._remove_bad_pixels()
-        return data
+
+        data_out = {}
+        data_out['data'] = data
+        return data_out
 
     def _remove_bad_pixels(self, data, value=0, bad_pixels=None):
         """ Some pixels are known to be very high or very low. This function will replace the 
