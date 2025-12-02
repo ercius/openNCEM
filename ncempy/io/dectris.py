@@ -2,6 +2,11 @@
 This module provides an interface to Dectris Arina data sets
 """
 
+from pathlib import Path
+import h5py
+import numpy as np
+import hdf5plugin
+
 class fileDECTRIS:
     """ Class to represent Dectris Arina data sets
 
