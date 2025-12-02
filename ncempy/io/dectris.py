@@ -22,7 +22,7 @@ class fileDECTRIS:
         data_type : numpy.dtype
             The data type of the values in the data set.
         """
-    def __init__(self, filename, verbose=False):
+    def __init__(self, filename, bad_pixels=None, verbose=False):
         """ Initialize a data set by opening the master file and determining the file size
 
             Parameters
@@ -38,10 +38,10 @@ class fileDECTRIS:
         self.data_shape = [0, 0, 0, 0] # the shape of the final 4D dataset
         self.file_hdl = None
         self.data_dtype = None
+        self.bad_pixel_value = bad_pixels
         
         # Pixels to remove automatically
-        self.bad_pixels = ((49, 75), (93,118), (95,119), (108, 57))
-        self.bad_pixel_value = None
+        # self.bad_pixels = ((49, 75), (93,118), (95,119), (108, 57)) # NCEM bad pixels
         
         if hasattr(filename, 'read'):
             try:
@@ -164,7 +164,7 @@ class fileDECTRIS:
             except:
                 raise
         
-    def _remove_bad_pixels(self, data, value=0, bad_pixels=None):
+    def remove_bad_pixels(self, data, value=0, bad_pixels=None):
         """ Some pixels are known to be very high or very low. This function will replace the 
         pixel values.
 
