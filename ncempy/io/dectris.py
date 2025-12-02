@@ -99,13 +99,13 @@ class fileDECTRIS:
         self.__del__()
         return None
 
-    def get_dataset(self, remove_bad_pixels=False, assume_shape=None):
+    def getDataset(self, remove_bad_pixels=False, assume_shape=None):
         """ Read the data from the HDF5 files
 
         Parameters
         ----------
         remove_bad_pixels : bool, default False
-            If True, remove_bad_pixels function is called after the data is loaded.
+            If True, _remove_bad_pixels function is called after the data is loaded.
         assume_shape : tuple, optional
             If this is set, then this tuple is used as the scanning shape overriding 
             the assumption of a square real space scanning grid
@@ -129,10 +129,10 @@ class fileDECTRIS:
                                data.shape[1], data.shape[2])
         data = data.reshape(data_shape)
         if remove_bad_pixels:
-            self.remove_bad_pixels()
+            self._remove_bad_pixels()
         return data
 
-    def remove_bad_pixels(self, data, value=0, bad_pixels=None):
+    def _remove_bad_pixels(self, data, value=0, bad_pixels=None):
         """ Some pixels are known to be very high or very low. This function will replace the 
         pixel values.
 
