@@ -99,7 +99,7 @@ class fileDECTRIS:
         self.__del__()
         return None
 
-    def get_dataset(self, remove_bad_pixels=False, assume_shape=None:
+    def get_dataset(self, remove_bad_pixels=False, assume_shape=None):
         """ Read the data from the HDF5 files
 
         Parameters
