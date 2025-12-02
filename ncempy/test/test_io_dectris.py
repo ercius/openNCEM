@@ -41,4 +41,7 @@ class Testdectris:
         file_path = data_location / Path('au_145mm_68kx_microprobe_01_master.h5')
         with ncempy.io.dectris.fileDECTRIS(str(file_path)) as f0:
             assert f0.raw_shape[1] == 192
-    
+
+    def test_dectrisReader(self, data_location):
+        import ncempy
+        ncempy.read(data_location / Path('au_145mm_68kx_microprobe_01_master.h5'))

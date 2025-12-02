@@ -183,3 +183,16 @@ class fileDECTRIS:
             self.bad_pixels = bad_pixels
         for bad in self.bad_pixels:
             data[:, :, bad[0], bad[1]] = value
+
+def dectrisReader(file_name):
+    if isinstance(file_name, str):
+        file_name = Path(file_name)
+
+    with fileDECTRIS(file_name) as f1:  # open the file and init the class
+        im1 = f1.getDataset()  # read in the dataset
+        md = f1.getMetadata()
+        if md:
+            extra_metadata = {'pixelSize': md['pixelSize'], 'pixelUnit':md['pixelUnit'], 'filename': f1.file_name}
+            im1.update(extra_metadata)
+    return im1
+        
