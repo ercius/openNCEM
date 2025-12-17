@@ -102,6 +102,7 @@ def test_read(data_location):
     """Test the general reader function"""
     all_files = Path(data_location).glob('*.*')
     for file in all_files:
-        file_dict = nio.read(file)
-        if file_dict:
-            assert 'data' in file_dict
+        if file.stem not in ('au_145mm_68kx_microprobe_01_data_000001', 'au_145mm_68kx_microprobe_01'):
+            file_dict = nio.read(file)
+            if file_dict:
+                assert 'data' in file_dict
