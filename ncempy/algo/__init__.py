@@ -4,6 +4,7 @@ from scipy import ndimage
 
 from . import radial_profile
 from . import peak_find
+from . import eels
 
 def rebin(im, f, funcType='sum'):
     """ Rebin a 2D array. From stackoverflow:
