@@ -511,7 +511,7 @@ class fileEMD:
 
         # create timestamp if missing
         if not timestamp:
-            timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S (UTC)')
+            timestamp = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S (UTC)')
         else:
             # try to convert given timestamp to string
             try:
