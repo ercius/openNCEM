@@ -134,14 +134,15 @@ class fileEMDVelox:
         return out
     
     def _find_groups(self):
-        """ Find all groups that contain image data.
+        """ Find all groups that contain data: spectrum data, image data, and spectrum image. 
 
         Note
         ----
-            This currently only finds images.
+            Previously, this only found images.
         """
         try:
-            # Get all of the groups in the Image group
+            # Get all of the groups in the Spectrum, Image, and SpectrumImage groups 
+            # TODO: Is there an order in which Spectrums and Images should be included? (e.g. by detector name or element name?)
             self.list_data = list(self._file_hdl['Data/Spectrum'].values()) + list(self._file_hdl['Data/Image'].values()) + list(self._file_hdl['Data/SpectrumImage'].values())
         except:
             self.list_data = []
@@ -273,10 +274,14 @@ class fileEMDVelox:
             If input is an int then the group corresponding to list_data attribute is used. The string 
             metadata is loaded and parsed by the json module into a dictionary.
         """
-        self._parseMetadata(group)
+        meta_data = self._parseMetadata(group) 
+        # note: _parseMetadata updates self.metaDataJSON, which is iterated through below
+        # thus, this line results in duplicate metadata, but perhaps this is beneficial because 
+        # _parseMetadata's return value enables us to pull out important metadata into the outermost level
+        # and also handles unit conversion for pixelUnits
+
         keys_to_ignore = ('EnergyFilter', 'Vacuum', 'GasInjectionSystems', 'SharedProperties')
         # previously: useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
-        meta_data = {}
         for kk in self.metaDataJSON.keys():
             if kk not in keys_to_ignore:
                meta_data.update(self.metaDataJSON[kk])
