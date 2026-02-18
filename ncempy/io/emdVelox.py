@@ -142,7 +142,7 @@ class fileEMDVelox:
         """
         try:
             # Get all of the groups in the Image group
-            self.list_data = list(self._file_hdl['Data/Image'].values())
+            self.list_data = list(self._file_hdl['Data/Spectrum'].values()) + list(self._file_hdl['Data/Image'].values()) + list(self._file_hdl['Data/SpectrumImage'].values())
         except:
             self.list_data = []
             raise
