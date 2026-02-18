@@ -119,8 +119,8 @@ class Testemd:
         # Test fileEMD class input with file object
         file_name = data_location / Path('Acquisition_18.emd')
         fid = open(file_name, 'rb')
-        emd0 = ncempy.io.emd.fileEMD(fid)
-        assert hasattr(emd0, 'file_hdl')
+        with ncempy.io.emd.fileEMD(fid) as emd0:
+            assert hasattr(emd0, 'file_hdl')
 
     def test_memmap(self, data_location):
         emd1 = ncempy.io.emd.fileEMD(data_location / Path('Acquisition_18.emd'))
@@ -190,3 +190,12 @@ class Testemd:
             ncempy.io.emd.emdReader(data_location / Path('STEM HAADF-DF4-DF2-BF Diffraction Micro.emd'))
         except ncempy.io.emd.NoEmdDataSets:
             pass
+
+    def test_metadata(self, data_location):
+        f = data_location / Path('Acquisition_18.emd')
+        import h5py
+        # Create a data set with missing attributes in the dim vectors
+        with ncempy.io.emd.fileEMD(f, readonly=True) as f0:
+            md = f0.getMetadata(0)
+        
+        assert md['binning'] == 4

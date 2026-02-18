@@ -1,12 +1,12 @@
+from pathlib import Path
+
 from . import dm
 from . import ser
 from . import emd
 from . import mrc
 from . import emdVelox
 from . import smv
-
-from pathlib import Path
-
+from . import dectris
 
 def read(filename, dsetNum=0):
     """
@@ -40,11 +40,27 @@ def read(filename, dsetNum=0):
         out = ser.serReader(filename)
     elif suffix in ('.dm3', '.dm4'):
         out = dm.dmReader(filename)
-    elif suffix in ('.emd', '.h5', '.hdf5'):
+    elif suffix in ('.h5', '.hdf5'):
         try:
+            # Try Berkeley EMD
             out = emd.emdReader(filename, dsetNum)
         except emd.NoEmdDataSets:
-            out = emdVelox.emdVeloxReader(filename, dsetNum)
+            # Try Dectris Arina
+            out = dectris.dectrisReader(filename)
+        except:
+            print('ncempy.read: Unknown H5 file.')
+            raise
+    elif suffix == '.emd':
+        try:
+            # Try Berkeley EMD
+            out = emd.emdReader(filename, dsetNum)
+        except emd.NoEmdDataSets:
+            # Try Velox EMD
+            try:
+                out = emdVelox.emdVeloxReader(filename, dsetNum)
+            except KeyError:
+                print('ncempy.read: Unknown EMD file.')
+                raise
     elif suffix in ('.mrc', '.rec', '.st', '.ali'):
         out = mrc.mrcReader(filename)
     elif suffix in ('.smv', '.img'):

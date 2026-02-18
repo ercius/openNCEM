@@ -388,6 +388,20 @@ class fileMRC:
 
         return mm
 
+    def getMetadata(self):
+        meta_data = {}
+
+        # Save most useful metaData
+        meta_data.update({'pixelSize': self.voxelSize, 'voxelSize': self.voxelSize,
+                        'cellAngles': self.cellAngles, 'axisOrientations': self.axisOrientations})
+        if hasattr(self, 'FEIinfo'):
+            # add in the special FEIinfo if it exists
+            try:
+                meta_data.update(self.FEIinfo)
+            except TypeError:
+                pass
+        return meta_data
+    
     def _applyAxisOrientations(self, arrayIn):
         """ This is untested and unused.
 

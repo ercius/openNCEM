@@ -177,6 +177,14 @@ class fileSMV:
                     raise(f'File data type not supported: {val}')
     
     def getDataset(self):
+        """Read the data from the file
+
+        Returns
+        -------
+        : dict
+        A dictionary containng the data in a dictionary with the key 'data'
+        
+        """
         self.readHeader()
         self.parseHeader()
         
@@ -186,6 +194,20 @@ class fileSMV:
         data_out = {}
         data_out['data'] = data
         return data_out
+
+    def getMetadata(self):
+        """Reads the metadata from the file
+
+        Returns
+        -------
+        : dict
+        A dicitons contained useful experimental metadata.
+        """
+        self.readHeader()
+        meta_data = {}
+        meta_data.update(self.header_info)
+        meta_data.update(self.custom_info)
+        return meta_data
     
 def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01, 
               beam_center=None, binned_by=1, newline=None, custom_header=None):

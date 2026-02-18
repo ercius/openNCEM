@@ -64,3 +64,9 @@ class Testser():
         fid = open(file_name, 'rb')
         ser0 = ncempy.io.ser.fileSER(fid)
         assert hasattr(ser0, '_file_hdl')
+
+    def test_metdata(self, data_location):
+        file_name = data_location / Path('16_STOimage_1.ser')
+        with ncempy.io.ser.fileSER(file_name) as f0:
+            md = f0.getMetadata()
+        assert md['High tension [kV]'] == 80
