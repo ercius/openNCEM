@@ -283,9 +283,10 @@ class fileEMDVelox:
         keys_to_ignore = ('EnergyFilter', 'Vacuum', 'GasInjectionSystems', 'SharedProperties')
         # previously: useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
         for kk in self.metaDataJSON.keys():
-            if kk not in keys_to_ignore:
-               meta_data.update(self.metaDataJSON[kk])
+            if kk not in keys_to_ignore and kk != 'CustomProperties':
+                meta_data.update(self.metaDataJSON[kk])
         
+        # handle CustomProperties separately
         for kk, vv in self.metaDataJSON['CustomProperties'].items():
             try:
                 if isinstance(vv, dict):
