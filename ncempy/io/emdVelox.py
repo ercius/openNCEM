@@ -22,6 +22,17 @@ from pathlib import Path
 import numpy as np
 import h5py
 
+def parse_dataset_as_dict(dataset): 
+    """
+    Args:
+    - dataset: an h5py Dataset object of type "O"
+
+    Returns: 
+    - dataset decoded as a dict 
+    """
+    bytes = dataset[()].tolist()[0]
+    decoded = bytes.decode("utf-8", "ignore").rstrip("\x00")
+    return json.loads(decoded)
 
 class fileEMDVelox:
     """ Class to represent Velox EMD files. It uses the h5py caching functionality
@@ -272,7 +283,7 @@ class fileEMDVelox:
             The h5py group to load the metadata from which is easily retrived from the list_data attribute.
             If input is an int then the group corresponding to list_data attribute is used. The string 
             metadata is loaded and parsed by the json module into a dictionary.
-        """
+        """        
         self._parseMetadata(group)
         keys_to_ignore = ('EnergyFilter', 'Vacuum', 'GasInjectionSystems', 'CustomProperties') 
         # note: CustomProperties is handled separately 
@@ -329,6 +340,10 @@ def emdVeloxReader(filename, dsetNum=0):
         return out
 
 class fileEMDVeloxWithSpectra(fileEMDVelox):
+    def __init__(self, filename): 
+        super().__init__(filename)
+        self._parse_image_titles()
+
     def _find_groups(self):
         """ Find all data groups: spectrum data, image data, and spectrum image. 
         """
@@ -337,3 +352,76 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
         for group in groups_to_extract: 
             if group in self._file_hdl:
                 self.list_data += list(self._file_hdl[group].values())
+
+    def _parse_image_titles(self):
+        """
+        Create a mapping between each image_uuid: 
+            - 'groupType' (EDS, STEM, TEM)
+            - 'title' (element or HAADF)
+        Stores the mapping for in self.img_titles
+        """
+        display_groups = self._file_hdl["SharedProperties/DisplayGroupItem"]
+        self.img_titles = {}
+        for group in display_groups.values():
+            display_group_dict = parse_dataset_as_dict(group)
+            # /Displays/ImageDisplay/___
+            image_display_path = display_group_dict['display']
+            image_display_dict = parse_dataset_as_dict(self._file_hdl.get(image_display_path))
+            
+            # /SharedProperties/ImageSeriesDataReference/___
+            data_ref_path = image_display_dict["data"]
+            data_ref_dict = parse_dataset_as_dict(self._file_hdl.get(data_ref_path))
+
+            data_path = data_ref_dict["dataPath"]
+            # image_uuid = data_path.split("/")[-1]
+            self.img_titles[data_path] = {'groupType': display_group_dict['groupType'].upper(), 'title': display_group_dict['name']} 
+
+    
+    def getMetadata(self, group):
+        """ Reads important metadata from Velox EMD files.
+
+        Parameters
+        ----------
+        group : h5py.Group or int
+            The h5py group to load the metadata from which is easily retrived from the list_data attribute.
+            If input is an int then the group corresponding to list_data attribute is used. The string 
+            metadata is loaded and parsed by the json module into a dictionary.
+        """
+         # ensure group is an actual group object, not an int 
+        try:
+            if type(group) is int:
+                group = self.list_data[group]
+        except IndexError:
+            raise IndexError('EMDVelox group #{} does not exist.'.format(group))
+        
+        self._parseMetadata(group)
+        keys_to_ignore = ('EnergyFilter', 'Vacuum', 'GasInjectionSystems', 'CustomProperties') 
+        # note: CustomProperties is handled separately 
+        # previously: useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
+        meta_data = {}
+        for kk in self.metaDataJSON.keys():
+            if kk not in keys_to_ignore:
+               meta_data.update(self.metaDataJSON[kk])
+        
+        # handle CustomProperties
+        for kk, vv in self.metaDataJSON['CustomProperties'].items():
+            try:
+                if isinstance(vv, dict):
+                    if vv['type'] == 'string':
+                        meta_data[kk] = str(vv['value'])
+                    elif vv['type'] == 'double':
+                        meta_data[kk] = float(vv['value'])
+                    else:
+                        meta_data[kk] = vv['value']
+            except:
+                pass
+        
+        # add general metadata
+        general_md = {}
+        if group.name in self.img_titles: 
+            general_md = self.img_titles[group.name]
+        elif group.parent.name in ['/Data/Spectrum', '/Data/SpectrumImage']:
+            general_md = {'groupType': 'EDS', 'title': 'EDS'} # is this needed/correct?
+        meta_data.update({'General': general_md})
+
+        return meta_data
