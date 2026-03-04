@@ -327,3 +327,13 @@ def emdVeloxReader(filename, dsetNum=0):
         out.update(md)
 
         return out
+
+class fileEMDVeloxWithSpectra(fileEMDVelox):
+    def _find_groups(self):
+        """ Find all data groups: spectrum data, image data, and spectrum image. 
+        """
+        self.list_data = []
+        groups_to_extract = ['Data/Spectrum', 'Data/Image', 'Data/SpectrumImage']
+        for group in groups_to_extract: 
+            if group in self._file_hdl:
+                self.list_data += list(self._file_hdl[group].values())
