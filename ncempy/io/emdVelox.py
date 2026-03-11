@@ -340,6 +340,10 @@ def emdVeloxReader(filename, dsetNum=0):
         return out
 
 class fileEMDVeloxWithSpectra(fileEMDVelox):
+    PROCESSED_IMAGE_GROUP_NAME = 'EDS_Processed'
+    SPECTRUM_IMAGE_GROUP_NAME = 'EDS_SI'
+    SPECTRUM_GROUP_NAME = 'EDS_Spectrum'
+
     def __init__(self, filename): 
         super().__init__(filename)
         self._parse_image_titles()
@@ -360,8 +364,12 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
             - 'title' (element or HAADF)
         Stores the mapping for in self.img_titles
         """
-        display_groups = self._file_hdl["SharedProperties/DisplayGroupItem"]
         self.img_titles = {}
+        
+        if "SharedProperties/DisplayGroupItem" not in self._file_hdl: 
+            return 
+        
+        display_groups = self._file_hdl["SharedProperties/DisplayGroupItem"]
         for group in display_groups.values():
             display_group_dict = parse_dataset_as_dict(group)
             # /Displays/ImageDisplay/___
@@ -373,10 +381,22 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
             data_ref_dict = parse_dataset_as_dict(self._file_hdl.get(data_ref_path))
 
             data_path = data_ref_dict["dataPath"]
-            # image_uuid = data_path.split("/")[-1]
-            self.img_titles[data_path] = {'groupType': display_group_dict['groupType'].upper(), 'title': display_group_dict['name']} 
+            # data_path = data_path.split("/")[-1]
+            groupType = display_group_dict['groupType'].upper()
+            self.img_titles[data_path] = {'groupType': self.PROCESSED_IMAGE_GROUP_NAME if groupType == "EDS" else groupType, 
+                                          'title': display_group_dict['name']} 
 
-    
+    def getMeasurementType(self):
+        """
+        Helper for Molecular Foundry Crucible ingestion. 
+        """
+        measurement_type = self.list_data[-1].parent.name[6:]
+        if measurement_type == 'Spectrum': 
+            measurement_type = self.SPECTRUM_GROUP_NAME
+        elif measurement_type == 'SpectrumImage': 
+            measurement_type = self.SPECTRUM_IMAGE_GROUP_NAME
+        return measurement_type 
+
     def getMetadata(self, group):
         """ Reads important metadata from Velox EMD files.
 
@@ -420,8 +440,11 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
         general_md = {}
         if group.name in self.img_titles: 
             general_md = self.img_titles[group.name]
-        elif group.parent.name in ['/Data/Spectrum', '/Data/SpectrumImage']:
-            general_md = {'groupType': 'EDS', 'title': 'EDS'} # is this needed/correct?
+        elif group.parent.name == '/Data/Spectrum':
+            general_md = {'groupType': self.SPECTRUM_GROUP_NAME, 'title': self.SPECTRUM_GROUP_NAME} 
+        elif group.parent.name == '/Data/SpectrumImage':
+            general_md = {'groupType': self.SPECTRUM_IMAGE_GROUP_NAME, 'title': self.SPECTRUM_IMAGE_GROUP_NAME} 
+
         meta_data.update({'General': general_md})
 
         return meta_data
