@@ -352,10 +352,14 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
         """ Find all data groups: spectrum data, image data, and spectrum image. 
         """
         self.list_data = []
-        groups_to_extract = ['Data/Spectrum', 'Data/Image', 'Data/SpectrumImage']
+        groups_to_extract = ['Data/Image', 'Data/SpectrumImage']
         for group in groups_to_extract: 
             if group in self._file_hdl:
                 self.list_data += list(self._file_hdl[group].values())
+        
+        # only add Spectrum data if there are no images or spectrum images 
+        if len(self.list_data) == 0 and 'Data/Spectrum' in self._file_hdl: 
+            self.list_data = list(self._file_hdl['Data/Spectrum'].values()) + self.list_data
 
     def _parse_image_titles(self):
         """
@@ -386,11 +390,12 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
             self.img_titles[data_path] = {'groupType': self.PROCESSED_IMAGE_GROUP_NAME if groupType == "EDS" else groupType, 
                                           'title': display_group_dict['name']} 
 
-    def getMeasurementType(self):
+    def getMeasurementType(self, index=-1):
         """
         Helper for Molecular Foundry Crucible ingestion. 
+        index: which item of list_data to consider (default: consider last item)
         """
-        measurement_type = self.list_data[-1].parent.name[6:]
+        measurement_type = self.list_data[index].parent.name[6:]
         if measurement_type == 'Spectrum': 
             measurement_type = self.SPECTRUM_GROUP_NAME
         elif measurement_type == 'SpectrumImage': 
