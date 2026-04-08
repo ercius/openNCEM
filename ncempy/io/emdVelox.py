@@ -274,12 +274,15 @@ class fileEMDVelox:
             metadata is loaded and parsed by the json module into a dictionary.
         """
         self._parseMetadata(group)
-        useful_keys = ('Optics', 'Stage', 'Scan', 'BinaryResult' )
+        keys_to_ignore = ('EnergyFilter', 'Vacuum', 'GasInjectionSystems', 'CustomProperties') 
+        # note: CustomProperties handled separately below
+        
         meta_data = {}
         for kk in self.metaDataJSON.keys():
-            if kk in useful_keys:
+            if kk not in keys_to_ignore:
                meta_data.update(self.metaDataJSON[kk])
         
+        # separate handling of CustomProperties 
         for kk, vv in self.metaDataJSON['CustomProperties'].items():
             try:
                 if isinstance(vv, dict):
