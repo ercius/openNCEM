@@ -24,6 +24,10 @@ import h5py
 
 def parse_dataset_as_dict(dataset): 
     """
+    Turns a h5py Dataset of type "O" into a python dict.
+    Helper function for processing certain data from the h5py file. 
+    Modeled after rsciio.
+
     Args:
     - dataset: an h5py Dataset object of type "O"
 
@@ -365,7 +369,7 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
         """
         Create a mapping between each image_uuid: 
             - 'groupType' (EDS, STEM, TEM)
-            - 'title' (element or HAADF)
+            - 'title' (element name or HAADF)
         Stores the mapping for in self.img_titles
         """
         self.img_titles = {}
@@ -389,18 +393,6 @@ class fileEMDVeloxWithSpectra(fileEMDVelox):
             groupType = display_group_dict['groupType'].upper()
             self.img_titles[data_path] = {'groupType': self.PROCESSED_IMAGE_GROUP_NAME if groupType == "EDS" else groupType, 
                                           'title': display_group_dict['name']} 
-
-    def getMeasurementType(self, index=-1):
-        """
-        Helper for Molecular Foundry Crucible ingestion. 
-        index: which item of list_data to consider (default: consider last item)
-        """
-        measurement_type = self.list_data[index].parent.name[6:]
-        if measurement_type == 'Spectrum': 
-            measurement_type = self.SPECTRUM_GROUP_NAME
-        elif measurement_type == 'SpectrumImage': 
-            measurement_type = self.SPECTRUM_IMAGE_GROUP_NAME
-        return measurement_type 
 
     def getMetadata(self, group):
         """ Reads important metadata from Velox EMD files.
