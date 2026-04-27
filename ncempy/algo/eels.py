@@ -39,7 +39,7 @@ def powerFit(sig, box):
         print('fitting problem')
         raise
 
-    pixel_range = np.linspace(box[0], sig.shape[0], np.int(np.abs(sig.shape[0] - box[0])))
+    pixel_range = np.linspace(box[0], sig.shape[0], int(np.abs(sig.shape[0] - box[0])))
     try:
         background = np.exp(pp[1]) * pixel_range ** pp[0]
     except:
