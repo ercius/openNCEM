@@ -33,22 +33,26 @@ def powerFit(sig, box):
         yy[yy < 0] = 0
         yy += 1
 
-        # TODO Replace polyfit with numpy.Polynomial.fit
-        pp = np.polyfit(np.log(eLoss), np.log(yy[box[0]:box[1]]), 1)  # log-log fit
-    except:
-        print('fitting problem')
+        p = np.polynomial.Polynomial.fit(np.log(eLoss), np.log(yy[box[0]:box[1]]), 1)
+        coeffs = p.convert().coef  # [intercept, slope] in ascending order
+    except Exception:
+        print('Fitting problem')
         raise
 
     pixel_range = np.linspace(box[0], sig.shape[0], int(np.abs(sig.shape[0] - box[0])))
     try:
-        background = np.exp(pp[1]) * pixel_range ** pp[0]
-    except:
-        print('background creation problem')
+        background = np.exp(coeffs[0]) * pixel_range ** coeffs[1]
+    except np.linalg.LinAlgError as e:
+        print(f'Background creation problem: {e}')
         background = np.zeros_like(pixel_range)
     return background, pixel_range
 
+def gaussian_lorentz(x, x0, sigma, w, n, C):
+    """Gaussian-Lorentz mixture: n * Gaussian(x0, sigma) + (1-n) * Lorentz(x0, w) + C"""
+    return n * gauss1D(x, x0, sigma) + (1 - n) * lorentz1D(x, x0, w) + C
 
-def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .15, 0.5, 0)):
+def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .15, 0.5, 0),
+                 fit_function=None):
     """ Fit a Gaussian-Lorentz to pre- and post-edge signals. This is useful for low loss EELS
 
     The function is of the form:
@@ -68,26 +72,28 @@ def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .1
         The initial guess for the parameters of the form (x0, sigma, w, n, C) as described in the function definition.
         All values are in eV except n which is dimensionless but should be [0, 1]. Default initial parameters are for
         a zero loss peak centered at 0 eV with a width of 0.15 eV, 50% mixing of the gaussian/lorentz and zero offset.
-
-    Returns
+    fit_function: callable, optional
+        The function to fit to the pre- and post-edge signals. The default is a Gaussian-Lorentz mixture as defined
+        in the function definition. The function must take the energy loss values as the first argument and the parameters
+        to fit as subsequent arguments.
     -------
     : 2-tuple
         A tuple contains two 1D ndarrays. The first is the energy loss values for the signal and the second is the
         background subtracted signal.
 
     """
+    if fit_function is None:
+        fit_function = gaussian_lorentz
+
     # Put the pre and post signals in the same arrays
     eLoss_fit = np.concatenate((energy_axis[pre[0]:pre[1]], energy_axis[post[0]:post[1]]))
     sig_fit = np.concatenate((spectra[pre[0]:pre[1]], spectra[post[0]:post[1]]))
 
-    # Gaussian-Lorentz fit to the pre- and post-edge
-    # TODO allow for other functions
-    GL = lambda x, x0, sigma, w, n, C: n * gauss1D(x, x0, sigma) + (1 - n) * lorentz1D(x, x0, w) + C
-    pp, r = opt.curve_fit(GL, eLoss_fit, sig_fit, p0=initial_parameters, maxfev=20000)
+    pp, r = opt.curve_fit(fit_function, eLoss_fit, sig_fit, p0=initial_parameters, maxfev=20000)
 
     # Create background using fitted values
     bgnd_eloss = np.linspace(energy_axis[pre[0]], energy_axis[post[1]], energy_axis[pre[0]:post[1]].shape[0])
-    bgnd = GL(bgnd_eloss, *pp)
+    bgnd = fit_function(bgnd_eloss, *pp)
 
     # Subtract the background from the signal
     sig_subtracted = spectra[pre[0]:post[1]] - bgnd
@@ -122,8 +128,7 @@ def map_background(spectra, bgnd_box):
     elif spectra.ndim == 2:
         mm = spectra
     else:
-        print('Incorrect spectra size')
-        return
+        raise ValueError('spectra must be 2D or 3D')
     mm_sub = np.zeros_like(mm)
     for ii, sig in enumerate(mm):
         bgnd, eLoss0 = powerFit(sig, bgnd_box)
@@ -177,8 +182,9 @@ def create_rgb(maps, normalize=True):
         displayed as a color image where the red, green, blue channels are properly mixed.
     """
     if maps.ndim != 3:
-        raise ValueError("map array must be 3-dimensional.")
-
+        raise ValueError("maps array must be 3-dimensional.")
+    if maps.shape[0] != 3:
+        raise ValueError(f"maps must have exactly 3 channels (got {maps.shape[0]}).")
     rgb = np.zeros((maps[0].shape[0], maps[0].shape[1], 3), dtype=np.float32)
     for ii, m in enumerate(maps):
         if normalize:
