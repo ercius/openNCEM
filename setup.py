@@ -85,7 +85,8 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'edstomo': ['glob2', 'genfire', 'hyperspy', 'scikit-image', 'ipyvolume']
+        'edstomo': ['glob2', 'genfire', 'hyperspy', 'scikit-image', 'ipyvolume'],
+        'jupyter': ['ipywidgets', 'matplotlib'],
     },
 
     # If there are data files included in your packages that need to be
