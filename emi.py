@@ -152,11 +152,12 @@ class fileEMI:
         image_size = self.image_size[index]
         dtype = self.data_type[index]
         image = np.fromfile(self.fid, count=image_size[0]*image_size[1], dtype=self.data_type)
-        print('Only read first image named: {}'.format(cur_text))
-        print(image)
-        return image.reshape(im_size)
+        print('Read image named: {}'.format(self.image_name[index]))
+
+        return {'data': image.reshape(image_size)}
 
 def emiReader(fname):
+    """Old original function to read EMI files. Use the fileEMI class instead."""
     full_file = np.fromfile(fname,dtype='<u1')
     
     obj_loc = np.where(full_file == 96)[0] # character `
