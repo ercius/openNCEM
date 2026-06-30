@@ -1,12 +1,13 @@
 """
 This module provides an interface to the FEI / Thermo Fischer ESVision EMI files. 
-It is only meant to open files that do not have a corresponding .ser file.
+It is only meant to open files that do not have a corresponding .ser file. It can 
+read the first image in some emi files.
 
-Basic EMI reader which can read the first image in most emi files.
 Currently readable image data types are uint16, uint32, float32
 
-Only the first image in the file is read. The EMI file format is not well documented, 
-and this reader is based on reverse engineering of a few sample files.
+The EMI file format is not documented at all. This reader is based on 
+reverse engineering of a few sample files from only a couple of microscopes. 
+It is likely that there are other variations of the EMI file format that this reader will not be able to read.
 
 """
 
