@@ -30,7 +30,7 @@ class fileSMV:
     file_path : pathlib.Path
         A pathlib.Path object for the open file
     fid : file
-        The file handle to the opened MRC file.
+        The file handle to the opened file.
     dataType : np.dtype
         The numpy dtype of the data.
     dataSize : np.ndarray
