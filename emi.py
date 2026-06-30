@@ -21,18 +21,24 @@ class fileEMI:
         A pathlib.Path object for the open file
     fid : file
         The file handle to the opened file.
-    dataType : np.dtype
+    data_type : list of np.dtype
         The numpy dtype of the data.
-    dataSize : np.ndarray
-        The size of the data in pixels.
+    image_size : list of 2-tuples
+        The size of the images in pixels.
+    image_locations : list of int
+        The file bytes locations of the images in the file.
+    image_name : list of str
+        The names of the images in the file.
     """
     
     _text_dtype = np.dtype([('mark','<u2'),('unknown','<u2'),('size','<u4')])
 
     def __init__(self, file_name, verbose=False):
         
-        self.dataType = None
-        self.dataSize = None
+        self.data_type = []
+        self.image_size = []
+        self.image_locations = []
+        self.image_name = []
         self._verbose = verbose
 
         if hasattr(file_name, 'read'):
@@ -60,10 +66,10 @@ class fileEMI:
         except:
             raise
 
-    def _read_text(self,):
-        aa = np.fromfile(self.fid, dtype=self._text_dtype, count=1)
+    def _read_text(self, fid):
+        aa = np.fromfile(fid, dtype=self._text_dtype, count=1)
         if aa['size'] > 0:
-            bin = np.fromfile(self.fid, dtype='<u1', count=aa['size'][0])
+            bin = np.fromfile(fid, dtype='<u1', count=aa['size'][0])
             text = ''.join([chr(item) for item in bin])
         else:
             text = ''
@@ -101,34 +107,54 @@ class fileEMI:
             for loc in obj_loc[0:]:
                 f0.seek(loc, 0)
                 cur_text = self._read_text(f0)
+                self.image_name.append(cur_text)
                 if self._verbose:
                     print(cur_text)
-                second_field = np.fromfile(f0,dtype='<u2',count=1)
+                second_field = np.fromfile(f0, dtype='<u2', count=1)
                 if (second_field == 112) or (second_field == 17184):
                     obj_info = np.fromfile(f0, count=2, dtype='<u2')
                     if obj_info[0] == 1042:
-                        #this is the data. Read header and quit
+                        # this is an image. Read header and continue
                         image_info = np.fromfile(f0, count=10, dtype='<u2')
                         f0.seek(-8, 1);
-                        im_size = np.fromfile(f0,count=2,dtype='<u4')
+                        self.image_size.append(np.fromfile(f0,count=2,dtype='<u4'))
                         if image_info[3] == 8710:
-                            numType = '<u2'
+                            self.data_type.append('<u2')
                         elif image_info[3] == 8714:
-                            numType = '<u4'
+                            self.data_type.append('<u4')
                         elif image_info[3] == 514:
-                            numType = '<u4'
+                            self.data_type.append('<u4')
                         elif image_info[3] == 8716:
-                            numType = 'f32'
+                            self.data_type.append('f32')
                         else:
                             print('Unknown data type: {}'.format(image_info[3]))
                             print('for object named: {}'.format(cur_text))
                             return
+                        self.image_locations.append(self.fid.tell())
                         
-                        image = np.fromfile(f0, count=im_size[0]*im_size[1], dtype=numType)
-                        print('Only read first image named: {}'.format(cur_text))
-                        print(image)
-                        return image.reshape(im_size)
                 f0.seek(-2, 1) # roll back the pointer 2 bytes
+    
+    def getDataset(self, index=0):
+        """Read the data from the file
+        
+        Paremeters
+        ----------
+        index : int, optional
+        The index of the image to load.
+
+        Returns
+        -------
+        : dict
+        A dictionary contraining the data with the key 'data'
+        
+        """
+        self.fid.seek(self.image_locations[index])
+        image_size = self.image_size[index]
+        dtype = self.data_type[index]
+        image = np.fromfile(self.fid, count=image_size[0]*image_size[1], dtype=self.data_type)
+        print('Only read first image named: {}'.format(cur_text))
+        print(image)
+        return image.reshape(im_size)
 
 def emiReader(fname):
     full_file = np.fromfile(fname,dtype='<u1')
