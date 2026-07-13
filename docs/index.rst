@@ -27,10 +27,8 @@ The openNCEM collection comes with different components. The general functionali
    :maxdepth: 2
 
     ncempy - openNCEM's python package<ncempy>
-    tools - wrapping the provided functionality into useful tools<tools>
-
-**python_titan**
-    A set of open source automation packages for Thermo Fisher transmission electron microscopes.
+    tools - wraps the provided functionality in ncempy into useful tools<tools>
+    python_titan - a set of open source automation packages for Thermo Fisher transmission electron microscopes<python_titan>
 
 Examples
 --------
@@ -43,22 +41,22 @@ an easily human readable form.
 
 .. code-block:: python
    
-   >>> import ncempy.io as nio
-   >>> dmData = nio.read('path/to/file/data.dm3')
-   >>> print(dmData['data'].shape) # the shape of the data
-   >>> print(dmData['pixelSize']) # print the pixel size
+   >>> import ncempy
+   >>> data = ncempy.read('path/to/file/data.dm3')
+   >>> print(data['data'].shape) # the shape of the data
+   >>> print(data['pixelSize']) # print the pixel size
 
 For developers
 ^^^^^^^^^^^^^^
-Developers will want access to the entire internal structure of the file.
-Then you need to instantiate the class, parse the header and then access its contents
+Developers may want access to the entire internal structure of the file.
+Instantiate the class, parse the header, and access the full contents.
 
 Here is how to open a DM file and have access to the internal file parameters
 
 .. code-block:: python
 
-   >>> import ncempy.io as nio
-   >>> with nio.dm.fileDM('/path/to/file/data.dm3') as dm0:
+   >>> import ncempy
+   >>> with ncempy.io.dm.fileDM('/path/to/file/data.dm3') as dm0:
    >>>     dmData = dm0.getDataset(0) #the full first data set
    >>>     dmSlice = dm0.getSlice(0, 1) #the second image of the first data set; equal to dmData[1,:,:] from the line above
    >>>     print(dm0.metaData) # all of the interesting metadata for this data set (pixel size, accelerating voltage, etc.)
@@ -72,8 +70,8 @@ full 4D data set from the master file.
 
 .. code-block:: python
 
-   >>> import ncempy.io as nio
-   >>> with nio.dectris.fileDECTRIS('/path/to/file/master.h5') as f0:
+   >>> import ncempy
+   >>> with ncempy.io.dectris.fileDECTRIS('/path/to/file/master.h5') as f0:
    >>>     data = f0.getDataset() # the full 4D data set, shape [scanY, scanX, frameY, frameX]
    >>>     print(data['data'].shape)
    >>>     print(f0.getMetadata()) # scan metadata (e.g. pixel size), if available
