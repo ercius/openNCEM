@@ -324,9 +324,6 @@ def gauss3D_FIT(xyz, x0, y0, z0, sigma_x, sigma_y, sigma_z):
     Returns the value of a gaussian at a 2D set of points for the given
     standard deviations with maximum normalized to 1.
     The Gaussian axes are assumed to be 90 degrees from each other.
-     xyz - 
-     x0, y0, z0 = the x, y, z centers of the Gaussian
-     sigma_x, sigma_y, sigma_z = The std. deviations of the Gaussian.
 
     Note
     -----

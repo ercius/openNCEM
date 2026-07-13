@@ -61,6 +61,20 @@ Here is how to open a DM file and have access to the internal file parameters
    >>>     print(dm0.metaData) # all of the interesting metadata for this data set (pixel size, accelerating voltage, etc.)
    >>>     print(dm0.allTags) # all of the tags in the file including tags specific to the Digital Micrpograph software program
 
+Reading Dectris Arina 4D-STEM data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The Dectris Arina detector writes its 4D-STEM data set across an HDF5 master
+file and one or more linked data files. Use `ncempy.io.dectris` to load the
+full 4D data set from the master file.
+
+.. code-block:: python
+
+   >>> import ncempy.io as nio
+   >>> with nio.dectris.fileDECTRIS('/path/to/file/master.h5') as f0:
+   >>>     data = f0.getDataset() # the full 4D data set, shape [scanY, scanX, frameY, frameX]
+   >>>     print(data['data'].shape)
+   >>>     print(f0.getMetadata()) # scan metadata (e.g. pixel size), if available
+
 License
 -------
 

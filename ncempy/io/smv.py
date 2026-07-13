@@ -237,7 +237,7 @@ def smvWriter(out_path, dp, camera_length=110, lamda=0.0197, pixel_size=0.01,
     newline : str (optional)
         Allow the user to specify the newline character. For data written on Windows computers
         some processing programs in Linux are not able to load SMV files with Windows 
-        carriage return and newline characters. Use '\n' on Windows machines to enforce Linux
+        carriage return and newline characters. Use '\\n' on Windows machines to enforce Linux
         line endings. The default `None` will use the system default.
     custom_header : dict
         This allows the user to input custom header lines using a dictionary. Each key/value
