@@ -29,6 +29,9 @@ The openNCEM collection comes with different components. The general functionali
     ncempy - openNCEM's python package<ncempy>
     tools - wrapping the provided functionality into useful tools<tools>
 
+**python_titan**
+    A set of open source automation packages for Thermo Fisher transmission electron microscopes.
+
 Examples
 --------
 Simple file reading
