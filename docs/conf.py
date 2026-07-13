@@ -34,9 +34,40 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
+    'sphinxcontrib.apidoc',
 ]
 
 napoleon_include_init_with_doc = False
+
+# Document docstring "Attributes" sections as :ivar: fields instead of as
+# separate autodoc attribute entries. Several classes (e.g. ncempy.io.dm.fileDM)
+# declare their attributes via __slots__, which autodoc also picks up directly;
+# without this, each one is documented twice and Sphinx raises "duplicate
+# object description" warnings.
+napoleon_use_ivar = True
+
+# -- sphinxcontrib.apidoc ---------------------------------------------------
+# Regenerates the ncempy.*.rst stub files from the package source on every
+# build, instead of hand-maintaining them. This keeps the module list from
+# drifting out of sync with the actual submodules.
+apidoc_module_dir = '../ncempy'
+apidoc_output_dir = '.'
+apidoc_excluded_paths = ['test']
+apidoc_separate_modules = True
+apidoc_module_first = True
+apidoc_toc_file = False
+
+# -- sphinx.ext.intersphinx --------------------------------------------------
+# Lets type references in docstrings (e.g. `numpy.ndarray`) link out to the
+# referenced project's own docs.
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'h5py': ('https://docs.h5py.org/en/stable/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

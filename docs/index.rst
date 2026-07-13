@@ -29,6 +29,9 @@ The openNCEM collection comes with different components. The general functionali
     ncempy - openNCEM's python package<ncempy>
     tools - wrapping the provided functionality into useful tools<tools>
 
+**python_titan**
+    A set of open source automation packages for Thermo Fisher transmission electron microscopes.
+
 Examples
 --------
 Simple file reading
@@ -60,6 +63,20 @@ Here is how to open a DM file and have access to the internal file parameters
    >>>     dmSlice = dm0.getSlice(0, 1) #the second image of the first data set; equal to dmData[1,:,:] from the line above
    >>>     print(dm0.metaData) # all of the interesting metadata for this data set (pixel size, accelerating voltage, etc.)
    >>>     print(dm0.allTags) # all of the tags in the file including tags specific to the Digital Micrpograph software program
+
+Reading Dectris Arina 4D-STEM data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The Dectris Arina detector writes its 4D-STEM data set across an HDF5 master
+file and one or more linked data files. Use `ncempy.io.dectris` to load the
+full 4D data set from the master file.
+
+.. code-block:: python
+
+   >>> import ncempy.io as nio
+   >>> with nio.dectris.fileDECTRIS('/path/to/file/master.h5') as f0:
+   >>>     data = f0.getDataset() # the full 4D data set, shape [scanY, scanX, frameY, frameX]
+   >>>     print(data['data'].shape)
+   >>>     print(f0.getMetadata()) # scan metadata (e.g. pixel size), if available
 
 License
 -------
