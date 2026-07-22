@@ -11,6 +11,7 @@ It is likely that there are other variations of the EMI file format that this re
 
 """
 
+import mmap
 from pathlib import Path
 import numpy as np
 
@@ -59,7 +60,7 @@ class fileEMI:
                 pass
             else:
                 raise TypeError('Filename is supposed to be a string or pathlib.Path')
-        self.file_path = filename
+        self.file_path = file_name
         self.file_name = self.file_path.name
 
         try:
@@ -69,15 +70,6 @@ class fileEMI:
             raise
         except:
             raise
-
-    def _read_text(self, fid):
-        aa = np.fromfile(fid, dtype=self._text_dtype, count=1)
-        if aa['size'] > 0:
-            bin = np.fromfile(fid, dtype='<u1', count=aa['size'][0])
-            text = ''.join([chr(item) for item in bin])
-        else:
-            text = ''
-        return text
 
     def __del__(self):
         """Destructor which also closes the file
@@ -102,42 +94,59 @@ class fileEMI:
         return None
     
     def parse_file(self):
-        # Read in the full file
-        full_file = np.fromfile(self.file_path, dtype='<u1')
-        # Find bytes that indicate a certain ASCII character: `
-        obj_loc = np.where(full_file == 96)[0]
-        
-        with open(self.file_path, 'rb') as f0:
-            for loc in obj_loc[0:]:
-                f0.seek(loc, 0)
-                cur_text = self._read_text(f0)
-                self.image_name.append(cur_text)
-                if self._verbose:
-                    print(cur_text)
-                second_field = np.fromfile(f0, dtype='<u2', count=1)
-                if (second_field == 112) or (second_field == 17184):
-                    obj_info = np.fromfile(f0, count=2, dtype='<u2')
-                    if obj_info[0] == 1042:
-                        # this is an image. Read header and continue
-                        image_info = np.fromfile(f0, count=10, dtype='<u2')
-                        f0.seek(-8, 1);
-                        self.image_size.append(np.fromfile(f0,count=2,dtype='<u4'))
-                        if image_info[3] == 8710:
-                            self.data_type.append('<u2')
-                        elif image_info[3] == 8714:
-                            self.data_type.append('<u4')
-                        elif image_info[3] == 514:
-                            self.data_type.append('<u4')
-                        elif image_info[3] == 8716:
-                            self.data_type.append('f32')
-                        else:
-                            print('Unknown data type: {}'.format(image_info[3]))
-                            print('for object named: {}'.format(cur_text))
-                            return
-                        self.image_locations.append(self.fid.tell())
-                        break
-                f0.seek(-2, 1) # roll back the pointer 2 bytes
-                
+        """Parse the file to find the image location, data type, and size. This
+        is reverse engineered and only works for very simple files.
+        """
+        # Map the entire file (0 = entire file)
+        with mmap.mmap(self.fid.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            while True:
+                pos = mm.find(bytes([96])) # this indicates the start of a data object
+                if pos != -1:
+                    mm.seek(pos)  # Set mmap pointer to byte location
+                    raw_bytes = mm.read(8)
+                    text_mark = int.from_bytes(raw_bytes[0:2], byteorder='little', signed=False)
+                    _ = int.from_bytes(raw_bytes[2:4], byteorder='little', signed=False)
+                    text_size = int.from_bytes(raw_bytes[4:8], byteorder='little', signed=False)
+                    if text_size > 0:
+                        cur_text = mm.read(text_size).decode('ascii')
+                    self.image_name.append(cur_text)
+                    if self._verbose:
+                        print(cur_text)
+                    raw_bytes = mm.read(2)
+                    second_field = int.from_bytes(raw_bytes, byteorder='little', signed=False)
+                    if (second_field == 112) or (second_field == 17184):
+                        raw_bytes = mm.read(4) # read 4 bytes but only convert the first 2
+                        obj_info = int.from_bytes(raw_bytes[0:2], byteorder='little', signed=False)
+                        if self._verbose:
+                            print(f'obj_info byte = {obj_info}')
+                        if obj_info == 1042:
+                            # this is an image. Read header and continue
+                            raw_bytes = mm.read(20)
+                            image_dtype = int.from_bytes(raw_bytes[4:6], byteorder='little', signed=False)
+                            image_size = (int.from_bytes(raw_bytes[12:17], byteorder='little', signed=False),
+                                            int.from_bytes(raw_bytes[16:20], byteorder='little', signed=False))
+                            if self._verbose:
+                                print(f'image size = {image_size}')
+                            self.image_size.append(image_size)
+                            if image_dtype == 8710:
+                                self.data_type.append('<u2')
+                            elif image_dtype == 8714:
+                                self.data_type.append('<u4')
+                            elif image_dtype == 514:
+                                self.data_type.append('<u4')
+                            elif image_dtype == 8716:
+                                self.data_type.append('<f4')
+                            else:
+                                print('Unknown data type: {}'.format(image_dtype))
+                                print('for object named: {}'.format(cur_text))
+                                return
+                            if self._verbose:
+                                print(f'image location = {mm.tell()}')
+                            
+                            self.image_locations.append(mm.tell())
+                            # We stop at the first image
+                            break
+
     
     def getDataset(self, index=0):
         """Read the data from the file
@@ -153,14 +162,14 @@ class fileEMI:
         A dictionary containing the data with the key 'data'
         
         """
-        self.fid.seek(self.image_locations[index])
+        self.fid.seek(self.image_locations[index], 0)
         image_size = self.image_size[index]
         dtype = self.data_type[index]
         image = np.fromfile(self.fid, count=image_size[0]*image_size[1], dtype=dtype)
         if self._verbose:
             print('Read image named: {}'.format(self.image_name[index]))
 
-        return {'data': image.reshape(image_size)}
+        return {'data':image.reshape(image_size), 'name':self.image_name[index]}
 
 if __name__ == '__main__':
     with fileEMI('../data/with sample CL 170.emi', verbose=False) as f0:
