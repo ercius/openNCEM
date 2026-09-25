@@ -101,14 +101,29 @@ class fileEMI:
         with mmap.mmap(self.fid.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             while True:
                 pos = mm.find(bytes([96])) # this indicates the start of a data object
+                if pos == -1:
+                    break
                 if pos != -1:
                     mm.seek(pos)  # Set mmap pointer to byte location
                     raw_bytes = mm.read(8)
                     text_mark = int.from_bytes(raw_bytes[0:2], byteorder='little', signed=False)
                     _ = int.from_bytes(raw_bytes[2:4], byteorder='little', signed=False)
                     text_size = int.from_bytes(raw_bytes[4:8], byteorder='little', signed=False)
-                    if text_size > 0:
-                        cur_text = mm.read(text_size).decode('ascii')
+                    cur_text = ''
+                    if 0 < text_size < 256:
+                        candidate_text = mm.read(text_size)
+                        try:
+                            cur_text = candidate_text.decode('ascii')
+                        except UnicodeDecodeError:
+                            # A 0x60 byte matched inside unrelated binary data,
+                            # not a real object marker. Resume the search just
+                            # past this false match.
+                            mm.seek(pos + 1)
+                            continue
+                    elif text_size >= 256:
+                        # Implausibly large text field: not a real object marker.
+                        mm.seek(pos + 1)
+                        continue
                     self.image_name.append(cur_text)
                     if self._verbose:
                         print(cur_text)
@@ -123,7 +138,7 @@ class fileEMI:
                             # this is an image. Read header and continue
                             raw_bytes = mm.read(20)
                             image_dtype = int.from_bytes(raw_bytes[4:6], byteorder='little', signed=False)
-                            image_size = (int.from_bytes(raw_bytes[12:17], byteorder='little', signed=False),
+                            image_size = (int.from_bytes(raw_bytes[12:16], byteorder='little', signed=False),
                                             int.from_bytes(raw_bytes[16:20], byteorder='little', signed=False))
                             if self._verbose:
                                 print(f'image size = {image_size}')
@@ -169,7 +184,13 @@ class fileEMI:
         if self._verbose:
             print('Read image named: {}'.format(self.image_name[index]))
 
-        return {'data':image.reshape(image_size), 'name':self.image_name[index]}
+        # image_size is (n_samples, n_measurements); the raw data is laid out
+        # as n_measurements rows of n_samples, but in reverse measurement
+        # order relative to the paired SER file. Verified against SER ground
+        # truth for "Scan Spectrum 2484" and "Scan Spectrum 2487".
+        data = image.reshape(image_size[1], image_size[0])[::-1]
+
+        return {'data': data, 'name': self.image_name[index]}
 
 if __name__ == '__main__':
     with fileEMI('../data/with sample CL 170.emi', verbose=False) as f0:
