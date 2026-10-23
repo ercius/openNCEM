@@ -269,8 +269,13 @@ class fileMRC:
         # Move to the end of the normal header
         self.fid.seek(1024)
 
-        # Read in the extended header if it exists (for FEI MRC files)
-        if self.extra[1] != 0:
+        # Read in the extended header if it is the legacy FEI format: 128 bytes (32 floats) per section and no
+        # other extended header type set in EXTTYP (header bytes 104 to 107). SerialEM, FEI1/FEI2 and symmetry
+        # records (CCP4, MRCO or no EXTTYP in older maps) have a different layout.
+        ext_type = self.extra[4].tobytes()
+        is_legacy_fei = (self.extra[1] > 0 and self.extra[1] % 128 == 0
+                         and ext_type not in (b'SERI', b'FEI1', b'FEI2', b'AGAR', b'CCP4', b'MRCO'))
+        if is_legacy_fei:
             pos1 = self.fid.tell()
             if self.v:
                 print('Extra header found. Most likely and FEI-style MRC file.')
@@ -320,7 +325,7 @@ class fileMRC:
         self.dataOut = {'pixelSize': self.voxelSize, 'voxelSize': self.voxelSize,
                         'cellAngles': self.cellAngles, 'axisOrientations': self.axisOrientations,
                         'filename': self.file_name}
-        if self.extra[1] != 0:
+        if self.FEIinfo:
             self.dataOut['FEIinfo'] = self.FEIinfo
 
         return 1
