@@ -985,28 +985,20 @@ def read_emi(filename):
     _emi['DetectorPixelWidth'] = root.findtext('DetectorPixelWidth')
 
     # Microscope Conditions
-    grp = root.find('ExperimentalConditions/MicroscopeConditions')
-
-    for elem in grp:
+    for elem in root.findall('ExperimentalConditions/MicroscopeConditions/*'):
         _emi[elem.tag] = _parseEntry_emi(elem.text)
 
     # Experimental Description
-    grp = root.find('ExperimentalDescription/Root')
-
-    for elem in grp:
+    for elem in root.findall('ExperimentalDescription/Root/*'):
         _emi['{} [{}]'.format(elem.findtext('Label'), elem.findtext('Unit'))] = _parseEntry_emi(
             elem.findtext('Value'))
 
     # AcquireInfo
-    grp = root.find('AcquireInfo')
-
-    for elem in grp:
+    for elem in root.findall('AcquireInfo/*'):
         _emi[elem.tag] = _parseEntry_emi(elem.text)
 
     # DetectorRange
-    grp = root.find('DetectorRange')
-
-    for elem in grp:
+    for elem in root.findall('DetectorRange/*'):
         _emi['DetectorRange_' + elem.tag] = _parseEntry_emi(elem.text)
 
     return _emi
