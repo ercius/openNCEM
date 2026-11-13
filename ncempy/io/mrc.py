@@ -179,7 +179,7 @@ class fileMRC:
         self.fid.seek(0)
 
         header_dtype = np.dtype(
-            [('head1', '10int32'), ('head2', '6float32'), ('axisOrientations', '3int32'), ('minMaxMean', '3int32'),
+            [('head1', '10int32'), ('head2', '6float32'), ('axisOrientations', '3int32'), ('minMaxMean', '3float32'),
              ('extra', '32int32')])
         header = np.fromfile(self.fid, dtype=header_dtype, count=1)
 

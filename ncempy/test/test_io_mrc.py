@@ -40,6 +40,17 @@ class Testmrc:
             mrc0 = ncempy.io.mrc.fileMRC(f0)
             assert hasattr(mrc0, 'fid')
 
+    def test_min_max_mean(self, temp_file):
+        # DMIN, DMAX and DMEAN are floats in the MRC header
+        data = np.arange(10 * 11 * 12, dtype=np.float32).reshape((10, 11, 12)) - 100.5
+        ncempy.io.mrc.mrcWriter(temp_file, data, (1, 2, 3))
+
+        with ncempy.io.mrc.fileMRC(temp_file) as f0:
+            assert f0.minMaxMean.dtype == np.float32
+            assert f0.minMaxMean[0] == pytest.approx(data.min())
+            assert f0.minMaxMean[1] == pytest.approx(data.max())
+            assert f0.minMaxMean[2] == pytest.approx(data.mean())
+
     # def test_metadata(self):
     #     file_path = Path('/mnt/NAS-NCEM_Data/TitanX/KateG/KateG/Greenlee_20190413_FeFeO_KGBox4G2/tiltSeries_20190413_FeFeO_neg70to65.mrc')
     #     with ncempy.io.mrc.fileMRC(file_path) as f0:
