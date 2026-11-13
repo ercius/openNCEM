@@ -53,6 +53,15 @@ class Testser():
         emi = ncempy.io.ser.read_emi(str(data_location / Path('16_STOimage.emi')))
         assert emi['AcceleratingVoltage'] == 80000
 
+    def test_read_emi_without_optional_groups(self, tmp_path):
+        # Only Uuid in ObjectInfo, no MicroscopeConditions, ExperimentalDescription, AcquireInfo or DetectorRange
+        emi_path = tmp_path / 'minimal.emi'
+        emi_path.write_bytes(b'\x00' * 16 + b'<ObjectInfo><Uuid>581dacb4-c48d-48cd-a67e-bbc503fe87aa</Uuid></ObjectInfo>')
+
+        emi = ncempy.io.ser.read_emi(emi_path)
+        assert emi['Uuid'] == '581dacb4-c48d-48cd-a67e-bbc503fe87aa'
+        assert emi['AcquireDate'] is None
+
     def test_serReader(self, data_location):
         dd = ncempy.io.ser.serReader(data_location / Path('16_STOimage_1.ser'))
 

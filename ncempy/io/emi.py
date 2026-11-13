@@ -1,0 +1,215 @@
+"""
+This module provides an interface to the FEI / Thermo Fischer ESVision EMI files. 
+It is only meant to open files that do not have a corresponding .ser file. It can 
+read the first image in some emi files.
+
+Currently readable image data types are uint16, uint32, float32
+
+The EMI file format is not documented at all. This reader is based on 
+reverse engineering of a few sample files from only a couple of microscopes. 
+It is likely that there are other variations of the EMI file format that this reader will not be able to read.
+
+"""
+
+import mmap
+from pathlib import Path
+
+import numpy as np
+
+_OBJECT_MARKER_BYTE = 0x60  # indicates the start of a data object
+_SECOND_FIELD_VALUES = {112, 17184}  # values seen following an object's name
+_IMAGE_OBJ_INFO = 1042  # obj_info value identifying an image object
+_DTYPE_MAP = {
+    8710: '<u2',
+    8714: '<u4',
+    514: '<u4',
+    8716: '<f4',
+}
+
+
+class fileEMI:
+    """Class to represent simple EMI files.
+
+    Attributes
+    ----------
+    file_name : str
+        The name of the file
+    file_path : pathlib.Path
+        A pathlib.Path object for the open file
+    fid : file
+        The file handle to the opened file.
+    data_type : list of np.dtype
+        The numpy dtype of the data.
+    image_size : list of 2-tuples
+        The size of the images in pixels.
+    image_locations : list of int
+        The file bytes locations of the images in the file.
+    image_name : list of str
+        The names of the images in the file.
+    """
+    
+    def __init__(self, file_name, verbose=False):
+        
+        self.data_type = []
+        self.image_size = []
+        self.image_locations = []
+        self.image_name = []
+        self._verbose = verbose
+
+        if hasattr(file_name, 'read'):
+            self.fid = file_name
+            try:
+                self.file_name = self.fid.name
+            except AttributeError:
+                self.file_name = None
+        else:
+            # check filename type. Prefer pathlib.Path
+            if isinstance(file_name, str):
+                file_name = Path(file_name)
+            elif isinstance(file_name, Path):
+                pass
+            else:
+                raise TypeError('Filename is supposed to be a string or pathlib.Path')
+        self.file_path = file_name
+        self.file_name = self.file_path.name
+
+        try:
+            self.fid = open(self.file_path, 'rb')
+        except OSError:
+            print(f'Error reading file: "{self.file_path}"')
+            raise
+
+    def __del__(self):
+        """Destructor which also closes the file
+
+        """
+        fid = getattr(self, 'fid', None)
+        if fid is not None and not fid.closed:
+            if self._verbose:
+                print(f'Closing input file: {self.file_path}')
+            self.fid.close()
+
+    def __enter__(self):
+        """Implement python's with statement
+
+        """
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Implement python's with statement
+        and close the file via __del__()
+        """
+        self.__del__()
+    
+    def parse_file(self):
+        """Parse the file to find the image location, data type, and size. This
+        is reverse engineered and only works for very simple files.
+        """
+        # Map the entire file (0 = entire file)
+        with mmap.mmap(self.fid.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            while True:
+                pos = mm.find(bytes([_OBJECT_MARKER_BYTE])) # this indicates the start of a data object
+                if pos == -1:
+                    break
+                mm.seek(pos)  # Set mmap pointer to byte location
+                raw_bytes = mm.read(8)
+                text_mark = int.from_bytes(raw_bytes[0:2], byteorder='little', signed=False)
+                _ = int.from_bytes(raw_bytes[2:4], byteorder='little', signed=False)
+                text_size = int.from_bytes(raw_bytes[4:8], byteorder='little', signed=False)
+                cur_text = ''
+                if 0 < text_size < 256:
+                    candidate_text = mm.read(text_size)
+                    try:
+                        cur_text = candidate_text.decode('ascii')
+                    except UnicodeDecodeError:
+                        # A 0x60 byte matched inside unrelated binary data,
+                        # not a real object marker. Resume the search just
+                        # past this false match.
+                        mm.seek(pos + 1)
+                        continue
+                elif text_size >= 256:
+                    # Implausibly large text field: not a real object marker.
+                    mm.seek(pos + 1)
+                    continue
+                if self._verbose:
+                    print(cur_text)
+                raw_bytes = mm.read(2)
+                second_field = int.from_bytes(raw_bytes, byteorder='little', signed=False)
+                if second_field in _SECOND_FIELD_VALUES:
+                    raw_bytes = mm.read(4) # read 4 bytes but only convert the first 2
+                    obj_info = int.from_bytes(raw_bytes[0:2], byteorder='little', signed=False)
+                    if self._verbose:
+                        print(f'obj_info byte = {obj_info}')
+                    if obj_info == _IMAGE_OBJ_INFO:
+                        # this is an image. Read header and continue
+                        raw_bytes = mm.read(20)
+                        image_dtype = int.from_bytes(raw_bytes[4:6], byteorder='little', signed=False)
+                        image_size = (int.from_bytes(raw_bytes[12:16], byteorder='little', signed=False),
+                                        int.from_bytes(raw_bytes[16:20], byteorder='little', signed=False))
+                        dtype = _DTYPE_MAP.get(image_dtype)
+                        if dtype is None:
+                            print(f'Unknown data type: {image_dtype}')
+                            print(f'for object named: {cur_text}')
+                            # Skip this object; keep scanning for other images.
+                            mm.seek(pos + 1)
+                            continue
+                        image_location = mm.tell()
+                        num_bytes = image_size[0] * image_size[1] * np.dtype(dtype).itemsize
+                        if image_location + num_bytes > mm.size():
+                            # The parsed size/dtype don't fit in the remaining
+                            # file: this wasn't a real image header match.
+                            print(f'Image size {image_size} with dtype {dtype} '
+                                  f'exceeds the remaining file size; skipping '
+                                  f'object named: {cur_text}')
+                            mm.seek(pos + 1)
+                            continue
+                        if self._verbose:
+                            print(f'image size = {image_size}')
+                            print(f'image location = {image_location}')
+                        self.image_name.append(cur_text)
+                        self.image_size.append(image_size)
+                        self.data_type.append(dtype)
+                        self.image_locations.append(image_location)
+
+            if not self.image_locations:
+                print(f'Warning: no images found while parsing "{self.file_name}"')
+
+    def getDataset(self, index=0):
+        """Read the data from the file
+        
+        Paremeters
+        ----------
+        index : int, optional
+        The index of the image to load.
+
+        Returns
+        -------
+        : dict
+        A dictionary containing the data with the key 'data'
+        
+        """
+        if not 0 <= index < len(self.image_locations):
+            raise IndexError(
+                f'Index {index} out of range: file contains '
+                f'{len(self.image_locations)} image(s)'
+            )
+        self.fid.seek(self.image_locations[index], 0)
+        image_size = self.image_size[index]
+        dtype = self.data_type[index]
+        image = np.fromfile(self.fid, count=image_size[0]*image_size[1], dtype=dtype)
+        if self._verbose:
+            print('Read image named: {}'.format(self.image_name[index]))
+
+        # image_size is (n_samples, n_measurements); the raw data is laid out
+        # as n_measurements rows of n_samples, but in reverse measurement
+        # order relative to the paired SER file. Verified against SER ground
+        # truth for "Scan Spectrum 2484" and "Scan Spectrum 2487".
+        data = image.reshape(image_size[1], image_size[0])[::-1]
+
+        return {'data': data, 'name': self.image_name[index]}
+
+if __name__ == '__main__':
+    with fileEMI('../data/with sample CL 170.emi', verbose=False) as f0:
+        f0.parse_file()
+        data = f0.getDataset(0)
+        print(f'data shape: {data["data"].shape}')
