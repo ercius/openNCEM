@@ -76,6 +76,8 @@ def pre_post_fit(energy_axis, spectra, pre, post, initial_parameters=(0, .15, .1
         The function to fit to the pre- and post-edge signals. The default is a Gaussian-Lorentz mixture as defined
         in the function definition. The function must take the energy loss values as the first argument and the parameters
         to fit as subsequent arguments.
+
+    Returns
     -------
     : 2-tuple
         A tuple contains two 1D ndarrays. The first is the energy loss values for the signal and the second is the

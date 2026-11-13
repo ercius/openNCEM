@@ -1,10 +1,5 @@
 """
 Module to correlate two images, functionally written.
-
-TODO
-----
-    - Cant use rfft2 currently. This gives one shift as 1/2 the value. How
-      can this be improved to improve speed?
 """
 
 import numpy as np
@@ -208,7 +203,7 @@ def imageShifter(g1, xy_shift):
     Multiply im by a plane wave that has the real space effect of shifting ifft2(G2) by [x, y] pixels.
 
     Parameters
-   -----------
+    ----------
         g1 : complex ndarray
             The Fourier transform of an image.
         xy_shift : list

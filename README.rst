@@ -29,6 +29,9 @@ The openNCEM collection comes with different components, described below.
 **tools**
     The tools build leveraging the algorithms and routines provided in the libraries/packages. They are subordered by the different problems they address.
 
+**python_titan**
+    A set of open source automation packages for Thermo Fisher transmission electron microscopes.
+
 Commands
 ========
 
